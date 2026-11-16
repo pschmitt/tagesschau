@@ -36,7 +36,7 @@
     <string name="shizuku_unavailable">Ohne Shizuku: Updates brauchen eine Bestätigung.</string>
     <string name="tasker_overlay_hint">Nötig, damit die Tasker-Aktion auch im Hintergrund abspielen kann.</string>
     <string name="tasker_action">tagesschau abspielen</string>
-    <string name="tasker_action_help">Spielt die neueste Ausgabe ab, oder die gerade laufende von ihrem Beginn an.</string>
+    <string name="tasker_action_help">Spielt die tagesschau oder Das Erste live ab, so wie hier eingestellt; unabhängig von den Bluetooth-Einstellungen.</string>
     <string name="tasker_audio_only">Laufende Ausgabe nur als Ton</string>
     <string name="back">Zurück</string>
     <string name="play">Abspielen</string>
@@ -103,6 +103,7 @@
     <string name="play_target">Beim Öffnen</string>
     <string name="play_target_help">Was die App beim Start zeigt</string>
     <string name="bt_target">Was abspielen</string>
+    <string name="bt_mode">Wie abspielen</string>
     <string name="play_target_tagesschau">Neueste tagesschau</string>
     <string name="play_target_channel">Das Erste live</string>
     <string name="subtitles">Untertitel</string>

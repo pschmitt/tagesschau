@@ -89,28 +89,16 @@ object BluetoothAutoPlay {
             .cancel(action(context, ACTION_START, deviceName))
         val settings = Settings(context)
         val intent =
-            when (settings.bluetoothMode) {
-                    BluetoothMode.AUDIO ->
-                        Intent(context, PlayLatestActivity::class.java)
-                            .putExtra(PlaybackService.EXTRA_PREFER_LIVE, settings.preferLive)
-                            .putExtra(PlaybackService.EXTRA_AUDIO_ONLY, true)
-                            .putExtra(PlaybackService.EXTRA_RESUME, settings.bluetoothResume)
-                            .putExtra(
-                                PlaybackService.EXTRA_CHANNEL,
-                                settings.bluetoothTarget == PlayTarget.CHANNEL,
-                            )
-                    BluetoothMode.VIDEO,
-                    BluetoothMode.PIP ->
-                        Intent(context, MainActivity::class.java)
-                            .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                            .putExtra(MainActivity.EXTRA_PLAY_LATEST, true)
-                            .putExtra(
-                                MainActivity.EXTRA_PIP,
-                                settings.bluetoothMode == BluetoothMode.PIP,
-                            )
-                }
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
-                .putExtra(MediaVolume.EXTRA, settings.bluetoothVolume)
+            AutoStart.intent(
+                context,
+                AutoStart.Options(
+                    target = settings.bluetoothTarget,
+                    preferLive = settings.preferLive,
+                    mode = settings.bluetoothMode,
+                    resume = settings.bluetoothResume,
+                    volume = settings.bluetoothVolume,
+                ),
+            )
         runCatching { context.startActivity(intent) }
             .onFailure { Log.w("BluetoothAutoPlay", "could not start playback", it) }
         notify(

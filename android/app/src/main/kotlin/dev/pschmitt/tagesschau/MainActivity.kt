@@ -117,6 +117,10 @@ class MainActivity : ComponentActivity() {
     var pendingLatest by mutableStateOf(false)
     var pendingPip = false
     var pendingVolume = -1
+    // What a play-latest request asks for (Bluetooth or Tasker); defaults: the Bluetooth settings.
+    var pendingChannel = false
+    var pendingPreferLive = true
+    var pendingResume = true
 
     private fun handleIntent(intent: Intent?) {
         intent ?: return
@@ -124,6 +128,16 @@ class MainActivity : ComponentActivity() {
         if (intent.getBooleanExtra(EXTRA_PLAY_LATEST, false)) {
             pendingPip = intent.getBooleanExtra(EXTRA_PIP, false)
             pendingVolume = intent.getIntExtra(MediaVolume.EXTRA, -1)
+            val settings = Settings(this)
+            pendingChannel =
+                intent.getBooleanExtra(
+                    PlaybackService.EXTRA_CHANNEL,
+                    settings.bluetoothTarget == PlayTarget.CHANNEL,
+                )
+            pendingPreferLive =
+                intent.getBooleanExtra(PlaybackService.EXTRA_PREFER_LIVE, settings.preferLive)
+            pendingResume =
+                intent.getBooleanExtra(PlaybackService.EXTRA_RESUME, settings.bluetoothResume)
             pendingLatest = true
         }
     }
@@ -410,14 +424,14 @@ private fun MainScreen(activity: MainActivity) {
         val l = listing ?: return@LaunchedEffect
         if (controller == null || l.all.isEmpty()) return@LaunchedEffect
         activity.pendingLatest = false
-        if (settings.bluetoothTarget == PlayTarget.CHANNEL) {
+        if (activity.pendingChannel) {
             activity.play(listOf(Edition.channel()), 0)
         } else {
-            val start = if (settings.preferLive || l.live == null) 0 else 1
+            val start = if (activity.pendingPreferLive || l.live == null) 0 else 1
             activity.play(
                 l.all,
                 start.coerceAtMost(l.all.size - 1),
-                resumeLatest = settings.bluetoothResume,
+                resumeLatest = activity.pendingResume,
             )
         }
         // No delay here: resetting pendingLatest restarts (cancels) this effect. The activity

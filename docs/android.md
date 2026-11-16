@@ -105,8 +105,10 @@ with each download, so they work offline too.
 
 Two ways to play "the latest tagesschau":
 
-- The plugin action **tagesschau abspielen** (Plugin, tagesschau). Options:
-  play the edition on air from its start, and audio only for it.
+- The plugin action **tagesschau abspielen** (Plugin, tagesschau). Each action
+  has its own options, the same as Bluetooth auto-play: what to play (latest
+  tagesschau or Das Erste live), how (sound only, video, picture-in-picture),
+  the edition on air from its start, resume, and a start volume.
 - **Send Intent** with action `dev.pschmitt.tagesschau.action.PLAY_LATEST`,
   target Activity. Optional boolean extras `prefer_live` and `audio_only`.
 
