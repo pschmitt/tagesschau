@@ -98,6 +98,7 @@ private fun SettingsScreen(activity: SettingsActivity) {
     var btDevices by remember { mutableStateOf(settings.bluetoothDevices) }
     var btMode by remember { mutableStateOf(settings.bluetoothMode) }
     var btDelay by remember { mutableStateOf(settings.bluetoothDelaySeconds) }
+    var btResume by remember { mutableStateOf(settings.bluetoothResume) }
     var choosingBt by remember { mutableStateOf(false) }
     val btPermission =
         androidx.activity.compose.rememberLauncherForActivityResult(
@@ -459,6 +460,21 @@ private fun SettingsScreen(activity: SettingsActivity) {
                             }
                         }
                     }
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.bt_resume)) },
+                        supportingContent = { Text(stringResource(R.string.bt_resume_help)) },
+                        trailingContent = {
+                            Switch(
+                                btResume,
+                                {
+                                    btResume = it
+                                    settings.bluetoothResume = it
+                                },
+                            )
+                        },
+                        colors = itemColors,
+                        modifier = Modifier.padding(start = 40.dp),
+                    )
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.bt_delay)) },
                         colors = itemColors,

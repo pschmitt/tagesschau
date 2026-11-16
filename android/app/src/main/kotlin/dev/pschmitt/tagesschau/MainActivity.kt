@@ -85,7 +85,6 @@ import com.google.common.util.concurrent.ListenableFuture
 import dev.pschmitt.tagesschau.update.Updater
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -130,8 +129,33 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
-    fun enterPipNow() {
-        runCatching { enterPictureInPictureMode(pipParams()) }
+    /** Bluetooth auto-play in PIP mode: enter picture-in-picture once playback runs. */
+    var pipWhenPlaying = false
+
+    /**
+     * Enters picture-in-picture, retrying: Android refuses (returns false) while the activity is
+     * still in its opening transition, which is exactly when Bluetooth auto-play asks for it.
+     */
+    fun enterPipNow(attempt: Int = 0) {
+        if (isInPictureInPictureMode) return
+        val ok =
+            runCatching { enterPictureInPictureMode(pipParams()) }
+                .onFailure { android.util.Log.w("MainActivity", "picture-in-picture failed", it) }
+                .getOrDefault(false)
+        android.util.Log.i("MainActivity", "picture-in-picture attempt $attempt: $ok")
+        if (!ok && attempt < 6) window.decorView.postDelayed({ enterPipNow(attempt + 1) }, 500)
+    }
+
+    private fun maybeEnterPip() {
+        if (!pipWhenPlaying || controller?.isPlaying != true) return
+        if (!lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) return
+        pipWhenPlaying = false
+        window.decorView.post { enterPipNow() }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        maybeEnterPip()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -174,6 +198,7 @@ class MainActivity : ComponentActivity() {
                         override fun onIsPlayingChanged(isPlaying: Boolean) {
                             updatePipParams()
                             playerView.keepScreenOn = isPlaying
+                            maybeEnterPip()
                         }
                     }
                 )
@@ -205,7 +230,7 @@ class MainActivity : ComponentActivity() {
         c.volume = if (sound) 1f else 0f
     }
 
-    fun play(editions: List<Edition>, index: Int) {
+    fun play(editions: List<Edition>, index: Int, resumeLatest: Boolean = true) {
         val c = controller ?: return
         setMedia(video = true, sound = true)
         val e = editions[index]
@@ -216,7 +241,7 @@ class MainActivity : ComponentActivity() {
             c.play()
             return
         }
-        val resume = if (e.live) 0 else Positions.resumeAt(this, e.id)
+        val resume = if (resumeLatest) Positions.resumeAt(this, e.date.toString()) else 0L
         c.setMediaItems(editions.map { Playlist.item(this, it) }, index, resume)
         c.prepare()
         c.play()
@@ -373,11 +398,14 @@ private fun MainScreen(activity: MainActivity) {
         if (controller == null || l.all.isEmpty()) return@LaunchedEffect
         activity.pendingLatest = false
         val start = if (settings.preferLive || l.live == null) 0 else 1
-        activity.play(l.all, start.coerceAtMost(l.all.size - 1))
-        if (activity.pendingPip) {
-            delay(600)
-            activity.enterPipNow()
-        }
+        activity.play(
+            l.all,
+            start.coerceAtMost(l.all.size - 1),
+            resumeLatest = settings.bluetoothResume,
+        )
+        // No delay here: resetting pendingLatest restarts (cancels) this effect. The activity
+        // enters picture-in-picture as soon as playback runs (see onIsPlayingChanged).
+        if (activity.pendingPip) activity.pipWhenPlaying = true
     }
     // A notification asked for an edition: play it once the list is there.
     LaunchedEffect(controller, listing, activity.pendingPlayId) {
@@ -501,7 +529,7 @@ private fun MainScreen(activity: MainActivity) {
                                 e,
                                 downloads[e.id],
                                 playing = e.id == currentId,
-                                saved = Positions.get(activity, e.id),
+                                saved = Positions.get(activity, e.date.toString()),
                                 onPlay = { activity.play(editions, index) },
                                 onDownload = { Downloads.start(activity, e) },
                                 onRemove = { Downloads.remove(activity, e.id) },

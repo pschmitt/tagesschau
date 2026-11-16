@@ -61,6 +61,8 @@
     <string name="bt_autoplay_some">%1$d Gerät(e): %2$s</string>
     <string name="bt_choose">Geräte wählen</string>
     <string name="bt_delay">Verzögerung</string>
+    <string name="bt_resume">Fortsetzen, falls schon begonnen</string>
+    <string name="bt_resume_help">Wurde die neueste Ausgabe schon angefangen, geht es dort weiter statt von vorn.</string>
     <string name="autoplay_channel">Auto-Wiedergabe</string>
     <string name="autoplay_countdown_title">tagesschau startet gleich</string>
     <string name="autoplay_started">tagesschau startet</string>

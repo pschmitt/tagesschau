@@ -126,9 +126,8 @@ fun rememberPlayState(context: Context, c: MediaController?): PlayState {
                         val pos = c.currentPosition
                         val id = c.currentMediaItem?.mediaId
                         val dur = c.duration.takeIf { it != C.TIME_UNSET } ?: 0
-                        if (c.isPlaying && id != null && !id.startsWith("live-")) {
-                            Positions.save(context, id, pos, dur)
-                        }
+                        val date = extras?.getString(Playlist.EXTRA_DATE)
+                        if (c.isPlaying && date != null) Positions.save(context, date, pos, dur)
                         PlayState(
                             playing = c.isPlaying,
                             position = pos,
@@ -159,7 +158,10 @@ fun rememberPlayState(context: Context, c: MediaController?): PlayState {
 
 private fun parseDate(s: String) = runCatching { OffsetDateTime.parse(s) }.getOrNull()
 
-/** Remembered playback position per edition, like the web player's. */
+/**
+ * Remembered playback position per edition, like the web player's. Keyed by the edition's air time,
+ * so a position from the live stream carries over to the published file.
+ */
 object Positions {
     private fun prefs(context: Context) =
         context.getSharedPreferences("positions", Context.MODE_PRIVATE)

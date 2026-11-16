@@ -93,6 +93,11 @@ class Settings(context: Context) {
                 .getOrDefault(BluetoothMode.AUDIO)
         set(value) = prefs.edit { putString(KEY_BT_MODE, value.name) }
 
+    /** Bluetooth auto-play continues the latest edition where it was left, if started before. */
+    var bluetoothResume: Boolean
+        get() = prefs.getBoolean(KEY_BT_RESUME, true)
+        set(value) = prefs.edit { putBoolean(KEY_BT_RESUME, value) }
+
     /** Seconds between a Bluetooth connection and playback (cancellable from a notification). */
     var bluetoothDelaySeconds: Int
         get() = prefs.getInt(KEY_BT_DELAY, 0)
@@ -121,6 +126,7 @@ class Settings(context: Context) {
         private const val KEY_BT = "bluetooth_devices"
         private const val KEY_BT_MODE = "bluetooth_mode"
         private const val KEY_BT_DELAY = "bluetooth_delay"
+        private const val KEY_BT_RESUME = "bluetooth_resume"
         private const val KEY_AUTOPLAY = "auto_play"
         const val KEY_AUTO_NEXT = "auto_next"
         private const val KEY_QUALITY = "download_quality"

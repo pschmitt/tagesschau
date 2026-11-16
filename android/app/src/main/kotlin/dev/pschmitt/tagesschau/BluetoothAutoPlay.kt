@@ -94,6 +94,7 @@ object BluetoothAutoPlay {
                     Intent(context, PlayLatestActivity::class.java)
                         .putExtra(PlaybackService.EXTRA_PREFER_LIVE, settings.preferLive)
                         .putExtra(PlaybackService.EXTRA_AUDIO_ONLY, true)
+                        .putExtra(PlaybackService.EXTRA_RESUME, settings.bluetoothResume)
                 BluetoothMode.VIDEO,
                 BluetoothMode.PIP ->
                     Intent(context, MainActivity::class.java)

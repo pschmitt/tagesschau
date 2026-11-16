@@ -89,12 +89,13 @@ class PlaybackService : MediaSessionService() {
         if (intent?.action == ACTION_PLAY_LATEST) {
             val preferLive = intent.getBooleanExtra(EXTRA_PREFER_LIVE, true)
             val audioOnly = intent.getBooleanExtra(EXTRA_AUDIO_ONLY, true)
-            scope.launch { playLatest(preferLive, audioOnly) }
+            val resume = intent.getBooleanExtra(EXTRA_RESUME, true)
+            scope.launch { playLatest(preferLive, audioOnly, resume) }
         }
         return super.onStartCommand(intent, flags, startId)
     }
 
-    private suspend fun playLatest(preferLive: Boolean, audioOnly: Boolean) {
+    private suspend fun playLatest(preferLive: Boolean, audioOnly: Boolean, resumeLatest: Boolean) {
         val items = Playlist.latest(this, preferLive, audioOnly)
         val player = session?.player ?: return
         if (items.isEmpty()) return
@@ -105,7 +106,10 @@ class PlaybackService : MediaSessionService() {
                 .buildUpon()
                 .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_VIDEO, audioOnly)
                 .build()
-        player.setMediaItems(items, 0, 0)
+        // Continue the latest edition where it was left, if wanted (Bluetooth: a setting).
+        val date = items[0].mediaMetadata.extras?.getString(Playlist.EXTRA_DATE)
+        val resume = if (resumeLatest && date != null) Positions.resumeAt(this, date) else 0L
+        player.setMediaItems(items, 0, resume)
         player.prepare()
         player.play()
     }
@@ -130,13 +134,20 @@ class PlaybackService : MediaSessionService() {
         const val ACTION_PLAY_LATEST = "dev.pschmitt.tagesschau.action.PLAY_LATEST"
         const val EXTRA_PREFER_LIVE = "prefer_live"
         const val EXTRA_AUDIO_ONLY = "audio_only"
+        const val EXTRA_RESUME = "resume"
         const val SEEK_MS = 20_000L
 
-        fun playLatestIntent(context: Context, preferLive: Boolean, audioOnly: Boolean) =
+        fun playLatestIntent(
+            context: Context,
+            preferLive: Boolean,
+            audioOnly: Boolean,
+            resume: Boolean = true,
+        ) =
             Intent(context, PlaybackService::class.java)
                 .setAction(ACTION_PLAY_LATEST)
                 .putExtra(EXTRA_PREFER_LIVE, preferLive)
                 .putExtra(EXTRA_AUDIO_ONLY, audioOnly)
+                .putExtra(EXTRA_RESUME, resume)
     }
 }
 
