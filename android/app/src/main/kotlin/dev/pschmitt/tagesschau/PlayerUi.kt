@@ -1,3 +1,5 @@
+@file:androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+
 package dev.pschmitt.tagesschau
 
 import android.content.Context
@@ -88,6 +90,7 @@ data class PlayState(
     val loaded: Boolean = false,
     val url: String? = null,
     val muted: Boolean = false,
+    val remote: Boolean = false,
     val videoOff: Boolean = false,
 ) {
     /** Broadcast time of a media position: the edition's air time plus the offset. */
@@ -141,6 +144,9 @@ fun rememberPlayState(context: Context, c: MediaController?): PlayState {
                             loaded = c.mediaItemCount > 0,
                             url = extras?.getString(Playlist.EXTRA_URL),
                             muted = c.volume == 0f,
+                            remote =
+                                c.deviceInfo.playbackType ==
+                                    androidx.media3.common.DeviceInfo.PLAYBACK_TYPE_REMOTE,
                             videoOff =
                                 C.TRACK_TYPE_VIDEO in c.trackSelectionParameters.disabledTrackTypes,
                         )
@@ -297,6 +303,20 @@ fun VideoPlayer(
                     }
                 }
         )
+        // Casting: the picture plays on the TV.
+        if (st.remote) {
+            Box(
+                Modifier.fillMaxSize().background(Palette.Deep.copy(alpha = 0.9f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    stringResource(R.string.casting_on),
+                    color = Palette.Ink,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 17.sp,
+                )
+            }
+        }
         // Auto-play started without sound or picture: one tap turns it on.
         if ((st.muted || st.videoOff) && !activity.inPip) {
             Box(
@@ -354,7 +374,9 @@ fun VideoPlayer(
             ) {
                 Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f))) {
                     // Top right: the player settings (YouTube's gear), as a bottom sheet.
-                    Box(Modifier.align(Alignment.TopEnd).padding(4.dp)) {
+                    Row(Modifier.align(Alignment.TopEnd).padding(4.dp)) {
+                        // Google Cast (Media3's button, chooser and controller dialogs).
+                        androidx.media3.cast.MediaRouteButton()
                         Ctl(R.drawable.ic_settings, R.string.player_settings) {
                             interaction++
                             activity.playerSettings = true
@@ -366,20 +388,20 @@ fun VideoPlayer(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(28.dp),
                     ) {
-                        RoundCtl(R.drawable.ic_ctl_prev, R.string.newer, 48, 26, st.hasPrevious) {
+                        RoundCtl(R.drawable.ic_ctl_prev, R.string.newer, 56, 30, st.hasPrevious) {
                             interaction++
                             c?.seekToPreviousMediaItem()
                         }
                         RoundCtl(
                             if (st.playing) R.drawable.ic_ctl_pause else R.drawable.ic_ctl_play,
                             if (st.playing) R.string.pause else R.string.play,
-                            64,
-                            34,
+                            76,
+                            42,
                         ) {
                             interaction++
                             c?.let { if (it.isPlaying) it.pause() else it.play() }
                         }
-                        RoundCtl(R.drawable.ic_ctl_next, R.string.older, 48, 26, st.hasNext) {
+                        RoundCtl(R.drawable.ic_ctl_next, R.string.older, 56, 30, st.hasNext) {
                             interaction++
                             c?.seekToNextMediaItem()
                         }
@@ -443,7 +465,10 @@ private fun RoundCtl(
     onClick: () -> Unit,
 ) {
     Box(
-        Modifier.size(size.dp).clip(CircleShape).clickable(enabled = enabled, onClick = onClick),
+        Modifier.size(size.dp)
+            .clip(CircleShape)
+            .background(Color.Black.copy(alpha = 0.45f))
+            .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(

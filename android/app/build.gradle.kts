@@ -108,6 +108,7 @@ dependencies {
     implementation(libs.media3.exoplayer.hls)
     implementation(libs.media3.session)
     implementation(libs.media3.ui)
+    implementation(libs.media3.cast)
     implementation(libs.media3.datasource)
     implementation(libs.media3.database)
     implementation(libs.shizuku.api)

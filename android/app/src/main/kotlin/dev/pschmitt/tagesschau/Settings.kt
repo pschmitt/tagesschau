@@ -68,6 +68,16 @@ class Settings(context: Context) {
                 .getOrDefault(AutoPlay.VIDEO_ONLY)
         set(value) = prefs.edit { putString(KEY_AUTOPLAY, value.name) }
 
+    /** Notify when an edition goes on air or a new one is published. */
+    var notifyNew: Boolean
+        get() = prefs.getBoolean(KEY_NOTIFY, false)
+        set(value) = prefs.edit { putBoolean(KEY_NOTIFY, value) }
+
+    /** Addresses of paired Bluetooth devices whose connection starts playback. */
+    var bluetoothDevices: Set<String>
+        get() = prefs.getStringSet(KEY_BT, emptySet()).orEmpty()
+        set(value) = prefs.edit { putStringSet(KEY_BT, value) }
+
     var autoDownload: AutoDownload
         get() =
             runCatching { AutoDownload.valueOf(prefs.getString(KEY_AUTO, null) ?: "") }
@@ -87,6 +97,8 @@ class Settings(context: Context) {
         private const val KEY_PREFER_LIVE = "prefer_live"
         private const val KEY_LEAVE = "leave_mode"
         private const val KEY_AUTO = "auto_download"
+        private const val KEY_NOTIFY = "notify_new"
+        private const val KEY_BT = "bluetooth_devices"
         private const val KEY_AUTOPLAY = "auto_play"
         const val KEY_AUTO_NEXT = "auto_next"
         private const val KEY_QUALITY = "download_quality"

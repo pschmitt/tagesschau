@@ -12,9 +12,18 @@ object Playlist {
     const val EXTRA_DATE = "date"
     const val EXTRA_END = "end"
     const val EXTRA_URL = "url"
+    /** The edition's web URL, also for downloaded ones: what a Chromecast plays. */
+    const val EXTRA_REMOTE = "remote"
 
     fun item(context: Context, e: Edition, streamUrl: String = e.url): MediaItem {
         // A downloaded edition plays its downloaded file (possibly another quality).
+        val remote =
+            if (e.live) streamUrl
+            else
+                streamUrl.replace(
+                    Regex("""\.web[a-z]+\.h264\.mp4$"""),
+                    ".${Settings(context).playbackQuality}.h264.mp4",
+                )
         val url =
             if (e.live) streamUrl
             else
@@ -41,13 +50,16 @@ object Playlist {
                         if (!e.channel) putString(EXTRA_DATE, e.date.toString())
                         e.end?.let { putString(EXTRA_END, it.toString()) }
                         putString(EXTRA_URL, url)
+                        putString(EXTRA_REMOTE, remote)
                     }
                 )
                 .build()
         return MediaItem.Builder()
             .setMediaId(e.id)
             .setUri(url)
-            .setMimeType(if (url.contains(".m3u8")) MimeTypes.APPLICATION_M3U8 else null)
+            .setMimeType(
+                if (url.contains(".m3u8")) MimeTypes.APPLICATION_M3U8 else MimeTypes.VIDEO_MP4
+            )
             .setMediaMetadata(metadata)
             .build()
     }

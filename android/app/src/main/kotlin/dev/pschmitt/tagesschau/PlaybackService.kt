@@ -51,9 +51,24 @@ class PlaybackService : MediaSessionService() {
                 Intent(this, MainActivity::class.java),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
-        session = MediaSession.Builder(this, player).setSessionActivity(open).build()
+        // Casting: the CastPlayer wraps the local player and moves playback to a Chromecast when
+        // one connects (Default Media Receiver). Without Google Play Services it stays local.
+        val sessionPlayer: androidx.media3.common.Player =
+            runCatching {
+                    androidx.media3.cast.CastPlayer.Builder(this)
+                        .setLocalPlayer(player)
+                        .setRemotePlayer(
+                            androidx.media3.cast.RemoteCastPlayer.Builder(this)
+                                .setMediaItemConverter(RemoteUrlConverter())
+                                .build()
+                        )
+                        .build()
+                }
+                .getOrElse { player }
+        session = MediaSession.Builder(this, sessionPlayer).setSessionActivity(open).build()
         // Stop after the current edition unless "continue with the next one" is on.
         val settings = Settings(this)
+        localPlayer = player
         player.pauseAtEndOfMediaItems = !settings.autoNext
         prefsListener =
             android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
@@ -62,6 +77,8 @@ class PlaybackService : MediaSessionService() {
             }
         settings.prefs.registerOnSharedPreferenceChangeListener(prefsListener)
     }
+
+    private var localPlayer: ExoPlayer? = null
 
     private var prefsListener: android.content.SharedPreferences.OnSharedPreferenceChangeListener? =
         null
@@ -97,6 +114,7 @@ class PlaybackService : MediaSessionService() {
             player.release()
             release()
         }
+        runCatching { localPlayer?.release() }
         session = null
         super.onDestroy()
     }
@@ -113,4 +131,32 @@ class PlaybackService : MediaSessionService() {
                 .putExtra(EXTRA_PREFER_LIVE, preferLive)
                 .putExtra(EXTRA_AUDIO_ONLY, audioOnly)
     }
+}
+
+/**
+ * Hands the Chromecast the edition's web URL, also for downloaded editions (their local file is not
+ * reachable from the TV).
+ */
+private class RemoteUrlConverter : androidx.media3.cast.MediaItemConverter {
+    private val default = androidx.media3.cast.DefaultMediaItemConverter()
+
+    override fun toMediaQueueItem(
+        mediaItem: androidx.media3.common.MediaItem
+    ): com.google.android.gms.cast.MediaQueueItem {
+        val uri = mediaItem.localConfiguration?.uri
+        val remote = mediaItem.mediaMetadata.extras?.getString(Playlist.EXTRA_REMOTE)
+        val item =
+            if (uri != null && uri.scheme?.startsWith("http") != true && remote != null) {
+                mediaItem
+                    .buildUpon()
+                    .setUri(remote)
+                    .setMimeType(androidx.media3.common.MimeTypes.VIDEO_MP4)
+                    .build()
+            } else mediaItem
+        return default.toMediaQueueItem(item)
+    }
+
+    override fun toMediaItem(
+        mediaQueueItem: com.google.android.gms.cast.MediaQueueItem
+    ): androidx.media3.common.MediaItem = default.toMediaItem(mediaQueueItem)
 }

@@ -83,6 +83,15 @@ private fun SettingsScreen(activity: SettingsActivity) {
     var retention by remember { mutableStateOf(settings.retentionHours) }
     var autoNext by remember { mutableStateOf(settings.autoNext) }
     var autoPlay by remember { mutableStateOf(settings.autoPlay) }
+    var notifyNew by remember { mutableStateOf(settings.notifyNew) }
+    var btDevices by remember { mutableStateOf(settings.bluetoothDevices) }
+    var choosingBt by remember { mutableStateOf(false) }
+    val btPermission =
+        androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+        ) { granted ->
+            if (granted) choosingBt = true
+        }
     var autoDownload by remember { mutableStateOf(settings.autoDownload) }
     var quality by remember { mutableStateOf(settings.downloadQuality) }
     var server by remember { mutableStateOf(settings.serverUrl) }
@@ -360,6 +369,63 @@ private fun SettingsScreen(activity: SettingsActivity) {
                 colors = itemColors,
             )
 
+            Section(R.string.section_notifications)
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.notify_new)) },
+                supportingContent = { Text(stringResource(R.string.notify_new_help)) },
+                leadingContent = { Icon(painterResource(R.drawable.ic_bell), null) },
+                trailingContent = {
+                    Switch(
+                        notifyNew,
+                        {
+                            notifyNew = it
+                            settings.notifyNew = it
+                            EditionWatch.schedule(activity)
+                        },
+                    )
+                },
+                colors = itemColors,
+            )
+
+            Section(R.string.section_bluetooth)
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.bt_autoplay)) },
+                supportingContent = {
+                    Text(
+                        if (btDevices.isEmpty()) stringResource(R.string.bt_autoplay_none)
+                        else
+                            stringResource(
+                                R.string.bt_autoplay_some,
+                                btDevices.size,
+                                bondedDevices(activity)
+                                    .filter { it.first in btDevices }
+                                    .joinToString { it.second },
+                            )
+                    )
+                },
+                leadingContent = { Icon(painterResource(R.drawable.ic_bluetooth), null) },
+                modifier =
+                    Modifier.clickable {
+                        if (
+                            android.os.Build.VERSION.SDK_INT >= 31 &&
+                                activity.checkSelfPermission(
+                                    android.Manifest.permission.BLUETOOTH_CONNECT
+                                ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                        ) {
+                            btPermission.launch(android.Manifest.permission.BLUETOOTH_CONNECT)
+                        } else {
+                            choosingBt = true
+                        }
+                    },
+                colors = itemColors,
+            )
+            Text(
+                stringResource(R.string.bt_hint),
+                color = Palette.Mist,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(start = 72.dp, end = 16.dp, bottom = 8.dp),
+            )
+
             Section(R.string.section_tasker)
             ListItem(
                 headlineContent = { Text(stringResource(R.string.tasker_overlay)) },
@@ -387,6 +453,56 @@ private fun SettingsScreen(activity: SettingsActivity) {
                 modifier = Modifier.padding(16.dp),
             )
         }
+    }
+
+    if (choosingBt) {
+        val devices = remember { bondedDevices(activity) }
+        var picked by remember { mutableStateOf(btDevices) }
+        AlertDialog(
+            onDismissRequest = { choosingBt = false },
+            containerColor = Palette.Deep,
+            title = { Text(stringResource(R.string.bt_choose)) },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    if (devices.isEmpty()) Text(stringResource(R.string.bt_no_devices))
+                    devices.forEach { (address, name) ->
+                        ListItem(
+                            headlineContent = { Text(name) },
+                            supportingContent = { Text(address, fontSize = 12.sp) },
+                            leadingContent = {
+                                androidx.compose.material3.Checkbox(
+                                    checked = address in picked,
+                                    onCheckedChange = null,
+                                )
+                            },
+                            modifier =
+                                Modifier.clickable {
+                                    picked =
+                                        if (address in picked) picked - address
+                                        else picked + address
+                                },
+                            colors = ListItemDefaults.colors(containerColor = Palette.Deep),
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        settings.bluetoothDevices = picked
+                        btDevices = picked
+                        choosingBt = false
+                    }
+                ) {
+                    Text(stringResource(R.string.save))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { choosingBt = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
     }
 
     if (editServer) {
@@ -431,3 +547,17 @@ private fun Section(title: Int) {
 
 private fun toast(activity: SettingsActivity, id: Int) =
     Toast.makeText(activity, activity.getString(id), Toast.LENGTH_LONG).show()
+
+/** Paired Bluetooth devices as (address, name); empty without the permission. */
+@android.annotation.SuppressLint("MissingPermission")
+private fun bondedDevices(context: android.content.Context): List<Pair<String, String>> =
+    runCatching {
+            context
+                .getSystemService(android.bluetooth.BluetoothManager::class.java)
+                .adapter
+                ?.bondedDevices
+                .orEmpty()
+                .map { it.address to (it.name ?: it.address) }
+                .sortedBy { it.second.lowercase() }
+        }
+        .getOrDefault(emptyList())

@@ -106,6 +106,14 @@ class MainActivity : ComponentActivity() {
     var sharing by mutableStateOf(false)
     var playerSettings by mutableStateOf(false)
 
+    /** An edition to start, from a notification tap. */
+    var pendingPlayId by mutableStateOf<String?>(null)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        intent.getStringExtra(EXTRA_PLAY_ID)?.let { pendingPlayId = it }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -124,6 +132,7 @@ class MainActivity : ComponentActivity() {
             }
         setContent { TagesschauTheme { MainScreen(this) } }
         if (intent?.getBooleanExtra(EXTRA_INSTALL_UPDATE, false) == true) installUpdate()
+        intent?.getStringExtra(EXTRA_PLAY_ID)?.let { pendingPlayId = it }
     }
 
     override fun onStart() {
@@ -272,6 +281,7 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_INSTALL_UPDATE = "install_update"
+        const val EXTRA_PLAY_ID = "play_id"
     }
 }
 
@@ -333,6 +343,15 @@ private fun MainScreen(activity: MainActivity) {
             }
             if (settings.autoPlay != AutoPlay.NONE) c.play()
         }
+    }
+    // A notification asked for an edition: play it once the list is there.
+    LaunchedEffect(controller, listing, activity.pendingPlayId) {
+        val id = activity.pendingPlayId ?: return@LaunchedEffect
+        val l = listing ?: return@LaunchedEffect
+        if (controller == null) return@LaunchedEffect
+        val i = l.all.indexOfFirst { it.id == id }
+        if (i >= 0) activity.play(l.all, i)
+        activity.pendingPlayId = null
     }
     val currentId = st.mediaId
     val airTime = st.air
