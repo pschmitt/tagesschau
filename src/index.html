@@ -754,7 +754,13 @@
     dlbtn.href = it.live ? "#" : "/download/" + encodeURIComponent(it.id);
     render();
     session(it);
-    start(userGesture);
+    if (cast.on) {
+      // Casting: the TV switches to the new choice; the local video stays paused.
+      const pos = it.channel || startAt === "live" ? null : resume != null ? resume : typeof startAt === "number" ? startAt : 0;
+      castLoad(window.cast.framework.CastContext.getInstance().getCurrentSession(), pos);
+    } else {
+      start(userGesture);
+    }
   }
 
   /* Subtitles: the CC button's last state is the default for every edition. */
@@ -1542,13 +1548,13 @@
     media.editTracksInfo(new chrome.cast.media.EditTracksInfoRequest(subsOn() ? [1] : []), () => {}, () => {});
   }
 
-  function castLoad(session) {
+  // at: start position in seconds, null for a live stream's edge; default: where the local video is.
+  function castLoad(session, at = video.currentTime) {
     if (!session || !current) return;
-    const at = video.currentTime;
     video.pause();
     const live = current.url.includes(".m3u8");
     const info = new chrome.cast.media.MediaInfo(current.url, live ? "application/x-mpegurl" : "video/mp4");
-    info.streamType = chrome.cast.media.StreamType.BUFFERED;
+    info.streamType = current.channel ? chrome.cast.media.StreamType.LIVE : chrome.cast.media.StreamType.BUFFERED;
     const meta = new chrome.cast.media.GenericMediaMetadata();
     meta.title = title(current);
     meta.subtitle = longDay(current.date);
@@ -1565,7 +1571,7 @@
     }
     const req = new chrome.cast.media.LoadRequest(info);
     req.activeTrackIds = current.subtitles && subsOn() ? [1] : [];
-    req.currentTime = at;
+    if (at != null) req.currentTime = at; // null: the receiver starts at the live edge
     req.autoplay = true;
     session.loadMedia(req).then(
       () => {
