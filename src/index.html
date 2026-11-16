@@ -799,7 +799,14 @@
 
   /* LIVE button */
   const sessionOf = url => (url.match(/\/live\/(\d+)-(\d+)-(\d+)\//) || []).slice(1).map(Number);
-  function liveEdge() { return (hls && hls.liveSyncPosition) || range()[1]; }
+  function liveEdge() {
+    if (cast.on) {
+      // The TV's live window (Cast receiver), else its stream length.
+      const r = cast.remote.liveSeekableRange;
+      return (r && r.end) || cast.remote.duration || 0;
+    }
+    return (hls && hls.liveSyncPosition) || range()[1];
+  }
   // Behind live: scrubbed back, or watching a session that was started from the edition's beginning.
   function behindLive() {
     if (!current || !current.live) return false;
@@ -809,7 +816,7 @@
   }
   function syncLive() {
     const b = $("livebtn");
-    const on = !!current && current.live && !cast.on && (current.channel || !current.end || Date.now() < current.end.getTime());
+    const on = !!current && current.live && (current.channel || !current.end || Date.now() < current.end.getTime());
     b.hidden = !on;
     if (!on) return;
     const behind = behindLive();
@@ -827,7 +834,8 @@
       return;
     }
     seekTo(liveEdge() - 1);
-    if (video.paused) video.play().catch(() => {});
+    if (cast.on) { if (cast.remote.isPaused) cast.rc.playOrPause(); }
+    else if (video.paused) video.play().catch(() => {});
   }
   $("livebtn").addEventListener("click", ev => { ev.stopPropagation(); goLive(); });
 
