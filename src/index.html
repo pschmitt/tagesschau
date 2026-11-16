@@ -960,7 +960,7 @@
   // (ARD's "webs" file) seeks along. Live editions only get the time label.
   // One thumbnail box: a hidden low-quality video that seeks along, kept inside `host`.
   function scrubThumb(box, vid, label, host) {
-    let src = null, pending = null;
+    let src = null, pending = null, thls = null, anchor = null;
     function seek(t) {
       if (vid.seeking || vid.readyState < 1) { pending = t; return; }
       pending = null;
@@ -968,22 +968,43 @@
     }
     vid.addEventListener("seeked", () => { if (pending != null) seek(pending); });
     vid.addEventListener("loadedmetadata", () => { if (pending != null) seek(pending); });
+    // Live streams (HLS): a small hls.js player at the lowest quality; broadcast time maps to
+    // media time through a segment's program date-time.
+    function load(url) {
+      if (thls) { thls.destroy(); thls = null; }
+      anchor = null;
+      if (!url.endsWith(".m3u8")) { vid.src = url; vid.preload = "auto"; return; }
+      if (!window.Hls || !Hls.isSupported()) return;
+      thls = new Hls({ startLevel: 0, capLevelToPlayerSize: true, maxBufferLength: 4, maxMaxBufferLength: 8, enableWorker: true, subtitleDisplay: false });
+      thls.on(Hls.Events.LEVEL_LOADED, (_, d) => {
+        const f = d.details.fragments.find(x => x.programDateTime);
+        if (f) anchor = { pdt: f.programDateTime, start: f.start };
+        if (thls) thls.currentLevel = 0;
+      });
+      thls.loadSource(url);
+      thls.attachMedia(vid);
+    }
+    function mediaTime(it, ms) {
+      if (!thls) return Math.max(0, (ms - it.date.getTime()) / 1000);
+      return anchor ? Math.max(0, anchor.start + (ms - anchor.pdt) / 1000) : null;
+    }
     return {
       show(it, p, ms) {
         const url = thumbUrl(it);
         if (!url) { box.hidden = true; return false; }
-        if (src !== url) { src = url; vid.src = url; vid.preload = "auto"; }
+        if (src !== url) { src = url; load(url); }
         label.textContent = hms(new Date(ms));
         box.hidden = false;
         const tw = box.offsetWidth, w = host.offsetWidth;
         box.style.left = Math.max(-tw / 2 + 8, Math.min(w - tw / 2 - 8, p * w - tw / 2)) + "px";
-        seek(Math.max(0, (ms - it.date.getTime()) / 1000));
+        const t = mediaTime(it, ms);
+        if (t != null) seek(t);
         return true;
       },
       hide() { box.hidden = true; },
     };
   }
-  const thumbUrl = it => it && !it.live ? it.url.replace(/\.web[a-z]+\.h264\.mp4$/, ".webs.h264.mp4") : null;
+  const thumbUrl = it => !it ? null : it.live ? it.url : it.url.replace(/\.web[a-z]+\.h264\.mp4$/, ".webs.h264.mp4");
   const mainThumb = scrubThumb($("thumb"), $("tv"), $("ttime"), track);
   const showThumb = (p, ms) => mainThumb.show(current, p, ms);
   function hideScrub() { tip.hidden = true; mainThumb.hide(); }
