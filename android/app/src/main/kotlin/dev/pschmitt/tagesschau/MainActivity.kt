@@ -305,8 +305,8 @@ class MainActivity : ComponentActivity() {
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         inPip = isInPictureInPictureMode
-        playerView.useController = !isInPictureInPictureMode
-        if (isInPictureInPictureMode) playerView.hideController()
+        // The controls are Compose (PlayerUi.kt); Media3's own stay off, also after PiP.
+        playerView.useController = false
     }
 
     // --- Self-update ---
