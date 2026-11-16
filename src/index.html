@@ -168,7 +168,7 @@
   .ctl:disabled { opacity: 0.35; cursor: default; background: none; }
   .ctl svg { width: 1.35rem; height: 1.35rem; }
   .ctl.main svg { width: 1.7rem; height: 1.7rem; }
-  a.ctl[hidden], google-cast-launcher[hidden], .castinfo[hidden] { display: none; }
+  .ctl[hidden], google-cast-launcher[hidden], .castinfo[hidden] { display: none; }
   google-cast-launcher.ctl { --connected-color: var(--signal); --disconnected-color: var(--ink); padding: 0.55rem; width: 2.5rem; height: 2.5rem; }
   .castinfo {
     position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
@@ -298,6 +298,7 @@
     .transport { position: static; background: var(--deep); padding: 0.4rem 0.6rem 0.5rem; }
     .vol input { display: none; }
     .time { font-size: 0.8rem; margin-left: 0.3rem; }
+    .time .sep, .time #to { display: none; }
     .player.idle .transport { opacity: 1; pointer-events: auto; }
     .player.idle, .player.idle .well { cursor: auto; }
     .ctl.opt { display: none; }
