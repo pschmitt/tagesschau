@@ -1513,7 +1513,16 @@
       receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
       autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
     });
-    $("castbtn").hidden = false;
+    // Shown while Cast devices are around. The launcher element hides itself (inline
+    // display:none) before discovery and does not always undo that, so we decide here.
+    const castBtn = $("castbtn");
+    const castShow = state => {
+      const none = state === window.cast.framework.CastState.NO_DEVICES_AVAILABLE;
+      castBtn.hidden = none;
+      castBtn.style.display = none ? "none" : "";
+    };
+    castShow(ctx.getCastState());
+    ctx.addEventListener(window.cast.framework.CastContextEventType.CAST_STATE_CHANGED, e => castShow(e.castState));
     cast.remote = new window.cast.framework.RemotePlayer();
     cast.rc = new window.cast.framework.RemotePlayerController(cast.remote);
     const E = window.cast.framework.RemotePlayerEventType;
