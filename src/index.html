@@ -90,6 +90,7 @@
   .pick { display: grid; gap: 0.6rem; margin-bottom: 1.1rem; }
   .stime { font-size: 2.6rem; font-weight: 750; font-stretch: 112%; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1; }
   .pick input[type=range] { width: 100%; accent-color: var(--signal); }
+  .srange-wrap { position: relative; }
   .nudge { display: flex; gap: 0.4rem; flex-wrap: wrap; }
   .nudge .pill { padding: 0.4rem 0.75rem; font-variant-numeric: tabular-nums; }
   .from { display: flex; align-items: center; gap: 0.5rem; color: var(--ink); }
@@ -344,7 +345,10 @@
     <div class="preview"><video id="pv" muted playsinline preload="auto"></video></div>
     <div class="pick">
       <span class="stime" id="stime">--:--:--</span>
-      <input type="range" id="srange" step="1" aria-label="Zeitpunkt">
+      <div class="srange-wrap" id="swrap">
+        <input type="range" id="srange" step="1" aria-label="Zeitpunkt">
+        <div class="thumb" id="sthumb" hidden><video id="stv" muted playsinline preload="none"></video><span id="sttime"></span></div>
+      </div>
       <div class="nudge">
         <button class="pill quiet" data-n="-5">−5 s</button>
         <button class="pill quiet" data-n="-1">−1 s</button>
@@ -626,28 +630,35 @@
   });
   // Thumbnails while scrubbing: a hidden low-quality copy of the published MP4
   // (ARD's "webs" file) seeks along. Live editions only get the time label.
-  const thumb = $("thumb"), tv = $("tv");
-  let thumbFor = null, thumbPending = null;
+  // One thumbnail box: a hidden low-quality video that seeks along, kept inside `host`.
+  function scrubThumb(box, vid, label, host) {
+    let src = null, pending = null;
+    function seek(t) {
+      if (vid.seeking || vid.readyState < 1) { pending = t; return; }
+      pending = null;
+      if (vid.fastSeek) vid.fastSeek(t); else vid.currentTime = t;
+    }
+    vid.addEventListener("seeked", () => { if (pending != null) seek(pending); });
+    vid.addEventListener("loadedmetadata", () => { if (pending != null) seek(pending); });
+    return {
+      show(it, p, ms) {
+        const url = thumbUrl(it);
+        if (!url) { box.hidden = true; return false; }
+        if (src !== url) { src = url; vid.src = url; vid.preload = "auto"; }
+        label.textContent = hms(new Date(ms));
+        box.hidden = false;
+        const tw = box.offsetWidth, w = host.offsetWidth;
+        box.style.left = Math.max(-tw / 2 + 8, Math.min(w - tw / 2 - 8, p * w - tw / 2)) + "px";
+        seek(Math.max(0, (ms - it.date.getTime()) / 1000));
+        return true;
+      },
+      hide() { box.hidden = true; },
+    };
+  }
   const thumbUrl = it => it && !it.live ? it.url.replace(/\.web[a-z]+\.h264\.mp4$/, ".webs.h264.mp4") : null;
-  function thumbSeek(t) {
-    if (tv.seeking || tv.readyState < 1) { thumbPending = t; return; }
-    thumbPending = null;
-    if (tv.fastSeek) tv.fastSeek(t); else tv.currentTime = t;
-  }
-  tv.addEventListener("seeked", () => { if (thumbPending != null) thumbSeek(thumbPending); });
-  tv.addEventListener("loadedmetadata", () => { if (thumbPending != null) thumbSeek(thumbPending); });
-  function showThumb(p, ms) {
-    const url = thumbUrl(current);
-    if (!url) { thumb.hidden = true; return false; }
-    if (thumbFor !== url) { thumbFor = url; tv.src = url; tv.preload = "auto"; }
-    $("ttime").textContent = hms(new Date(ms));
-    thumb.hidden = false;
-    const tw = thumb.offsetWidth, w = track.offsetWidth;
-    thumb.style.left = Math.max(-tw / 2 + 8, Math.min(w - tw / 2 - 8, p * w - tw / 2)) + "px";
-    thumbSeek(Math.max(0, (ms - current.date.getTime()) / 1000));
-    return true;
-  }
-  function hideScrub() { tip.hidden = true; thumb.hidden = true; }
+  const mainThumb = scrubThumb($("thumb"), $("tv"), $("ttime"), track);
+  const showThumb = (p, ms) => mainThumb.show(current, p, ms);
+  function hideScrub() { tip.hidden = true; mainThumb.hide(); }
   track.addEventListener("pointermove", ev => {
     const [p, ms] = posAt(ev);
     if (ms === null) return;
@@ -947,6 +958,19 @@
   sdlg.addEventListener("close", closeShare);
   sdlg.addEventListener("click", ev => { if (ev.target === sdlg) sdlg.close(); });
   srange.addEventListener("input", () => shareUpdate(true));
+  // The same scrubbing thumbnails as on the player's timeline.
+  const shareThumb = scrubThumb($("sthumb"), $("stv"), $("sttime"), $("swrap"));
+  const sFrac = v => (v - Number(srange.min)) / ((Number(srange.max) - Number(srange.min)) || 1);
+  srange.addEventListener("pointermove", ev => {
+    if (!sItem) return;
+    const r = srange.getBoundingClientRect();
+    const p = Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width));
+    const pressed = ev.buttons > 0 || ev.pointerType !== "mouse";
+    const ms = pressed ? Number(srange.value) : Number(srange.min) + p * (Number(srange.max) - Number(srange.min));
+    shareThumb.show(sItem, pressed ? sFrac(ms) : p, ms);
+  });
+  srange.addEventListener("input", () => { if (sItem) shareThumb.show(sItem, sFrac(Number(srange.value)), Number(srange.value)); });
+  ["pointerleave", "pointerup", "pointercancel", "change", "blur"].forEach(e => srange.addEventListener(e, () => shareThumb.hide()));
   $("sfrom").addEventListener("change", () => shareUpdate(false));
   for (const b of sdlg.querySelectorAll(".nudge .pill")) {
     b.addEventListener("click", () => {

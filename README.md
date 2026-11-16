@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="https://images.tagesschau.de/image/eb0b0d74-03ac-45ec-9300-0851fd6823d3/AAABlqrTsSI/AAABnSStX0g/1x1-big/sendungslogo-tagesschau-100.jpg?width=256" width="128" height="128" alt="tagesschau logo">
+</p>
+
+<p align="center">
   <a href="https://nixbot.brkn.lol/repos/github/pschmitt/tagesschau"><img src="https://nixbot.brkn.lol/repos/github/pschmitt/tagesschau/badge.svg?branch=main" alt="nixbot"></a>
 </p>
 
@@ -7,6 +11,11 @@
 <p align="center">
   Every tagesschau edition as a podcast feed and a web player, plus the
   edition on air from its first second.
+</p>
+
+<p align="center">
+  <img src="assets/player-desktop.jpg" width="640" alt="The web player on a desktop: the 15:00 edition with its controls, a thumbnail while scrubbing, the broadcast-time clock and the list of editions by day">
+  <img src="assets/player-phone.jpg" width="182" alt="The web player on a phone: the picture with controls below, the clock and the list of editions">
 </p>
 
 The official tagesschau podcasts carry the 20:00 edition only. tagesschau.de
@@ -27,7 +36,9 @@ plays from ARD's servers.
   from Das Erste's two-hour live window.
 - **NixOS module**: `services.tagesschau`, with a hardened systemd unit.
 
-This project is not affiliated with the ARD, ARD-aktuell or tagesschau.de.
+This project is not affiliated with the ARD, ARD-aktuell or tagesschau.de. The
+logo and the screenshots show ARD material; the logo is loaded from ARD's own
+image server and is not part of this repository.
 
 ## Install
 

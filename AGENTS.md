@@ -25,8 +25,9 @@ not on the machine the agent runs on.
 
 - No runtime dependencies beyond the Python standard library; the page loads
   hls.js and its font from a CDN and needs no build step.
-- The repository ships no ARD artwork or logos. Images come from the module's
-  `coverImage` and `logoImage` options.
+- The repository ships no ARD logos or cover art: the server's images come from
+  the module's `coverImage` and `logoImage` options, and the README loads the
+  logo from ARD's image server. Screenshots of the player live in `assets/`.
 - No hostnames or private infrastructure in the code or docs; use
   `example.com` placeholders.
 - User-facing text on the page is German.
