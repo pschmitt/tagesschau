@@ -246,6 +246,11 @@ object Downloads {
                 manager.removeDownload(d.request.id)
             }
         }
+        // Subtitle files whose download is gone (removed, or never started).
+        val kept = all(context).filterValues { edition(it)?.date?.isBefore(cutoff) == false }.keys
+        Subtitles.dir(context).listFiles()?.forEach { f ->
+            if (f.name.substringBefore(".vtt") !in kept) f.delete()
+        }
     }
 
     fun scheduleRetention(context: Context) {

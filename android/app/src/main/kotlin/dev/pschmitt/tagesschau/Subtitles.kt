@@ -11,7 +11,9 @@ import java.net.URL
 object Subtitles {
     fun url(context: Context, id: String) = "${Settings(context).serverUrl}/subtitles/$id.vtt"
 
-    fun file(context: Context, id: String) = File(context.filesDir, "subtitles/$id.vtt")
+    fun dir(context: Context) = File(context.filesDir, "subtitles")
+
+    fun file(context: Context, id: String) = File(dir(context), "$id.vtt")
 
     /** Saves an edition's subtitles in the background; editions without any are left alone. */
     fun save(context: Context, id: String) {
