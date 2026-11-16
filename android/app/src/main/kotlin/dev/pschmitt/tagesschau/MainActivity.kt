@@ -85,7 +85,6 @@ import androidx.media3.session.SessionToken
 import androidx.media3.ui.PlayerView
 import com.google.common.util.concurrent.ListenableFuture
 import dev.pschmitt.tagesschau.update.Updater
-import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -598,7 +597,7 @@ private fun Clock(activity: MainActivity, st: PlayState, edition: Edition?) {
                 val c = activity.controller
                 airTime =
                     when {
-                        s.channel -> OffsetDateTime.now()
+                        s.channel && c != null -> s.channelAt(c.currentPosition)
                         c != null && s.start != null -> s.airAt(c.currentPosition)
                         else -> s.air
                     }

@@ -99,6 +99,8 @@ data class PlayState(
      * A live stream that is not at its live edge (scrubbed back, or started from the beginning).
      */
     val behindLive: Boolean = false,
+    /** Wall-clock time (ms) of the live window's start, from the stream's program date-time. */
+    val windowStart: Long = C.TIME_UNSET,
 ) {
     /** Show the LIVE chip: Das Erste live, or an edition still on air. */
     val showLive: Boolean
@@ -112,8 +114,17 @@ data class PlayState(
     val channel: Boolean
         get() = mediaId == Edition.CHANNEL_ID
 
+    /**
+     * Das Erste live: the playhead's broadcast time (also when scrubbed back), else air time +
+     * offset.
+     */
     val air: OffsetDateTime?
-        get() = if (channel) OffsetDateTime.now() else airAt(position)
+        get() = if (channel) channelAt(position) else airAt(position)
+
+    fun channelAt(ms: Long): OffsetDateTime =
+        if (windowStart != C.TIME_UNSET)
+            java.time.Instant.ofEpochMilli(windowStart + ms).atOffset(java.time.ZoneOffset.UTC)
+        else OffsetDateTime.now()
 
     /** The timeline in media ms: fixed to the scheduled end for live, else the file's length. */
     val span: Long
@@ -163,6 +174,15 @@ fun rememberPlayState(context: Context, c: MediaController?): PlayState {
                             hasSubs = c.currentTracks.containsType(C.TRACK_TYPE_TEXT),
                             subsOn =
                                 C.TRACK_TYPE_TEXT !in c.trackSelectionParameters.disabledTrackTypes,
+                            windowStart =
+                                if (c.currentTimeline.isEmpty) C.TIME_UNSET
+                                else
+                                    c.currentTimeline
+                                        .getWindow(
+                                            c.currentMediaItemIndex,
+                                            androidx.media3.common.Timeline.Window(),
+                                        )
+                                        .windowStartTimeMs,
                             behindLive =
                                 (id == Edition.CHANNEL_ID || id?.startsWith("live-") == true) &&
                                     (dur > 0 && dur - pos > 25_000 ||
@@ -710,7 +730,7 @@ private fun Timeline(st: PlayState, modifier: Modifier, onSeek: (Long) -> Unit) 
         }
         if (dragFrac >= 0 && span > 0) {
             val ms = (dragFrac * span).toLong()
-            val t = st.airAt(ms)?.hms() ?: ""
+            val t = (if (st.channel) st.channelAt(ms) else st.airAt(ms))?.hms() ?: ""
             val thumbUrl = if (st.live) null else st.url
             val boxW = if (thumbUrl != null) 136.dp else 64.dp
             val boxWpx = with(density) { boxW.toPx() }
