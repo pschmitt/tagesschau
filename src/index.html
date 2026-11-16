@@ -360,6 +360,14 @@
     .menu button { padding: 0.95rem 1.4rem; gap: 1rem; }
     .menu svg { width: 1.4rem; height: 1.4rem; }
     .player.idle .transport { opacity: 1; pointer-events: auto; }
+    /* Fullscreen on a phone: controls over the picture again, hidden while playing (a tap shows them). */
+    .player:fullscreen .transport {
+      position: absolute; padding: 2.5rem 0.9rem calc(0.45rem + env(safe-area-inset-bottom));
+      background: linear-gradient(to top, rgba(7, 29, 64, 0.92) 0%, rgba(7, 29, 64, 0.7) 55%, rgba(7, 29, 64, 0) 100%);
+    }
+    .player:fullscreen.idle .transport { opacity: 0; pointer-events: none; }
+    .player:fullscreen .big-play, .player:fullscreen .flash { bottom: 0; }
+    .player:fullscreen .time .sep, .player:fullscreen .time #to { display: inline; }
     .player.idle, .player.idle .well { cursor: auto; }
     .ctl.opt { display: none; }
   }
@@ -922,7 +930,9 @@
     player.classList.remove("idle");
     clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
-      if (!video.paused && !player.contains(document.activeElement) && !dragging && !menuOpen()) player.classList.add("idle");
+      // Keyboard focus in the player keeps the controls; focus left by a click (fullscreen button) does not.
+      const kbd = player.contains(document.activeElement) && document.activeElement.matches(":focus-visible");
+      if (!video.paused && !kbd && !dragging && !menuOpen()) player.classList.add("idle");
     }, 2500);
   }
   let idleAtTap = false;
