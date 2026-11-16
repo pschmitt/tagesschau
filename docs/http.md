@@ -43,6 +43,8 @@ receivers can load the live sessions.
   settings (subtitles, speed, clock format; C toggles subtitles) and
   fullscreen on the right. The big clock below shows minutes, seconds
   (default) or milliseconds.
+- Live streams (Das Erste live, an edition on air) show a LIVE button: red
+  at the live edge, grey when behind; a click returns to what airs now.
 - Casting through Google Cast (Chrome): the cast button hands the edition and
   position to the TV.
 - The bell notifies while the page is open when an edition goes on air or a

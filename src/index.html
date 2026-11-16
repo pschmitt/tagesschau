@@ -305,6 +305,17 @@
   .item[aria-current="true"] { background: var(--panel); border-left-color: var(--signal); }
   .item[aria-current="true"] .d { color: var(--ink); }
   .item[aria-current="true"] .seen { background: var(--signal); opacity: 1; }
+  /* LIVE: red while at the live edge, grey when behind; a click returns to it */
+  .live {
+    display: inline-flex; align-items: center; gap: 0.35rem; margin-left: 0.6rem; padding: 0.2rem 0.55rem;
+    border: 0; border-radius: 1rem; background: rgba(16, 53, 111, 0.85); color: var(--mist);
+    font: inherit; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; flex: none;
+  }
+  .live[hidden] { display: none; }
+  .live:hover { color: var(--ink); }
+  .live .ldot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--mist); }
+  .live.at { color: var(--ink); cursor: default; }
+  .live.at .ldot { background: #e53935; }
   /* Das Erste live, the channel in real time, above the editions (as in the Android app) */
   .channel {
     width: 100%; display: flex; align-items: center; gap: 0.9rem; margin: 0 0 1.5rem; padding: 0.85rem 1rem;
@@ -457,6 +468,7 @@
               <input type="range" id="volume" min="0" max="1" step="0.05" value="1" aria-label="Lautstärke">
             </div>
             <span class="time"><span id="clocknow">--:--:--</span><span class="sep"> / </span><span id="to">--:--</span><span id="from" hidden></span></span>
+            <button class="live" id="livebtn" hidden title="Zum Live-Bild"><span class="ldot"></span>LIVE</button>
           </div>
           <div class="group">
             <button class="ctl opt" id="back" aria-label="10 Sekunden zurück" title="10 Sekunden zurück (J)"><svg><use href="#i-back"/></svg></button>
@@ -702,7 +714,13 @@
       // hls.js wherever it works; Chrome's native HLS claims support but fails on
       // separate audio renditions. Native HLS only where hls.js cannot run (iOS).
       // Subtitles come as a separate rendition; the 608 captions in the video would double them.
-      hls = new Hls({ startPosition: it.channel ? -1 : startAt || 0, enableCEA708Captions: false, subtitleDisplay: subsOn() });
+      hls = new Hls({ startPosition: it.channel ? -1 : startAt === "live" ? 0 : startAt || 0, enableCEA708Captions: false, subtitleDisplay: subsOn() });
+      // The time-shifted playlists ask to start at their beginning (EXT-X-START); "live" overrides that.
+      if (startAt === "live") {
+        hls.once(Hls.Events.LEVEL_LOADED, () => {
+          video.addEventListener("loadedmetadata", () => { video.currentTime = hls.liveSyncPosition || range()[1] - 3; }, { once: true });
+        });
+      }
       hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, applySubs);
       hls.loadSource(it.url);
       hls.attachMedia(video);
@@ -717,7 +735,7 @@
     }
     applySubs();
     const mem = !it.live && store.get(it.id);
-    const resume = startAt != null ? (hls ? null : startAt)
+    const resume = startAt != null ? (hls || startAt === "live" ? null : startAt)
       : (mem && mem.pos > 5 && (!mem.dur || mem.pos / mem.dur < 0.95)) ? mem.pos : null;
     if (resume != null) {
       video.addEventListener("loadedmetadata", () => { video.currentTime = resume; }, { once: true });
@@ -766,6 +784,40 @@
   }
   video.textTracks.addEventListener("addtrack", () => { if (!hls) applySubs(); });
 
+  /* LIVE button */
+  const sessionOf = url => (url.match(/\/live\/(\d+)-(\d+)-(\d+)\//) || []).slice(1).map(Number);
+  function liveEdge() { return (hls && hls.liveSyncPosition) || range()[1]; }
+  // Behind live: scrubbed back, or watching a session that was started from the edition's beginning.
+  function behindLive() {
+    if (!current || !current.live) return false;
+    if (liveEdge() - curTime() > 25) return true;
+    const [start, , began] = sessionOf(current.url);
+    return began - start > 60;
+  }
+  function syncLive() {
+    const b = $("livebtn");
+    const on = !!current && current.live && !cast.on && (current.channel || !current.end || Date.now() < current.end.getTime());
+    b.hidden = !on;
+    if (!on) return;
+    const behind = behindLive();
+    b.classList.toggle("at", !behind);
+    b.setAttribute("aria-label", behind ? "Zum Live-Bild springen" : "Live");
+    b.disabled = !behind;
+  }
+  function goLive() {
+    if (!current || !current.live) return;
+    const [start, end, began] = sessionOf(current.url);
+    if (!current.channel && start && began - start > 60) {
+      // A session without the catch-up delay: its live edge is what airs now.
+      const url = current.url.replace(`/${start}-${end}-${began}/`, `/${start}-${end}-${start}/`);
+      play({ ...current, url }, true, "live");
+      return;
+    }
+    seekTo(liveEdge() - 1);
+    if (video.paused) video.play().catch(() => {});
+  }
+  $("livebtn").addEventListener("click", ev => { ev.stopPropagation(); goLive(); });
+
   function step(dir) {
     const i = items.findIndex(it => current && it.id === current.id) + dir;
     if (i >= 0 && i < items.length) play(items[i], true);
@@ -806,6 +858,7 @@
     $("to").textContent = sp ? hm(new Date(sp[1])) : "--:--";
     track.setAttribute("aria-valuetext", at ? hms(at) : "");
     drawClock();
+    syncLive();
   }
 
   // The big clock, with milliseconds, redrawn every frame (timeupdate comes only ~4×/s).
