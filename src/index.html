@@ -305,6 +305,17 @@
   .item[aria-current="true"] { background: var(--panel); border-left-color: var(--signal); }
   .item[aria-current="true"] .d { color: var(--ink); }
   .item[aria-current="true"] .seen { background: var(--signal); opacity: 1; }
+  /* Das Erste live, the channel in real time, above the editions (as in the Android app) */
+  .channel {
+    width: 100%; display: flex; align-items: center; gap: 0.9rem; margin: 0 0 1.5rem; padding: 0.85rem 1rem;
+    background: var(--deep); border: 0; border-left: 3px solid transparent; border-radius: 6px;
+    color: inherit; font: inherit; text-align: left; cursor: pointer;
+  }
+  .channel:hover { background: var(--panel); }
+  .channel[aria-current="true"] { background: var(--panel); border-left-color: var(--signal); }
+  .channel .dot { background: #e53935; margin: 0; flex: none; width: 0.7rem; height: 0.7rem; }
+  .channel strong { display: block; font-size: 1.15rem; }
+  .channel .sub { color: var(--mist); font-size: 0.9rem; }
   .dot {
     display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%;
     background: var(--signal); margin-right: 0.4rem; vertical-align: 0.05em;
@@ -545,6 +556,11 @@
   // air time to scheduled end for a live edition, air time plus length otherwise.
   function span() {
     if (!current) return null;
+    if (current.channel) {
+      // The stream's two-hour window, in broadcast time.
+      const [x, y] = range(), A = airAt(x), B = airAt(y);
+      return A && B && B > A ? [A.getTime(), B.getTime()] : null;
+    }
     const a = current.date.getTime();
     if (current.live && current.end) return [a, current.end.getTime()];
     const len = (store.get(current.id) || {}).dur || (isFinite(video.duration) ? video.duration : 0);
@@ -557,8 +573,23 @@
   }
 
   /* Rundown */
+  // Das Erste's live stream itself (2 h window; hls.js starts at the live edge).
+  const CHANNEL = { id: "daserste-live", url: "https://daserste-live.ard-mcdn.de/daserste/live/hls/de/master.m3u8", live: true, channel: true, get date() { return new Date(); } };
+  const title = it => it.channel ? "Das Erste live" : "tagesschau " + hm(it.date) + " Uhr";
+
   function render() {
     rundown.replaceChildren();
+    const ch = document.createElement("button");
+    ch.className = "channel";
+    ch.setAttribute("aria-current", String(!!(current && current.channel)));
+    const chText = document.createElement("span");
+    chText.innerHTML = "<strong>Das Erste live</strong><span class=sub></span>";
+    chText.querySelector(".sub").textContent = current && current.channel ? "spielt" : "Fernsehprogramm in Echtzeit";
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    ch.append(dot, chText);
+    ch.addEventListener("click", () => play(CHANNEL, true));
+    rundown.append(ch);
     let group = null, list = null;
     for (const it of items) {
       const label = dayLabel(it.date);
@@ -627,12 +658,12 @@
     const w = document.createElement("span");
     w.className = "when";
     const s = document.createElement("strong");
-    s.textContent = longDay(it.date);
+    s.textContent = it.channel ? "Das Erste live" : longDay(it.date);
     w.append(s);
     if (it.live) {
       const o = document.createElement("span");
       o.className = "onair";
-      o.textContent = " läuft gerade";
+      o.textContent = it.channel ? " in Echtzeit" : " läuft gerade";
       w.append(o);
     }
     now.append(clockEl, w);
@@ -663,7 +694,7 @@
       // hls.js wherever it works; Chrome's native HLS claims support but fails on
       // separate audio renditions. Native HLS only where hls.js cannot run (iOS).
       // Subtitles come as a separate rendition; the 608 captions in the video would double them.
-      hls = new Hls({ startPosition: startAt || 0, enableCEA708Captions: false, subtitleDisplay: subsOn() });
+      hls = new Hls({ startPosition: it.channel ? -1 : startAt || 0, enableCEA708Captions: false, subtitleDisplay: subsOn() });
       hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, applySubs);
       hls.loadSource(it.url);
       hls.attachMedia(video);
@@ -686,6 +717,7 @@
     caption(it);
     const dlbtn = $("dlbtn");
     dlbtn.hidden = !!it.live;
+    $("sharebtn").hidden = !!it.channel; // a moment links to an edition, not the channel
     dlbtn.href = it.live ? "#" : "/download/" + encodeURIComponent(it.id);
     render();
     session(it);
@@ -1128,8 +1160,8 @@
   function session(it) {
     if (!("mediaSession" in navigator)) return;
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: "tagesschau " + hm(it.date) + " Uhr",
-      artist: longDay(it.date) + (it.live ? ", läuft gerade" : ""),
+      title: title(it),
+      artist: it.channel ? "Fernsehprogramm in Echtzeit" : longDay(it.date) + (it.live ? ", läuft gerade" : ""),
       album: "tagesschau, alle Ausgaben",
       artwork: [{ src: "/cover.jpg", sizes: "1400x1400", type: "image/jpeg" }],
     });
@@ -1272,7 +1304,7 @@
     }
   }
   function openShare() {
-    if (!current) return;
+    if (!current || current.channel) return;
     sItem = current;
     const sp = span();
     const nowAt = airAt(video.currentTime) || current.date;
@@ -1413,7 +1445,7 @@
     const info = new chrome.cast.media.MediaInfo(current.url, live ? "application/x-mpegurl" : "video/mp4");
     info.streamType = chrome.cast.media.StreamType.BUFFERED;
     const meta = new chrome.cast.media.GenericMediaMetadata();
-    meta.title = "tagesschau " + hm(current.date) + " Uhr";
+    meta.title = title(current);
     meta.subtitle = longDay(current.date);
     meta.images = [new chrome.cast.Image(location.origin + "/cover.jpg")];
     info.metadata = meta;
