@@ -64,7 +64,10 @@ The mode decides how: "Nur Ton" (audio in the background), "Video" (the app
 opens and plays) or "Bild-im-Bild" (straight into picture-in-picture). A
 notification says that playback started. With a delay (0 s by default, up to
 30 s) the notification counts down first and offers "Abbrechen" and "Jetzt
-abspielen". Like the Tasker action, this needs "Über anderen Apps einblenden".
+abspielen".
+
+"Bei Trennung weiterspielen" (on by default) keeps playback going on the
+phone's speaker when a Bluetooth device or headphones disconnect; off pauses it. Like the Tasker action, this needs "Über anderen Apps einblenden".
 
 ## Downloads
 

@@ -40,7 +40,8 @@ class PlaybackService : MediaSessionService() {
                         .build(),
                     true,
                 )
-                .setHandleAudioBecomingNoisy(true)
+                // Pause when headphones or a Bluetooth device disconnect, unless set to continue.
+                .setHandleAudioBecomingNoisy(!Settings(this).continueOnDisconnect)
                 .setSeekBackIncrementMs(SEEK_MS)
                 .setSeekForwardIncrementMs(SEEK_MS)
                 .build()
@@ -74,6 +75,8 @@ class PlaybackService : MediaSessionService() {
             android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
                 if (key == Settings.KEY_AUTO_NEXT)
                     player.pauseAtEndOfMediaItems = !settings.autoNext
+                if (key == Settings.KEY_CONTINUE_ON_DISCONNECT)
+                    player.setHandleAudioBecomingNoisy(!settings.continueOnDisconnect)
             }
         settings.prefs.registerOnSharedPreferenceChangeListener(prefsListener)
     }

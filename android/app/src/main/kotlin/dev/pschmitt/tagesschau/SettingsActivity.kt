@@ -99,6 +99,7 @@ private fun SettingsScreen(activity: SettingsActivity) {
     var btMode by remember { mutableStateOf(settings.bluetoothMode) }
     var btDelay by remember { mutableStateOf(settings.bluetoothDelaySeconds) }
     var btResume by remember { mutableStateOf(settings.bluetoothResume) }
+    var continueOnDisconnect by remember { mutableStateOf(settings.continueOnDisconnect) }
     var choosingBt by remember { mutableStateOf(false) }
     val btPermission =
         androidx.activity.compose.rememberLauncherForActivityResult(
@@ -460,6 +461,23 @@ private fun SettingsScreen(activity: SettingsActivity) {
                             }
                         }
                     }
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.continue_on_disconnect)) },
+                        supportingContent = {
+                            Text(stringResource(R.string.continue_on_disconnect_help))
+                        },
+                        trailingContent = {
+                            Switch(
+                                continueOnDisconnect,
+                                {
+                                    continueOnDisconnect = it
+                                    settings.continueOnDisconnect = it
+                                },
+                            )
+                        },
+                        colors = itemColors,
+                        modifier = Modifier.padding(start = 40.dp),
+                    )
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.bt_resume)) },
                         supportingContent = { Text(stringResource(R.string.bt_resume_help)) },
