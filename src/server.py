@@ -137,7 +137,7 @@ def editions():
 
 MEDIATHEK_ITEM = "https://api.ardmediathek.de/page-gateway/pages/ard/item/%s?embedded=true&mcV6=true"
 SUBS_URL_RE = re.compile(r'"(https://api\.ardmediathek\.de/player-service/subtitle/webvtt/[^"]+\.vtt)"')
-SUBS_RETRY = 600  # seconds before looking again for subtitles that were missing
+SUBS_RETRY = 120  # seconds before looking again for subtitles that were missing (ARD adds them after publishing)
 SUBS_RE = re.compile(r"^/subtitles/(ts-\d+)\.vtt$")
 
 
@@ -320,7 +320,7 @@ def master_playlist():
         # Offered but not on by default: the players turn it on from their setting.
         media.append(
             '#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Deutsch",LANGUAGE="de",'
-            'DEFAULT=NO,AUTOSELECT=NO,FORCED=NO,URI="subs.m3u8"'
+            'DEFAULT=NO,AUTOSELECT=YES,FORCED=NO,URI="subs.m3u8"'
         )
         inf += ',SUBTITLES="subs"'
     return "#EXTM3U\n#EXT-X-VERSION:4\n#EXT-X-INDEPENDENT-SEGMENTS\n%s\n%s\nvideo.m3u8\n" % ("\n".join(media), inf)
