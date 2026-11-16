@@ -914,9 +914,10 @@
     $("toggle").setAttribute("aria-label", playing ? "Pause" : "Abspielen");
     // While the play/pause sign flashes, the big play button waits (no two icons on top of each other).
     $("bigplay").hidden = playing || video.seeking || (video.readyState < 2 && !video.error) || performance.now() < flashUntil;
-    icon($("mute"), video.muted || video.volume === 0 ? "mute" : "vol");
-    $("volume").value = video.muted ? 0 : video.volume;
-    $("mute").setAttribute("aria-label", video.muted ? "Ton an" : "Ton aus");
+    const muted = vol.muted() || vol.level() === 0;
+    icon($("mute"), muted ? "mute" : "vol");
+    $("volume").value = vol.muted() ? 0 : vol.level();
+    $("mute").setAttribute("aria-label", muted ? "Ton an" : "Ton aus");
     $("speedval").textContent = speedLabel(video.playbackRate);
     for (const b of $("speedlist").children) b.setAttribute("aria-checked", String(Number(b.dataset.rate) === video.playbackRate));
     if ("mediaSession" in navigator) navigator.mediaSession.playbackState = playing ? "playing" : "paused";
@@ -1193,24 +1194,36 @@
     } else if (ev.key === "ArrowLeft" && $("setmain").hidden) { ev.stopPropagation(); openMenu(); }
     else ev.stopPropagation();
   });
+  // Volume and mute act on the TV while casting, on the browser otherwise (remembered per viewer).
+  const vol = {
+    level: () => (cast.on ? cast.remote.volumeLevel : video.volume),
+    muted: () => (cast.on ? cast.remote.isMuted : video.muted),
+    set(v) {
+      if (cast.on) {
+        cast.remote.volumeLevel = v;
+        cast.rc.setVolumeLevel();
+        if (cast.remote.isMuted !== (v === 0)) cast.rc.muteOrUnmute();
+        return;
+      }
+      video.volume = v;
+      video.muted = v === 0;
+      store.set("volume", v);
+    },
+    mute(m) {
+      if (cast.on) { if (cast.remote.isMuted !== m) cast.rc.muteOrUnmute(); return; }
+      video.muted = m;
+      if (!m && video.volume === 0) video.volume = 0.5;
+    },
+  };
   $("mute").addEventListener("click", () => {
-    video.muted = !video.muted;
-    if (!video.muted && video.volume === 0) video.volume = 0.5;
+    vol.mute(!vol.muted());
     $("unmute").hidden = true;
   });
-  // Volume, remembered per viewer.
   const savedVol = store.get("volume");
   if (typeof savedVol === "number") video.volume = savedVol;
-  $("volume").addEventListener("input", ev => {
-    const v = Number(ev.target.value);
-    video.volume = v;
-    video.muted = v === 0;
-    store.set("volume", v);
-  });
+  $("volume").addEventListener("input", ev => vol.set(Number(ev.target.value)));
   function volumeBy(d) {
-    video.muted = false;
-    video.volume = Math.max(0, Math.min(1, Math.round((video.volume + d) * 20) / 20));
-    store.set("volume", video.volume);
+    vol.set(Math.max(0, Math.min(1, Math.round((vol.level() + d) * 20) / 20)));
   }
   $("unmute").addEventListener("click", ev => { ev.stopPropagation(); video.muted = false; $("unmute").hidden = true; video.play(); });
   function fullscreen() {
@@ -1233,7 +1246,7 @@
       case "ArrowDown": volumeBy(-0.05); break;
       case "s": openShare(); break;
       case "c": toggleSubs(); break;
-      case "m": video.muted = !video.muted; break;
+      case "m": vol.mute(!vol.muted()); break;
       case "n": step(1); break;
       case "p": step(-1); break;
       default: return;
@@ -1537,6 +1550,9 @@
       else castEnd();
     });
     cast.rc.addEventListener(E.IS_PAUSED_CHANGED, () => { syncButtons(); tick(); });
+    // The TV's volume, also when changed with its remote.
+    cast.rc.addEventListener(E.VOLUME_LEVEL_CHANGED, syncButtons);
+    cast.rc.addEventListener(E.IS_MUTED_CHANGED, syncButtons);
     cast.rc.addEventListener(E.CURRENT_TIME_CHANGED, tick);
   };
 
