@@ -94,6 +94,7 @@ private fun SettingsScreen(activity: SettingsActivity) {
     var retention by remember { mutableStateOf(settings.retentionHours) }
     var autoNext by remember { mutableStateOf(settings.autoNext) }
     var subtitles by remember { mutableStateOf(settings.subtitles) }
+    var clockFormat by remember { mutableStateOf(settings.clockFormat) }
     var autoPlay by remember { mutableStateOf(settings.autoPlay) }
     var notifyNew by remember { mutableStateOf(settings.notifyNew) }
     var btDevices by remember { mutableStateOf(settings.bluetoothDevices) }
@@ -257,6 +258,34 @@ private fun SettingsScreen(activity: SettingsActivity) {
                         },
                         colors = itemColors,
                     )
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.clock_format)) },
+                        supportingContent = { Text(stringResource(R.string.clock_format_help)) },
+                        leadingContent = { Icon(painterResource(R.drawable.ic_clock), null) },
+                        colors = itemColors,
+                    )
+                    SingleChoiceSegmentedButtonRow(
+                        Modifier.fillMaxWidth().padding(start = 56.dp, end = 16.dp, bottom = 8.dp)
+                    ) {
+                        val formats =
+                            listOf(
+                                ClockFormat.MINUTES to "20:00",
+                                ClockFormat.SECONDS to "20:00:06",
+                                ClockFormat.MILLIS to ",123",
+                            )
+                        formats.forEachIndexed { i, (f, label) ->
+                            SegmentedButton(
+                                selected = clockFormat == f,
+                                onClick = {
+                                    clockFormat = f
+                                    settings.clockFormat = f
+                                },
+                                shape = SegmentedButtonDefaults.itemShape(i, formats.size),
+                            ) {
+                                Text(label, fontSize = 13.sp)
+                            }
+                        }
+                    }
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.subtitles)) },
                         supportingContent = { Text(stringResource(R.string.subtitles_help)) },

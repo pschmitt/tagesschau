@@ -26,6 +26,13 @@ enum class BluetoothMode {
     PIP,
 }
 
+/** How precise the big clock under the player is: 20:00, 20:00:06 or 20:00:06,123. */
+enum class ClockFormat {
+    MINUTES,
+    SECONDS,
+    MILLIS,
+}
+
 /** What starts when the app opens and nothing plays yet. */
 enum class AutoPlay {
     VIDEO_SOUND,
@@ -63,6 +70,12 @@ class Settings(context: Context) {
 
     /** Continue with the next (older) edition when one ends. */
     /** Subtitles on by default (the player's CC button switches them for the session). */
+    var clockFormat: ClockFormat
+        get() =
+            runCatching { ClockFormat.valueOf(prefs.getString(KEY_CLOCK, null) ?: "") }
+                .getOrDefault(ClockFormat.SECONDS)
+        set(value) = prefs.edit { putString(KEY_CLOCK, value.name) }
+
     var subtitles: Boolean
         get() = prefs.getBoolean(KEY_SUBTITLES, false)
         set(value) = prefs.edit { putBoolean(KEY_SUBTITLES, value) }
@@ -158,6 +171,7 @@ class Settings(context: Context) {
         private const val KEY_AUTOPLAY = "auto_play"
         const val KEY_AUTO_NEXT = "auto_next"
         const val KEY_SUBTITLES = "subtitles"
+        const val KEY_CLOCK = "clock_format"
         private const val KEY_AUTO_CHARGING = "auto_download_charging"
         private const val KEY_QUALITY = "download_quality"
         private const val KEY_PLAY_QUALITY = "playback_quality"

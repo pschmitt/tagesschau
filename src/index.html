@@ -365,6 +365,7 @@
   <symbol id="i-cc" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M10.4 10.3a2.2 2.2 0 1 0 0 3.4M16.4 10.3a2.2 2.2 0 1 0 0 3.4"/></symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6a.5.5 0 0 0 .1-.6l-2-3.5a.5.5 0 0 0-.6-.2l-2.5 1a7.3 7.3 0 0 0-1.7-1l-.4-2.6a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 0-.5.4l-.4 2.7a7.3 7.3 0 0 0-1.7 1l-2.5-1a.5.5 0 0 0-.6.2l-2 3.5a.5.5 0 0 0 .1.6L4.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6a.5.5 0 0 0-.1.6l2 3.5c.1.2.4.3.6.2l2.5-1c.5.4 1.1.8 1.7 1l.4 2.6c0 .3.2.5.5.5h4c.3 0 .5-.2.5-.4l.4-2.7c.6-.3 1.2-.6 1.7-1l2.5 1c.2.1.5 0 .6-.2l2-3.5a.5.5 0 0 0-.1-.6zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></symbol>
   <symbol id="i-speed" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4.9 17a8 8 0 1 1 14.2 0M12 13l3.5-4"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 7.5V12l3 2"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m9 6 6 6-6 6"/></symbol>
   <symbol id="i-chevback" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m15 6-6 6 6 6"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
@@ -408,10 +409,15 @@
           <div class="sheet-title">Einstellungen</div>
           <button role="menuitemcheckbox" id="ccitem" aria-checked="false" title="Untertitel (C)"><svg><use href="#i-cc"/></svg><span class="label">Untertitel<small id="ccnote" hidden>Für diese Ausgabe keine</small></span><span class="switch"></span></button>
           <button role="menuitem" id="speeditem" aria-haspopup="menu"><svg><use href="#i-speed"/></svg><span class="label">Geschwindigkeit</span><span class="val" id="speedval">Normal</span><svg><use href="#i-chev"/></svg></button>
+          <button role="menuitem" id="clockitem" aria-haspopup="menu"><svg><use href="#i-clock"/></svg><span class="label">Uhrzeit</span><span class="val" id="clockval"></span><svg><use href="#i-chev"/></svg></button>
         </div>
         <div id="setspeed" hidden>
           <button class="head" id="speedback"><svg><use href="#i-chevback"/></svg><span class="label">Geschwindigkeit</span></button>
           <div id="speedlist"></div>
+        </div>
+        <div id="setclock" hidden>
+          <button class="head" id="clockback"><svg><use href="#i-chevback"/></svg><span class="label">Uhrzeit</span></button>
+          <div id="clocklist"></div>
         </div>
       </div>
       <div class="transport" id="transport">
@@ -761,6 +767,8 @@
 
   // The big clock, with milliseconds, redrawn every frame (timeupdate comes only ~4×/s).
   let clockShown = "";
+  const CLOCK_FORMATS = [["min", "20:00"], ["s", "20:00:06"], ["ms", "20:00:06,123"]];
+  const clockFormat = () => (CLOCK_FORMATS.some(([k]) => k === store.get("clock")) ? store.get("clock") : "s");
   function drawClock() {
     if (!clockEl || !current) return;
     const at = airAt(curTime());
@@ -768,7 +776,8 @@
       if (clockShown !== "-") { clockEl.textContent = hm(current.date); clockShown = "-"; }
       return;
     }
-    const s = hms(at), ms = String(at.getMilliseconds()).padStart(3, "0");
+    const fmt = clockFormat();
+    const s = fmt === "min" ? hm(at) : hms(at), ms = fmt === "ms" ? String(at.getMilliseconds()).padStart(3, "0") : "";
     if (clockShown === s + ms) return;
     if (clockShown.slice(0, 8) !== s || !clockEl.querySelector(".ms")) {
       clockEl.replaceChildren(s.slice(0, 5));
@@ -778,7 +787,7 @@
       m.className = "ms";
       clockEl.append(small, m);
     }
-    clockEl.querySelector(".ms").textContent = "," + ms;
+    clockEl.querySelector(".ms").textContent = ms && "," + ms;
     clockShown = s + ms;
   }
   (function frame() {
@@ -957,9 +966,10 @@
   function openMenu(sub) {
     setmenu.hidden = false;
     setbtn.setAttribute("aria-expanded", "true");
-    $("setmain").hidden = sub === "speed";
+    $("setmain").hidden = !!sub;
     $("setspeed").hidden = sub !== "speed";
-    const first = sub === "speed" ? $("speedlist").querySelector('[aria-checked="true"]') : setmenu.querySelector("#setmain button:not([hidden])");
+    $("setclock").hidden = sub !== "clock";
+    const first = sub ? $(sub + "list").querySelector('[aria-checked="true"]') : setmenu.querySelector("#setmain button:not([hidden])");
     if (first) first.focus({ preventScroll: true });
   }
   function closeMenu(refocus) {
@@ -1012,6 +1022,24 @@
   $("ccitem").addEventListener("click", toggleSubs);
   $("speeditem").addEventListener("click", () => openMenu("speed"));
   $("speedback").addEventListener("click", () => openMenu());
+  $("clockitem").addEventListener("click", () => openMenu("clock"));
+  $("clockback").addEventListener("click", () => openMenu());
+  // Big clock format: minutes, seconds (default) or milliseconds, remembered.
+  for (const [k, label] of CLOCK_FORMATS) {
+    const b = document.createElement("button");
+    b.setAttribute("role", "menuitemradio");
+    b.dataset.fmt = k;
+    b.innerHTML = '<svg class="check"><use href="#i-check"/></svg><span class="label"></span>';
+    b.querySelector(".label").textContent = label;
+    b.addEventListener("click", () => { store.set("clock", k); syncClockMenu(); clockShown = ""; drawClock(); closeMenu(true); });
+    $("clocklist").append(b);
+  }
+  function syncClockMenu() {
+    const f = clockFormat();
+    $("clockval").textContent = CLOCK_FORMATS.find(([k]) => k === f)[1];
+    for (const b of $("clocklist").children) b.setAttribute("aria-checked", String(b.dataset.fmt === f));
+  }
+  syncClockMenu();
   const speedLabel = r => r === 1 ? "Normal" : String(r).replace(".", ",") + "×";
   for (const r of [...SPEEDS].sort((a, b) => a - b)) {
     const b = document.createElement("button");
@@ -1038,7 +1066,7 @@
     else if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
       ev.preventDefault(); ev.stopPropagation();
       items[(i + (ev.key === "ArrowDown" ? 1 : -1) + items.length) % items.length].focus();
-    } else if (ev.key === "ArrowLeft" && !$("setspeed").hidden) { ev.stopPropagation(); openMenu(); }
+    } else if (ev.key === "ArrowLeft" && $("setmain").hidden) { ev.stopPropagation(); openMenu(); }
     else ev.stopPropagation();
   });
   $("mute").addEventListener("click", () => {

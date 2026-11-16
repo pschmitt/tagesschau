@@ -580,6 +580,17 @@ private val MILLIS = DateTimeFormatter.ofPattern(",SSS")
 private fun Clock(activity: MainActivity, st: PlayState, edition: Edition?) {
     val state by rememberUpdatedState(st)
     var airTime by remember { mutableStateOf(st.air) }
+    // The format follows the setting, also when it changes while this screen is open.
+    val settings = remember { Settings(activity) }
+    var format by remember { mutableStateOf(settings.clockFormat) }
+    DisposableEffect(Unit) {
+        val l =
+            android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+                if (key == Settings.KEY_CLOCK) format = settings.clockFormat
+            }
+        settings.prefs.registerOnSharedPreferenceChangeListener(l)
+        onDispose { settings.prefs.unregisterOnSharedPreferenceChangeListener(l) }
+    }
     LaunchedEffect(Unit) {
         while (true) {
             withFrameMillis {
@@ -606,7 +617,7 @@ private fun Clock(activity: MainActivity, st: PlayState, edition: Edition?) {
                         fontWeight = FontWeight.SemiBold,
                     )
                 ) {
-                    append(t?.format(SECONDS) ?: "")
+                    if (format != ClockFormat.MINUTES) append(t?.format(SECONDS) ?: "")
                 }
                 withStyle(
                     SpanStyle(
@@ -616,7 +627,8 @@ private fun Clock(activity: MainActivity, st: PlayState, edition: Edition?) {
                         fontFeatureSettings = "tnum",
                     )
                 ) {
-                    if (airTime != null) append(t?.format(MILLIS) ?: "")
+                    if (airTime != null && format == ClockFormat.MILLIS)
+                        append(t?.format(MILLIS) ?: "")
                 }
             },
             fontSize = 64.sp,

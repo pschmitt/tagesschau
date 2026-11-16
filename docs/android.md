@@ -89,6 +89,7 @@ with each download, so they work offline too.
 | --- | --- | --- |
 | Beim Öffnen abspielen | Nur Bild (stumm) | Start the newest edition when the app opens: picture and sound, picture only (with a "Ton einschalten" button), sound only, or nothing |
 | Laufende Ausgabe ab Beginn | on | Play the edition on air from its start, else the newest finished one (Tasker and app start) |
+| Uhrzeit unter dem Player | 20:00:06 | The big clock with minutes, seconds or milliseconds |
 | Untertitel | off | Subtitles by default, where an edition has them; the CC button in the player switches them for the session |
 | Danach die nächste Ausgabe abspielen | off | Continue with the next edition, or stop after one |
 | Beim Verlassen des Players | Bild-im-Bild | Picture-in-picture, audio only, or stop |
