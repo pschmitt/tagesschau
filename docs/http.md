@@ -8,6 +8,7 @@
 | `/episodes.json` | Editions and the edition on air, for the player. |
 | `/live` | URL of a time-shifted HLS stream (video and audio), or 404. |
 | `/live/audio` | The same as an audio-only stream, for phones with the screen off. |
+| `/subtitles/<id>.vtt` | The edition's WebVTT subtitles from the ARD Mediathek, or 404. |
 | `/download/<id>` | The edition's MP4 as a file download (`?q=webxxl\|webxl\|webm\|webs`). |
 | `/sw.js` | The web player's service worker (notifications). |
 | `/cover.jpg`, `/logo.jpg` | The configured artwork, or 404. |
@@ -23,6 +24,15 @@ second. The playlist ends a minute after the scheduled end.
 
 `/live` answers 404 when no edition started within `liveMinutes`.
 
+## Subtitles
+
+tagesschau.de's edition JSON has no subtitles; the ARD Mediathek item of the
+same video does. Its id is the base64 of `crid://tagesschau.de/<externalId>`
+plus a suffix, so the server finds it from the edition's `externalId`.
+`episodes.json` lists `subtitles` for each edition that has them. The live
+session playlists offer Das Erste's subtitle rendition, not selected by
+default.
+
 Playlists and JSON answers carry `Access-Control-Allow-Origin: *`, so Cast
 receivers can load the live sessions.
 
@@ -30,7 +40,7 @@ receivers can load the live sessions.
 
 - Controls as on YouTube: timeline above previous, play/pause, next, volume
   (slider on hover, arrow keys) and the time; seeking, download, cast, share,
-  speed and fullscreen on the right.
+  subtitles (C), speed and fullscreen on the right.
 - Casting through Google Cast (Chrome): the cast button hands the edition and
   position to the TV.
 - The bell notifies while the page is open when an edition goes on air or a
@@ -40,5 +50,7 @@ receivers can load the live sessions.
 
 - `?at=<unix seconds>` opens the edition with that moment and starts there
   (the player's share dialog creates these).
+- `?untertitel=1` (or `?subs=1`) shows subtitles for this visit, `=0` hides
+  them. Without it the CC button's last state applies (off at first).
 - `?ton=1` (or `?sound=1`) never starts muted: when the browser blocks
   autoplay with sound, the player waits for a tap.

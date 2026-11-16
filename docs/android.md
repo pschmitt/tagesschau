@@ -33,6 +33,7 @@ The controls work like YouTube's mobile player:
 | Drag the timeline | Seek, with a thumbnail and the broadcast time |
 | Gear | Speed, stream quality, continue with the next edition, share, download |
 | Cast button | Play on a Chromecast or Google TV |
+| CC button | Subtitles on / off (shown when the edition or stream has them) |
 
 Leaving the app while a video plays shows it picture-in-picture by default;
 Settings, Beim Verlassen switches to audio only or to stopping. Playback runs
@@ -79,7 +80,8 @@ Every edition within the retention period downloads by itself, by default on
 Wi-Fi only and in 720p: when the app opens and hourly in the background.
 Downloaded editions play without network and are deleted once they are older
 than the retention period (48 hours by default). Single editions can be
-downloaded or deleted from the list or the gear sheet.
+downloaded or deleted from the list or the gear sheet. Subtitles are saved
+with each download, so they work offline too.
 
 ## Settings
 
@@ -87,9 +89,11 @@ downloaded or deleted from the list or the gear sheet.
 | --- | --- | --- |
 | Beim Öffnen abspielen | Nur Bild (stumm) | Start the newest edition when the app opens: picture and sound, picture only (with a "Ton einschalten" button), sound only, or nothing |
 | Laufende Ausgabe ab Beginn | on | Play the edition on air from its start, else the newest finished one (Tasker and app start) |
+| Untertitel | off | Subtitles by default, where an edition has them; the CC button in the player switches them for the session |
 | Danach die nächste Ausgabe abspielen | off | Continue with the next edition, or stop after one |
 | Beim Verlassen des Players | Bild-im-Bild | Picture-in-picture, audio only, or stop |
 | Automatisch herunterladen | Nur im WLAN | Off, Wi-Fi only, or always |
+| Nur beim Laden | off | Start automatic downloads only while the phone charges |
 | Download-Qualität | 720p | 1080p, 720p or 540p |
 | Downloads behalten | 2 Tage | 1 day to 1 week |
 | Server | `https://tagesschau.brkn.lol` | The tagesschau server to use |

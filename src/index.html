@@ -313,7 +313,7 @@
   <symbol id="i-vol" viewBox="0 0 24 24"><path fill="currentColor" d="M4 9h4l5-4v14l-5-4H4z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
   <symbol id="i-mute" viewBox="0 0 24 24"><path fill="currentColor" d="M4 9h4l5-4v14l-5-4H4z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16 9l5 6M21 9l-5 6"/></symbol>
   <symbol id="i-download" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></symbol>
-  <symbol id="i-share" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5.5" r="2.6" fill="currentColor"/><circle cx="6" cy="12" r="2.6" fill="currentColor"/><circle cx="18" cy="18.5" r="2.6" fill="currentColor"/><path fill="none" stroke="currentColor" stroke-width="1.8" d="M8.3 10.8 15.7 6.7M8.3 13.2l7.4 4.1"/></symbol>
   <symbol id="i-cc" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M10.4 10.3a2.2 2.2 0 1 0 0 3.4M16.4 10.3a2.2 2.2 0 1 0 0 3.4"/></symbol>
   <symbol id="i-full" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
 </svg>
@@ -626,7 +626,14 @@
   }
 
   /* Subtitles: the CC button's last state is the default for every edition. */
-  const subsOn = () => store.get("subtitles") === true;
+  // ?untertitel=1 (or ?subs=1) switches them on for this visit, =0 off; the button still works.
+  const subsParam = (() => {
+    const q = new URLSearchParams(location.search);
+    const k = ["untertitel", "subs"].find(k => q.has(k));
+    return k ? q.get(k) !== "0" : null;
+  })();
+  let subsOverride = subsParam;
+  const subsOn = () => subsOverride != null ? subsOverride : store.get("subtitles") === true;
   const hasSubs = it => !!it && (!!it.subtitles || !!it.live);
   function applySubs() {
     const on = subsOn();
@@ -645,7 +652,9 @@
   }
   function toggleSubs() {
     if (!hasSubs(current)) return;
-    store.set("subtitles", !subsOn());
+    const on = !subsOn();
+    subsOverride = null;
+    store.set("subtitles", on);
     applySubs();
   }
   video.textTracks.addEventListener("addtrack", () => { if (!hls) applySubs(); });
