@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Tagesschau" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/studio</item>
+        <item name="android:statusBarColor">@color/studio</item>
+        <item name="android:navigationBarColor">@color/studio</item>
+    </style>
+    <style name="Theme.Tagesschau.Player" parent="Theme.Tagesschau">
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.Tagesschau.Invisible" parent="android:Theme.Translucent.NoTitleBar">
+        <item name="android:windowNoDisplay">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+</resources>

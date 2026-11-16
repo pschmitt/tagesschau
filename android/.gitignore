@@ -1,0 +1,8 @@
+# Fetched build artifacts (see justfile); never committed.
+/dist/
+.gradle/
+build/
+/local.properties
+.kotlin/
+# Regenerated from flake.nix on every `nix develop`.
+.pre-commit-config.yaml

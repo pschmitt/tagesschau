@@ -1,0 +1,24 @@
+name: Android lint
+
+# ktfmt and Android Lint through the shared workflow (with its ktfmt auto-fix PR).
+on:
+  push:
+    paths: &paths
+      - "android/**.kt"
+      - "android/**.kts"
+      - "android/**.xml"
+      - ".github/workflows/android-lint.yaml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+jobs:
+  lint:
+    uses: pschmitt/ci-workflows/.github/workflows/lint.yaml@main
+    with:
+      project-directory: android
+      lint-baseline-path: ""
+    secrets: inherit
+    permissions:
+      contents: write
+      pull-requests: write

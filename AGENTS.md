@@ -3,6 +3,7 @@
 A small Python server (standard library only) with one HTML page: a podcast
 feed, a web player and a time-shifted live stream of the tagesschau. Sources
 are `src/server.py` and `src/index.html`; Nix files live in `nix/`.
+The Android app lives in `android/` and has its own `android/AGENTS.md`.
 
 Before changing workflows, check for reusable workflows or actions in
 [ci-workflows](https://github.com/pschmitt/ci-workflows) and preserve existing

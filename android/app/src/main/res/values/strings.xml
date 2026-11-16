@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings">Einstellungen</string>
+    <string name="server">Server</string>
+    <string name="retention_hours">Downloads behalten (Stunden)</string>
+    <string name="prefer_live">Laufende Ausgabe ab Beginn</string>
+    <string name="leave_mode">Beim Verlassen des Players</string>
+    <string name="leave_pip">Bild-im-Bild weiterspielen</string>
+    <string name="leave_audio">Nur den Ton weiterspielen</string>
+    <string name="leave_stop">Wiedergabe anhalten</string>
+    <string name="save">Speichern</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="load_failed">Die Ausgaben konnten nicht geladen werden (%1$s). Heruntergeladene Ausgaben gehen trotzdem.</string>
+    <string name="empty">Keine Ausgaben. Zum Aktualisieren nach unten ziehen.</string>
+    <string name="live_from_start">läuft gerade, ab Beginn</string>
+    <string name="downloaded">heruntergeladen</string>
+    <string name="downloading">lädt … %1$d %%</string>
+    <string name="queued">wartet auf Download</string>
+    <string name="download_failed">Download fehlgeschlagen</string>
+    <string name="download">Herunterladen</string>
+    <string name="delete_download">Download löschen</string>
+    <string name="downloads_channel">Downloads</string>
+    <string name="updates_channel">Updates</string>
+    <string name="updates">Updates</string>
+    <string name="update_check">Nach Updates suchen</string>
+    <string name="update_none">Die App ist aktuell.</string>
+    <string name="update_installing">Update wird installiert …</string>
+    <string name="update_failed">Update fehlgeschlagen</string>
+    <string name="update_available">Update verfügbar</string>
+    <string name="update_available_text">Neue Version (%1$s). Tippen zum Installieren.</string>
+    <string name="update_installed">tagesschau aktualisiert</string>
+    <string name="update_installed_text">Version %1$s läuft.</string>
+    <string name="shizuku_ready">Shizuku: Updates werden still installiert.</string>
+    <string name="shizuku_permission_needed">Shizuku läuft, die App hat aber noch keinen Zugriff.</string>
+    <string name="shizuku_permission_denied">Shizuku-Zugriff abgelehnt; in Shizuku freigeben.</string>
+    <string name="shizuku_not_running">Shizuku ist installiert, läuft aber nicht.</string>
+    <string name="shizuku_unavailable">Ohne Shizuku: Updates brauchen eine Bestätigung.</string>
+    <string name="shizuku_allow">Shizuku-Zugriff erlauben</string>
+    <string name="tasker_overlay_hint">Damit die Tasker-Aktion auch im Hintergrund abspielen kann, braucht die App die Berechtigung „Über anderen Apps einblenden“.</string>
+    <string name="tasker_overlay_grant">Berechtigung erteilen</string>
+    <string name="tasker_overlay_granted">Berechtigung erteilt</string>
+    <string name="tasker_action">tagesschau abspielen</string>
+    <string name="tasker_action_help">Spielt die neueste Ausgabe ab, oder die gerade laufende von ihrem Beginn an.</string>
+    <string name="tasker_audio_only">Laufende Ausgabe nur als Ton</string>
+</resources>

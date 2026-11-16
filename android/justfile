@@ -1,0 +1,44 @@
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+application_id := "dev.pschmitt.tagesschau.debug"
+remote_host := env_var_or_default("TAGESSCHAU_ANDROID_REMOTE_HOST", "rofl-13.brkn.lol")
+
+# Empty for the main checkout; "-<worktree-dirname>" in a linked git worktree, so parallel
+# worktrees do not share a remote sync directory.
+worktree_suffix := `gd=$(git rev-parse --absolute-git-dir); gcd=$(cd "$(git rev-parse --git-common-dir)" && pwd); if [ "$gd" != "$gcd" ]; then basename "$(git rev-parse --show-toplevel)" | sed 's/^/-/'; fi`
+
+remote_path := env_var_or_default("TAGESSCHAU_ANDROID_REMOTE_PATH", "~/build/tagesschau-android" + worktree_suffix)
+local_dist := env_var_or_default("TAGESSCHAU_ANDROID_DIST_DIR", "./dist")
+
+# One universal APK (app-debug.apk / app-release.apk).
+default_abi := ""
+
+source_commit := `git rev-parse HEAD`
+gradle_extra_props := "-PtagesschauCommit=" + source_commit
+
+zenfone_serial := env_var_or_default("ZENFONE_SERIAL", "R6AIB700W850L7G")
+
+mipad_host := env_var_or_default("MIPAD_HOST", "mi-pad-4.lan")
+mipad_ssh_port := env_var_or_default("MIPAD_SSH_PORT", "8022")
+mipad_adb_port := env_var_or_default("MIPAD_ADB_PORT", "5555")
+
+px5_host := env_var_or_default("PX5_HOST", "px5.lan")
+
+# Release builds (and, with the shared recipes' opt-in, debug builds) are signed with the persistent
+# key from rbw, so in-app self-updates and CI builds share one signature.
+enable_release_signing := "true"
+rbw_keystore_entry := "tagesschau Android CI Signing Keystore"
+keystore_jks_attachment := "tagesschau-android-ci.jks"
+keystore_env_attachment := "tagesschau-android-ci-keystore.env"
+ci_tmp_dir_name := ".tagesschau-android-ci-tmp"
+
+# List all available recipes. Must stay the first recipe in this file.
+default:
+    @just --list
+
+# Recipes shared across the app fleet (format, lint, remote sync/build/fetch, device deploys).
+# See pschmitt/ci-workflows' just/ for the source of truth.
+import '.just/android-app-ci/just/common.just'
+import '.just/android-app-ci/just/single-module.just'
+
+check host=remote_host: lint (gradle host "testDebugUnitTest lintDebug")

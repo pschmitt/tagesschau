@@ -1,0 +1,31 @@
+name: Android release
+
+# Every Android change on main republishes the rolling "latest" prerelease, which the app's
+# self-update installs from (android/app/src/main/kotlin/dev/pschmitt/tagesschau/update/).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "android/**"
+      - ".github/workflows/android-release.yaml"
+  workflow_dispatch:
+
+jobs:
+  release:
+    uses: pschmitt/ci-workflows/.github/workflows/release.yaml@main
+    with:
+      app-display-name: tagesschau
+      application-id: dev.pschmitt.tagesschau
+      artifact-label: tagesschau-android
+      project-directory: android
+      # The persistent key (CI_KEYSTORE_* secrets, also in rbw), so updates keep the signature.
+      enable-release-signing: true
+      release-apk-paths: app/build/outputs/apk/release/app-release.apk
+      debug-apk-paths: app/build/outputs/apk/debug/app-debug.apk
+      verify-git-revision: false
+    secrets: inherit
+    permissions:
+      contents: write
+      actions: write
+      id-token: write
+      attestations: write

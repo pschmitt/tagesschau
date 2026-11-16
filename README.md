@@ -35,6 +35,8 @@ plays from ARD's servers.
   on air (or aired in the last 90 minutes) that starts at its first second, cut
   from Das Erste's two-hour live window.
 - **NixOS module**: `services.tagesschau`, with a hardened systemd unit.
+- **Android app**: a native player with picture-in-picture, downloads, a Tasker
+  plugin and self-updates; see [android/README.md](android/README.md).
 
 This project is not affiliated with the ARD, ARD-aktuell or tagesschau.de. The
 logo and the screenshots show ARD material; the logo is loaded from ARD's own
@@ -75,6 +77,7 @@ Subscribe to `/feed.xml` in a podcast app, or open `/` in a browser.
 | --- | --- |
 | [NixOS module](docs/nix.md) | Options, reverse proxy, artwork |
 | [HTTP interface](docs/http.md) | Feed, player, live stream and JSON endpoints |
+| [Android app](android/README.md) | Native player, downloads, Tasker, self-update |
 
 ## License
 

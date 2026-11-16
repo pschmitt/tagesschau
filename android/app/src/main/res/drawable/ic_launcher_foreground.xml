@@ -1,0 +1,24 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- A broadcast clock: ring, hour ticks and the hands at 20:00, with the orange "on air" dot. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#F2F6FC"
+        android:strokeWidth="4"
+        android:pathData="M54,30A24,24 0,1 1,53.99 30Z" />
+    <path
+        android:fillColor="#F2F6FC"
+        android:pathData="M52.5,33h3v6h-3zM52.5,69h3v6h-3zM33,52.5h6v3h-6zM69,52.5h6v3h-6z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#F2F6FC"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M54,54L54,38M54,54L43,60" />
+    <path
+        android:fillColor="#FF8A00"
+        android:pathData="M54,50A4,4 0,1 1,53.99 50Z" />
+</vector>
