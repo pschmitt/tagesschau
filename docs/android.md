@@ -32,6 +32,7 @@ The controls work like YouTube's mobile player:
 | Swipe up / down on the picture | Fullscreen on / off (turning the phone works too) |
 | Drag the timeline | Seek, with a thumbnail and the broadcast time |
 | Gear | Speed, stream quality, continue with the next edition, share, download |
+| Cast button | Play on a Chromecast or Google TV |
 
 Leaving the app while a video plays shows it picture-in-picture by default;
 Settings, Beim Verlassen switches to audio only or to stopping. Playback runs
@@ -40,6 +41,26 @@ headset controls.
 
 "Diese Stelle teilen" makes the web player's `?at=` link to the exact second,
 with a preview and 1 s / 5 s nudges.
+
+## Casting
+
+The cast button on the picture (next to the gear) sends playback to a
+Chromecast or Google TV through Google Cast's Default Media Receiver; the
+controls then drive the TV. Downloaded editions go to the TV as their web URL.
+Casting needs Google Play Services on the phone.
+
+## Notifications
+
+Settings, Benachrichtigungen, Neue Ausgaben melden posts to the channel "Neue
+Ausgaben" when an edition goes on air and when a new one is published (checked
+every 15 minutes). Tapping a notification plays that edition.
+
+## Bluetooth
+
+Settings, Bluetooth, Bei Verbindung abspielen picks paired devices (car,
+headphones, speakers). When one of them connects, the latest edition starts as
+audio: the edition on air from its start if that setting is on, else the newest
+one. Like the Tasker action, this needs "Über anderen Apps einblenden".
 
 ## Downloads
 
