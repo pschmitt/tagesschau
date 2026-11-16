@@ -3,7 +3,6 @@
 package dev.pschmitt.tagesschau
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
 import android.content.ComponentName
 import android.content.Intent
@@ -14,9 +13,6 @@ import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.util.Rational
-import android.view.GestureDetector
-import android.view.MotionEvent
-import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -60,6 +56,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
@@ -71,7 +70,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -87,7 +85,6 @@ import com.google.common.util.concurrent.ListenableFuture
 import dev.pschmitt.tagesschau.update.Updater
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -119,12 +116,9 @@ class MainActivity : ComponentActivity() {
         playerView =
             PlayerView(this).apply {
                 setBackgroundColor(android.graphics.Color.BLACK)
-                setShowNextButton(true)
-                setShowPreviousButton(true)
-                controllerShowTimeoutMs = 2500
-                setFullscreenButtonClickListener { setFullscreenMode(it) }
+                // The web player's controls are drawn in Compose (PlayerUi.kt).
+                useController = false
             }
-        installDoubleTapSeek()
         setContent { TagesschauTheme { MainScreen(this) } }
         if (intent?.getBooleanExtra(EXTRA_INSTALL_UPDATE, false) == true) installUpdate()
     }
@@ -170,7 +164,9 @@ class MainActivity : ComponentActivity() {
 
     fun play(editions: List<Edition>, index: Int) {
         val c = controller ?: return
-        c.setMediaItems(editions.map { Playlist.item(this, it) }, index, 0)
+        val e = editions[index]
+        val resume = if (e.live) 0 else Positions.resumeAt(this, e.id)
+        c.setMediaItems(editions.map { Playlist.item(this, it) }, index, resume)
         c.prepare()
         c.play()
     }
@@ -234,54 +230,6 @@ class MainActivity : ComponentActivity() {
         if (isInPictureInPictureMode) playerView.hideController()
     }
 
-    // --- Double tap: left or right third jumps 20 s; further taps keep adding ---
-
-    @SuppressLint("ClickableViewAccessibility")
-    private fun installDoubleTapSeek() {
-        var seekUntil = 0L
-        var seekSide = 0
-        var total = 0
-        val detector =
-            GestureDetector(
-                this,
-                object : GestureDetector.SimpleOnGestureListener() {
-                    override fun onDoubleTap(e: MotionEvent): Boolean = tap(e, true)
-
-                    override fun onSingleTapUp(e: MotionEvent): Boolean = tap(e, false)
-
-                    private fun tap(e: MotionEvent, double: Boolean): Boolean {
-                        val c = controller ?: return false
-                        val w = playerView.width
-                        val side =
-                            when {
-                                e.x < w / 3f -> -1
-                                e.x > w * 2f / 3f -> 1
-                                else -> 0
-                            }
-                        val now = System.currentTimeMillis()
-                        val inSeekMode = side != 0 && side == seekSide && now < seekUntil
-                        if (side == 0 || !(double || inSeekMode)) return false
-                        if (side != seekSide || now >= seekUntil) total = 0
-                        seekSide = side
-                        seekUntil = now + 700
-                        total += 20
-                        c.seekTo((c.currentPosition + side * 20_000L).coerceAtLeast(0))
-                        Toast.makeText(
-                                this@MainActivity,
-                                (if (side < 0) "−" else "+") + "$total s",
-                                Toast.LENGTH_SHORT,
-                            )
-                            .show()
-                        return true
-                    }
-                },
-            )
-        playerView.setOnTouchListener { _, event ->
-            detector.onTouchEvent(event)
-            false
-        }
-    }
-
     // --- Self-update ---
 
     fun installUpdate() {
@@ -305,15 +253,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-/** The picture; one [PlayerView] instance moved between the layouts. */
-@Composable
-private fun Picture(activity: MainActivity, modifier: Modifier) {
-    AndroidView(
-        factory = { activity.playerView.also { (it.parent as? ViewGroup)?.removeView(it) } },
-        modifier = modifier.background(Color.Black),
-    )
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainScreen(activity: MainActivity) {
@@ -321,11 +260,10 @@ private fun MainScreen(activity: MainActivity) {
     val bigPicture = activity.inPip || activity.fullscreen || landscape
     LaunchedEffect(bigPicture) { activity.immersive(bigPicture && !activity.inPip) }
 
+    val st = rememberPlayState(activity, activity.controller)
     if (bigPicture) {
         if (activity.fullscreen) BackHandler { activity.setFullscreenMode(false) }
-        Box(Modifier.fillMaxSize().background(Color.Black)) {
-            Picture(activity, Modifier.fillMaxSize())
-        }
+        VideoPlayer(activity, st, overlay = true, modifier = Modifier.fillMaxSize())
         return
     }
 
@@ -336,8 +274,6 @@ private fun MainScreen(activity: MainActivity) {
     var loading by remember { mutableStateOf(false) }
     val downloads = remember { mutableStateMapOf<String, Download>() }
     val controller = activity.controller
-    var currentId by remember { mutableStateOf<String?>(null) }
-    var airTime by remember { mutableStateOf<OffsetDateTime?>(null) }
 
     fun refresh() {
         loading = true
@@ -362,22 +298,8 @@ private fun MainScreen(activity: MainActivity) {
             c.prepare()
         }
     }
-    // The clock: broadcast time of the playhead (air time of the edition + position).
-    LaunchedEffect(controller) {
-        while (true) {
-            val c = controller
-            val item = c?.currentMediaItem
-            currentId = item?.mediaId
-            val date = item?.mediaMetadata?.extras?.getString(Playlist.EXTRA_DATE)
-            airTime = date?.let {
-                runCatching {
-                        OffsetDateTime.parse(it).plusNanos(c.currentPosition * 1_000_000)
-                    }
-                    .getOrNull()
-            }
-            delay(250)
-        }
-    }
+    val currentId = st.mediaId
+    val airTime = st.air
     DisposableEffect(Unit) {
         val manager = Downloads.manager(activity)
         downloads.putAll(Downloads.all(activity))
@@ -441,7 +363,13 @@ private fun MainScreen(activity: MainActivity) {
         containerColor = Palette.Studio,
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
-            Picture(activity, Modifier.fillMaxWidth().aspectRatio(16f / 9f))
+            VideoPlayer(
+                activity,
+                st,
+                overlay = false,
+                modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
+            )
+            Box(Modifier.background(Palette.Deep)) { Transport(activity, st) }
             PullToRefreshBox(
                 isRefreshing = loading,
                 onRefresh = ::refresh,
@@ -471,6 +399,7 @@ private fun MainScreen(activity: MainActivity) {
                                 e,
                                 downloads[e.id],
                                 playing = e.id == currentId,
+                                saved = Positions.get(activity, e.id),
                                 onPlay = { activity.play(editions, index) },
                                 onDownload = { Downloads.start(activity, e) },
                                 onRemove = { Downloads.remove(activity, e.id) },
@@ -555,15 +484,30 @@ private fun EditionRow(
     e: Edition,
     download: Download?,
     playing: Boolean,
+    saved: Pair<Long, Long>?,
     onPlay: () -> Unit,
     onDownload: () -> Unit,
     onRemove: () -> Unit,
 ) {
+    // How much of the edition was seen, as a thin line along the row's bottom (as on the web).
+    val seen =
+        saved?.let { (pos, dur) -> if (dur > 0) (pos.toFloat() / dur).coerceIn(0f, 1f) else 0f }
+            ?: 0f
+    val watched = seen >= 0.95f
     Row(
         Modifier.fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 1.dp)
             .clip(RoundedCornerShape(6.dp))
             .background(if (playing) Palette.Panel else Color.Transparent)
+            .drawBehind {
+                if (seen > 0f && !e.live) {
+                    drawRect(
+                        if (playing) Palette.Signal else Palette.Mist.copy(alpha = 0.6f),
+                        topLeft = Offset(0f, size.height - 2.dp.toPx()),
+                        size = Size(size.width * seen, 2.dp.toPx()),
+                    )
+                }
+            }
             .clickable(onClick = onPlay),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -599,6 +543,15 @@ private fun EditionRow(
                         download?.state == Download.STATE_QUEUED -> stringResource(R.string.queued)
                         download?.state == Download.STATE_FAILED ->
                             stringResource(R.string.download_failed)
+                        watched -> stringResource(R.string.watched)
+                        seen > 0f && saved != null ->
+                            stringResource(
+                                R.string.resume_at,
+                                e.date
+                                    .plusNanos(saved.first * 1_000_000)
+                                    .atZoneSameInstant(Edition.BERLIN)
+                                    .format(DateTimeFormatter.ofPattern("HH:mm")),
+                            )
                         else -> "tagesschau"
                     },
                     color =

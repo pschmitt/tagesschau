@@ -10,6 +10,7 @@ import androidx.media3.common.MimeTypes
 /** MediaItems for editions, with the metadata the notification and lock screen show. */
 object Playlist {
     const val EXTRA_DATE = "date"
+    const val EXTRA_END = "end"
 
     fun item(context: Context, e: Edition, url: String = e.url): MediaItem {
         val server = Settings(context).serverUrl
@@ -19,7 +20,12 @@ object Playlist {
                 .setArtist(if (e.live) "${e.day}, läuft gerade" else e.day)
                 .setAlbumTitle("tagesschau")
                 .setArtworkUri("$server/cover.jpg".toUri())
-                .setExtras(Bundle().apply { putString(EXTRA_DATE, e.date.toString()) })
+                .setExtras(
+                    Bundle().apply {
+                        putString(EXTRA_DATE, e.date.toString())
+                        e.end?.let { putString(EXTRA_END, it.toString()) }
+                    }
+                )
                 .build()
         return MediaItem.Builder()
             .setMediaId(e.id)

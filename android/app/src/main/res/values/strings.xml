@@ -39,6 +39,16 @@
     <string name="tasker_action_help">Spielt die neueste Ausgabe ab, oder die gerade laufende von ihrem Beginn an.</string>
     <string name="tasker_audio_only">Laufende Ausgabe nur als Ton</string>
     <string name="back">Zurück</string>
+    <string name="play">Abspielen</string>
+    <string name="pause">Pause</string>
+    <string name="newer">Neuere Ausgabe</string>
+    <string name="older">Ältere Ausgabe</string>
+    <string name="back10">10 Sekunden zurück</string>
+    <string name="fwd30">30 Sekunden vor</string>
+    <string name="share">Diese Stelle teilen</string>
+    <string name="fullscreen">Vollbild</string>
+    <string name="watched">gesehen</string>
+    <string name="resume_at">weiter ab %1$s</string>
     <string name="playing">spielt</string>
     <string name="on_air">läuft gerade</string>
     <string name="section_playback">Wiedergabe</string>
