@@ -18,6 +18,7 @@ class TagesschauApp : Application() {
         Downloads.scheduleRetention(this)
         Downloads.scheduleAutoDownload(this)
         EditionWatch.createChannel(this)
+        BluetoothAutoPlay.createChannel(this)
         EditionWatch.schedule(this)
         dev.pschmitt.tagesschau.update.Updater.createChannel(this)
         dev.pschmitt.tagesschau.update.Updater.schedule(this)

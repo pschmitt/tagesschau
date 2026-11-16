@@ -85,6 +85,8 @@ private fun SettingsScreen(activity: SettingsActivity) {
     var autoPlay by remember { mutableStateOf(settings.autoPlay) }
     var notifyNew by remember { mutableStateOf(settings.notifyNew) }
     var btDevices by remember { mutableStateOf(settings.bluetoothDevices) }
+    var btMode by remember { mutableStateOf(settings.bluetoothMode) }
+    var btDelay by remember { mutableStateOf(settings.bluetoothDelaySeconds) }
     var choosingBt by remember { mutableStateOf(false) }
     val btPermission =
         androidx.activity.compose.rememberLauncherForActivityResult(
@@ -419,6 +421,50 @@ private fun SettingsScreen(activity: SettingsActivity) {
                     },
                 colors = itemColors,
             )
+            SingleChoiceSegmentedButtonRow(
+                Modifier.fillMaxWidth().padding(start = 56.dp, end = 16.dp, bottom = 4.dp)
+            ) {
+                val modes =
+                    listOf(
+                        BluetoothMode.AUDIO to R.string.bt_mode_audio,
+                        BluetoothMode.VIDEO to R.string.bt_mode_video,
+                        BluetoothMode.PIP to R.string.bt_mode_pip,
+                    )
+                modes.forEachIndexed { i, (mode, label) ->
+                    SegmentedButton(
+                        selected = btMode == mode,
+                        onClick = {
+                            btMode = mode
+                            settings.bluetoothMode = mode
+                        },
+                        shape = SegmentedButtonDefaults.itemShape(i, modes.size),
+                    ) {
+                        Text(stringResource(label), fontSize = 13.sp)
+                    }
+                }
+            }
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.bt_delay)) },
+                colors = itemColors,
+                modifier = Modifier.padding(start = 40.dp),
+            )
+            SingleChoiceSegmentedButtonRow(
+                Modifier.fillMaxWidth().padding(start = 56.dp, end = 16.dp, bottom = 4.dp)
+            ) {
+                val delays = listOf(0, 5, 10, 30)
+                delays.forEachIndexed { i, sec ->
+                    SegmentedButton(
+                        selected = btDelay == sec,
+                        onClick = {
+                            btDelay = sec
+                            settings.bluetoothDelaySeconds = sec
+                        },
+                        shape = SegmentedButtonDefaults.itemShape(i, delays.size),
+                    ) {
+                        Text("$sec s", fontSize = 13.sp)
+                    }
+                }
+            }
             Text(
                 stringResource(R.string.bt_hint),
                 color = Palette.Mist,

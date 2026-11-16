@@ -17,6 +17,15 @@ enum class AutoDownload {
     ALWAYS,
 }
 
+/**
+ * How a Bluetooth connection plays: sound only, video in the app, or video in picture-in-picture.
+ */
+enum class BluetoothMode {
+    AUDIO,
+    VIDEO,
+    PIP,
+}
+
 /** What starts when the app opens and nothing plays yet. */
 enum class AutoPlay {
     VIDEO_SOUND,
@@ -78,6 +87,17 @@ class Settings(context: Context) {
         get() = prefs.getStringSet(KEY_BT, emptySet()).orEmpty()
         set(value) = prefs.edit { putStringSet(KEY_BT, value) }
 
+    var bluetoothMode: BluetoothMode
+        get() =
+            runCatching { BluetoothMode.valueOf(prefs.getString(KEY_BT_MODE, null) ?: "") }
+                .getOrDefault(BluetoothMode.AUDIO)
+        set(value) = prefs.edit { putString(KEY_BT_MODE, value.name) }
+
+    /** Seconds between a Bluetooth connection and playback (cancellable from a notification). */
+    var bluetoothDelaySeconds: Int
+        get() = prefs.getInt(KEY_BT_DELAY, 0)
+        set(value) = prefs.edit { putInt(KEY_BT_DELAY, value.coerceIn(0, 300)) }
+
     var autoDownload: AutoDownload
         get() =
             runCatching { AutoDownload.valueOf(prefs.getString(KEY_AUTO, null) ?: "") }
@@ -99,6 +119,8 @@ class Settings(context: Context) {
         private const val KEY_AUTO = "auto_download"
         private const val KEY_NOTIFY = "notify_new"
         private const val KEY_BT = "bluetooth_devices"
+        private const val KEY_BT_MODE = "bluetooth_mode"
+        private const val KEY_BT_DELAY = "bluetooth_delay"
         private const val KEY_AUTOPLAY = "auto_play"
         const val KEY_AUTO_NEXT = "auto_next"
         private const val KEY_QUALITY = "download_quality"

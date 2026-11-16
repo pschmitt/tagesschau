@@ -98,6 +98,13 @@ class PlaybackService : MediaSessionService() {
         val items = Playlist.latest(this, preferLive, audioOnly)
         val player = session?.player ?: return
         if (items.isEmpty()) return
+        // Whatever an earlier auto-play muted or switched off: sound on, picture as asked.
+        player.volume = 1f
+        player.trackSelectionParameters =
+            player.trackSelectionParameters
+                .buildUpon()
+                .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_VIDEO, audioOnly)
+                .build()
         player.setMediaItems(items, 0, 0)
         player.prepare()
         player.play()

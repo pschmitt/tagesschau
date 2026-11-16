@@ -85,6 +85,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import dev.pschmitt.tagesschau.update.Updater
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -109,9 +110,28 @@ class MainActivity : ComponentActivity() {
     /** An edition to start, from a notification tap. */
     var pendingPlayId by mutableStateOf<String?>(null)
 
+    /**
+     * Start the latest edition (Bluetooth auto-play), optionally straight into picture-in-picture.
+     */
+    var pendingLatest by mutableStateOf(false)
+    var pendingPip = false
+
+    private fun handleIntent(intent: Intent?) {
+        intent ?: return
+        intent.getStringExtra(EXTRA_PLAY_ID)?.let { pendingPlayId = it }
+        if (intent.getBooleanExtra(EXTRA_PLAY_LATEST, false)) {
+            pendingPip = intent.getBooleanExtra(EXTRA_PIP, false)
+            pendingLatest = true
+        }
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        intent.getStringExtra(EXTRA_PLAY_ID)?.let { pendingPlayId = it }
+        handleIntent(intent)
+    }
+
+    fun enterPipNow() {
+        runCatching { enterPictureInPictureMode(pipParams()) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -132,7 +152,7 @@ class MainActivity : ComponentActivity() {
             }
         setContent { TagesschauTheme { MainScreen(this) } }
         if (intent?.getBooleanExtra(EXTRA_INSTALL_UPDATE, false) == true) installUpdate()
-        intent?.getStringExtra(EXTRA_PLAY_ID)?.let { pendingPlayId = it }
+        handleIntent(intent)
     }
 
     override fun onStart() {
@@ -224,7 +244,7 @@ class MainActivity : ComponentActivity() {
 
     // --- Picture-in-picture ---
 
-    private fun pipParams(): PictureInPictureParams {
+    fun pipParams(): PictureInPictureParams {
         val hint = Rect().also { playerView.getGlobalVisibleRect(it) }
         val b =
             PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9)).setSourceRectHint(hint)
@@ -282,6 +302,8 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val EXTRA_INSTALL_UPDATE = "install_update"
         const val EXTRA_PLAY_ID = "play_id"
+        const val EXTRA_PLAY_LATEST = "play_latest"
+        const val EXTRA_PIP = "pip"
     }
 }
 
@@ -342,6 +364,19 @@ private fun MainScreen(activity: MainActivity) {
                 AutoPlay.NONE -> Unit
             }
             if (settings.autoPlay != AutoPlay.NONE) c.play()
+        }
+    }
+    // Bluetooth auto-play with video: the latest edition, then picture-in-picture if asked.
+    LaunchedEffect(controller, listing, activity.pendingLatest) {
+        if (!activity.pendingLatest) return@LaunchedEffect
+        val l = listing ?: return@LaunchedEffect
+        if (controller == null || l.all.isEmpty()) return@LaunchedEffect
+        activity.pendingLatest = false
+        val start = if (settings.preferLive || l.live == null) 0 else 1
+        activity.play(l.all, start.coerceAtMost(l.all.size - 1))
+        if (activity.pendingPip) {
+            delay(600)
+            activity.enterPipNow()
         }
     }
     // A notification asked for an edition: play it once the list is there.

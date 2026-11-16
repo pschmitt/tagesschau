@@ -13,6 +13,8 @@
         android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- Exact delayed start after a Bluetooth connection (falls back to an inexact alarm). -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <!-- Lets the Tasker action start playback from the background (activity start). -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- Self-update (see update/Updater.kt). -->
@@ -106,6 +108,9 @@
             android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
             android:value="androidx.media3.cast.DefaultCastOptionsProvider" />
 
+        <receiver
+            android:name=".BluetoothAutoPlayActionReceiver"
+            android:exported="false" />
         <receiver
             android:name=".BluetoothAutoPlayReceiver"
             android:exported="true">

@@ -58,9 +58,13 @@ every 15 minutes). Tapping a notification plays that edition.
 ## Bluetooth
 
 Settings, Bluetooth, Bei Verbindung abspielen picks paired devices (car,
-headphones, speakers). When one of them connects, the latest edition starts as
-audio: the edition on air from its start if that setting is on, else the newest
-one. Like the Tasker action, this needs "Über anderen Apps einblenden".
+headphones, speakers). When one of them connects, the latest edition starts:
+the edition on air from its start if that setting is on, else the newest one.
+The mode decides how: "Nur Ton" (audio in the background), "Video" (the app
+opens and plays) or "Bild-im-Bild" (straight into picture-in-picture). A
+notification says that playback started. With a delay (0 s by default, up to
+30 s) the notification counts down first and offers "Abbrechen" and "Jetzt
+abspielen". Like the Tasker action, this needs "Über anderen Apps einblenden".
 
 ## Downloads
 
