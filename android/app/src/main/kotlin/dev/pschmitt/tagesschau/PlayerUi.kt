@@ -732,7 +732,10 @@ private fun Timeline(st: PlayState, modifier: Modifier, onSeek: (Long) -> Unit) 
             val ms = (dragFrac * span).toLong()
             val t = (if (st.channel) st.channelAt(ms) else st.airAt(ms))?.hms() ?: ""
             val thumbUrl = if (st.live) null else st.url
-            val boxW = if (thumbUrl != null) 136.dp else 64.dp
+            // The thumbnail scales with the player: 40 % of its width, 160-320 dp, 16:9.
+            val thumbW = with(density) { (widthPx * 0.4f).toDp() }.coerceIn(160.dp, 320.dp)
+            val thumbH = thumbW * 9f / 16f
+            val boxW = if (thumbUrl != null) thumbW else 64.dp
             val boxWpx = with(density) { boxW.toPx() }
             val x =
                 (dragFrac * widthPx - boxWpx / 2).coerceIn(-boxWpx / 3, widthPx - boxWpx * 2 / 3)
@@ -740,7 +743,7 @@ private fun Timeline(st: PlayState, modifier: Modifier, onSeek: (Long) -> Unit) 
                 Modifier.offset {
                         IntOffset(
                             x.roundToInt(),
-                            -(if (thumbUrl != null) 104.dp else 26.dp).roundToPx(),
+                            -(if (thumbUrl != null) thumbH + 28.dp else 26.dp).roundToPx(),
                         )
                     }
                     .width(boxW)
@@ -749,7 +752,7 @@ private fun Timeline(st: PlayState, modifier: Modifier, onSeek: (Long) -> Unit) 
             ) {
                 // Scrubbing thumbnail (as on the web): the low-quality file, seeking along.
                 if (thumbUrl != null)
-                    ScrubThumb(thumbUrl, ms, Modifier.fillMaxWidth().height(76.dp))
+                    ScrubThumb(thumbUrl, ms, Modifier.fillMaxWidth().height(thumbH))
                 Text(
                     t,
                     color = Palette.Deep,
