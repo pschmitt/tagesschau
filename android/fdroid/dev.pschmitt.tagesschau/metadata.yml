@@ -1,0 +1,16 @@
+name: 'tagesschau'
+summary: 'Every tagesschau edition, and the one on air from its first second'
+license: GPL-3.0-only
+categories:
+  - Multimedia
+description: |
+  A native player for a tagesschau server: every regular edition of the last
+  days (12:00, 14:00, 17:00, 20:00 and more), the edition on air replayed from
+  its first second, Das Erste live, downloads for offline viewing, picture in
+  picture, a Tasker action and self-updates.
+
+  The app talks to a tagesschau server and uses the author's instance until
+  you set another one under Settings. It stores no video: everything plays
+  from ARD's servers.
+
+  This app is not affiliated with the ARD, ARD-aktuell or tagesschau.de.
