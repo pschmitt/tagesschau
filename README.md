@@ -60,6 +60,10 @@ Add the flake and enable the module:
 
 See [docs/nix.md](docs/nix.md) for every option.
 
+On Android, install the app from the
+[`latest` release](https://github.com/pschmitt/tagesschau/releases/tag/latest);
+see [docs/android.md](docs/android.md).
+
 ## Quick start
 
 ```sh
