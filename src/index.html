@@ -1044,22 +1044,27 @@
     seekBy(side * SKIP);
     skipHint(side);
   }
-  well.addEventListener("pointerup", ev => {
-    if (!isTouch() || ev.target !== video) return;
+  // Taps and clicks on the picture: double on the left or right third jumps 20 s (further
+  // quick taps add 20 s each), once plays or pauses; a mouse double-click in the middle is fullscreen.
+  const sideOf = ev => {
     const r = well.getBoundingClientRect();
     const x = (ev.clientX - r.left) / r.width;
-    const side = x < 1 / 3 ? -1 : x > 2 / 3 ? 1 : 0;
+    return x < 1 / 3 ? -1 : x > 2 / 3 ? 1 : 0;
+  };
+  well.addEventListener("pointerup", ev => {
+    if (ev.target !== video || (ev.pointerType === "mouse" && ev.button !== 0)) return;
+    const side = sideOf(ev);
     const t = performance.now();
     if (side && side === seekSide && t < seekUntil) { skip(side, t); return; }
     if (side && side === lastSide && t - lastTap < DOUBLE) { skip(side, t); lastTap = 0; return; }
     seekSide = 0;
     lastTap = t; lastSide = side;
     clearTimeout(tapTimer);
-    const wasIdle = idleAtTap;
+    // A tap while the controls are hidden only shows them (touch); a click always acts.
+    const wasIdle = isTouch() && idleAtTap;
     tapTimer = setTimeout(() => { if (!wasIdle) toggle(); }, side ? DOUBLE : 0);
   });
-  well.addEventListener("click", ev => { if (ev.target === video && !isTouch()) toggle(); });
-  well.addEventListener("dblclick", ev => { if (ev.target === video && !isTouch()) fullscreen(); });
+  well.addEventListener("dblclick", ev => { if (ev.target === video && !isTouch() && sideOf(ev) === 0) fullscreen(); });
   $("back").addEventListener("click", () => seekBy(-10));
   $("fwd").addEventListener("click", () => seekBy(30));
   /* Settings menu: subtitles toggle in place, speed opens a sub-list. */
