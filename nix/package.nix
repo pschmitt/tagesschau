@@ -1,0 +1,37 @@
+{
+  lib,
+  stdenvNoCC,
+  makeWrapper,
+  python3,
+}:
+# Standard library only: nothing to build, the server runs from the store.
+stdenvNoCC.mkDerivation {
+  pname = "tagesschau";
+  version = "0.1.0";
+
+  src = lib.fileset.toSource {
+    root = ../src;
+    fileset = lib.fileset.unions [
+      ../src/server.py
+      ../src/index.html
+    ];
+  };
+
+  nativeBuildInputs = [ makeWrapper ];
+
+  installPhase = ''
+    runHook preInstall
+    install -Dm644 server.py index.html -t $out/share/tagesschau
+    makeWrapper ${lib.getExe python3} $out/bin/tagesschau \
+      --add-flags "-I $out/share/tagesschau/server.py"
+    runHook postInstall
+  '';
+
+  meta = {
+    description = "Podcast feed, web player and time-shifted live stream of the tagesschau";
+    homepage = "https://github.com/pschmitt/tagesschau";
+    license = lib.licenses.gpl3Plus;
+    mainProgram = "tagesschau";
+    platforms = lib.platforms.all;
+  };
+}

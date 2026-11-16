@@ -1,0 +1,7 @@
+target-version = "py312"
+line-length = 120
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+# printf-style formatting is used throughout and reads fine here.
+ignore = ["UP031"]

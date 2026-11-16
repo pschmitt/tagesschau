@@ -1,0 +1,27 @@
+name: lint
+on:
+  push:
+    branches: [main]
+  pull_request: {}
+  workflow_dispatch: {}
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/ruff-action@v3
+        with:
+          src: src
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # The player's script is inline; check that it parses.
+      - run: |
+          sed -n '/^<script>$/,/^<\/script>$/p' src/index.html | sed '1d;$d' > /tmp/player.js
+          node --check /tmp/player.js
