@@ -1272,7 +1272,17 @@
     // A shared link (?at=<unix seconds>) opens the edition with that moment.
     const at = Number(new URLSearchParams(location.search).get("at")) * 1000;
     const hit = at ? items.filter(it => it.date.getTime() <= at + 1000).sort((a, b) => b.date - a.date)[0] : null;
-    if (hit && at - hit.date.getTime() < 3 * 3600e3) {
+    const onAir = items.find(it => it.live);
+    if (/^\/live\/?$/.test(location.pathname)) {
+      // /live: the edition on air at its live edge, else Das Erste live.
+      if (onAir) {
+        const [start, end, began] = sessionOf(onAir.url);
+        if (start) onAir.url = onAir.url.replace(`/${start}-${end}-${began}/`, `/${start}-${end}-${start}/`);
+        play(onAir, false, "live");
+      } else {
+        play(CHANNEL, false);
+      }
+    } else if (hit && at - hit.date.getTime() < 3 * 3600e3) {
       play(hit, false, Math.max(0, (at - hit.date.getTime()) / 1000));
     } else {
       if (at) {

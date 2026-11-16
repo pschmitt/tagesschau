@@ -531,6 +531,11 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/sw.js":
             self.send_text(SERVICE_WORKER, "text/javascript; charset=utf-8")
             return
+        # Browsers opening /live get the player, which starts what airs now; apps (Tasker) the URL.
+        if path in ("/live", "/live/") and "text/html" in self.headers.get("Accept", ""):
+            with open(PLAYER, encoding="utf-8") as f:
+                self.send_text(f.read(), "text/html; charset=utf-8")
+            return
         if path.startswith("/live"):
             self.do_live(path)
             return
