@@ -71,10 +71,15 @@ class PlaybackService : MediaSessionService() {
         val settings = Settings(this)
         localPlayer = player
         player.pauseAtEndOfMediaItems = !settings.autoNext
+        player.trackSelectionParameters =
+            Subtitles.params(player.trackSelectionParameters, settings.subtitles)
         prefsListener =
             android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
                 if (key == Settings.KEY_AUTO_NEXT)
                     player.pauseAtEndOfMediaItems = !settings.autoNext
+                if (key == Settings.KEY_SUBTITLES)
+                    player.trackSelectionParameters =
+                        Subtitles.params(player.trackSelectionParameters, settings.subtitles)
                 if (key == Settings.KEY_CONTINUE_ON_DISCONNECT)
                     player.setHandleAudioBecomingNoisy(!settings.continueOnDisconnect)
             }

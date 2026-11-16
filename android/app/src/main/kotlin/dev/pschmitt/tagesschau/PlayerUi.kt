@@ -92,6 +92,9 @@ data class PlayState(
     val muted: Boolean = false,
     val remote: Boolean = false,
     val videoOff: Boolean = false,
+    /** The edition has a text track, and whether text tracks are switched on. */
+    val hasSubs: Boolean = false,
+    val subsOn: Boolean = false,
 ) {
     /** Broadcast time of a media position: the edition's air time plus the offset. */
     fun airAt(ms: Long): OffsetDateTime? = start?.plusNanos(ms * 1_000_000)
@@ -148,6 +151,9 @@ fun rememberPlayState(context: Context, c: MediaController?): PlayState {
                                     androidx.media3.common.DeviceInfo.PLAYBACK_TYPE_REMOTE,
                             videoOff =
                                 C.TRACK_TYPE_VIDEO in c.trackSelectionParameters.disabledTrackTypes,
+                            hasSubs = c.currentTracks.containsType(C.TRACK_TYPE_TEXT),
+                            subsOn =
+                                C.TRACK_TYPE_TEXT !in c.trackSelectionParameters.disabledTrackTypes,
                         )
                     }
                 delay(200)
@@ -378,6 +384,18 @@ fun VideoPlayer(
                     // Top right: the player settings (YouTube's gear), as a bottom sheet.
                     Row(Modifier.align(Alignment.TopEnd).padding(4.dp)) {
                         // Google Cast (Media3's button, chooser and controller dialogs).
+                        if (st.hasSubs && !st.remote) {
+                            Ctl(
+                                if (st.subsOn) R.drawable.ic_cc_on else R.drawable.ic_cc,
+                                if (st.subsOn) R.string.subtitles_off else R.string.subtitles_on,
+                            ) {
+                                interaction++
+                                c?.let {
+                                    it.trackSelectionParameters =
+                                        Subtitles.params(it.trackSelectionParameters, !st.subsOn)
+                                }
+                            }
+                        }
                         androidx.media3.cast.MediaRouteButton()
                         Ctl(R.drawable.ic_settings, R.string.player_settings) {
                             interaction++

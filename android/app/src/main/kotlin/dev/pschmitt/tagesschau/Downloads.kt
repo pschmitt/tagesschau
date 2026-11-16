@@ -6,6 +6,7 @@ import android.app.Notification
 import android.content.Context
 import androidx.core.net.toUri
 import androidx.media3.database.StandaloneDatabaseProvider
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.NoOpCacheEvictor
@@ -66,7 +67,8 @@ object Downloads {
     fun dataSourceFactory(context: Context): CacheDataSource.Factory =
         CacheDataSource.Factory()
             .setCache(cache(context))
-            .setUpstreamDataSourceFactory(http())
+            // DefaultDataSource: http(s) and the saved subtitle files.
+            .setUpstreamDataSourceFactory(DefaultDataSource.Factory(context, http()))
             .setCacheWriteDataSinkFactory(null)
 
     @Synchronized
@@ -99,6 +101,7 @@ object Downloads {
 
     /** Starts a download through the service (with its progress notification); foreground only. */
     fun start(context: Context, e: Edition) {
+        Subtitles.save(context, e.id)
         DownloadService.sendAddDownload(
             context,
             TagesschauDownloadService::class.java,
@@ -125,7 +128,9 @@ object Downloads {
         val online = caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
         val unmetered =
             caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED)
-        return online && (mode == AutoDownload.ALWAYS || unmetered)
+        val battery = context.getSystemService(android.os.BatteryManager::class.java)
+        val power = !Settings(context).autoDownloadCharging || battery.isCharging
+        return online && power && (mode == AutoDownload.ALWAYS || unmetered)
     }
 
     /**
@@ -138,7 +143,11 @@ object Downloads {
         val have = all(context).keys
         val missing = editions.filter { !it.live && it.date.isAfter(cutoff) && it.id !in have }
         missing.forEach { e ->
-            if (viaService) start(context, e) else manager(context).addDownload(request(context, e))
+            if (viaService) start(context, e)
+            else {
+                Subtitles.save(context, e.id)
+                manager(context).addDownload(request(context, e))
+            }
         }
         return missing.size
     }
@@ -159,19 +168,22 @@ object Downloads {
                             else NetworkType.CONNECTED
                         )
                         .setRequiresStorageNotLow(true)
+                        .setRequiresCharging(Settings(context).autoDownloadCharging)
                         .build()
                 )
                 .build()
         wm.enqueueUniquePeriodicWork("auto-download", ExistingPeriodicWorkPolicy.UPDATE, request)
     }
 
-    fun remove(context: Context, id: String) =
+    fun remove(context: Context, id: String) {
+        Subtitles.delete(context, id)
         DownloadService.sendRemoveDownload(
             context,
             TagesschauDownloadService::class.java,
             id,
             false,
         )
+    }
 
     fun edition(download: Download): Edition? =
         runCatching {
@@ -210,7 +222,10 @@ object Downloads {
         val manager = manager(context)
         all(context).values.forEach { d ->
             val e = edition(d)
-            if (e == null || e.date.isBefore(cutoff)) manager.removeDownload(d.request.id)
+            if (e == null || e.date.isBefore(cutoff)) {
+                Subtitles.delete(context, d.request.id)
+                manager.removeDownload(d.request.id)
+            }
         }
     }
 
@@ -265,6 +280,7 @@ class AutoDownloadWorker(context: Context, params: WorkerParameters) :
     override suspend fun doWork(): Result {
         val ctx = applicationContext
         if (Settings(ctx).autoDownload == AutoDownload.OFF) return Result.success()
+        if (!Downloads.autoAllowed(ctx)) return Result.success()
         val listing =
             runCatching { Api(Settings(ctx).serverUrl).listing() }
                 .getOrElse {

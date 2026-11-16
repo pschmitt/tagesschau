@@ -19,6 +19,8 @@ data class Edition(
     val end: OffsetDateTime? = null,
     /** The Das Erste live channel itself (real time), not an edition. */
     val channel: Boolean = false,
+    /** WebVTT URL when the edition has subtitles (live streams carry their own). */
+    val subtitles: String? = null,
 ) {
     val time: String
         get() = date.atZoneSameInstant(BERLIN).format(TIME)
@@ -62,6 +64,7 @@ class Api(private val baseUrl: String) {
                         id = e.getString("id"),
                         date = OffsetDateTime.parse(e.getString("date")),
                         url = e.getString("url"),
+                        subtitles = e.optString("subtitles").takeIf { it.isNotEmpty() },
                     )
                 }
             val live =

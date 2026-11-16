@@ -55,6 +55,12 @@
     color: var(--ink); font-size: 0.9rem; font-weight: 600; padding: 0.45rem 0.95rem;
   }
   .bar-actions { display: flex; align-items: center; gap: 0.4rem; }
+  #ccbtn { position: relative; }
+  #ccbtn[aria-pressed="true"]::after { content: ""; position: absolute; left: 25%; right: 25%; bottom: 6px; height: 2px; border-radius: 1px; background: var(--signal); }
+  video::cue { background: rgba(0, 0, 0, .78); color: #fff; font-family: Archivo, sans-serif; line-height: 1.3; }
+  video::cue(.textBlue), video::cue(.cyan) { color: #8fd8ff; }
+  video::cue(.textYellow), video::cue(.yellow) { color: #ffe45c; }
+  video::cue(.textGreen), video::cue(.green) { color: #8ff0a4; }
   #notifybtn { color: var(--mist); }
   #notifybtn[aria-pressed="true"] { color: var(--signal); }
   .subscribe:hover { background: var(--deep); }
@@ -308,6 +314,7 @@
   <symbol id="i-mute" viewBox="0 0 24 24"><path fill="currentColor" d="M4 9h4l5-4v14l-5-4H4z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16 9l5 6M21 9l-5 6"/></symbol>
   <symbol id="i-download" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></symbol>
   <symbol id="i-share" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/></symbol>
+  <symbol id="i-cc" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M10.4 10.3a2.2 2.2 0 1 0 0 3.4M16.4 10.3a2.2 2.2 0 1 0 0 3.4"/></symbol>
   <symbol id="i-full" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
 </svg>
 
@@ -368,6 +375,7 @@
             <a class="ctl opt" id="dlbtn" href="#" download aria-label="Diese Ausgabe herunterladen" title="Diese Ausgabe herunterladen"><svg><use href="#i-download"/></svg></a>
             <google-cast-launcher class="ctl" id="castbtn" title="Auf Fernseher abspielen" hidden></google-cast-launcher>
             <button class="ctl" id="sharebtn" aria-label="Diese Stelle teilen" title="Diese Stelle teilen (S)"><svg><use href="#i-share"/></svg></button>
+            <button class="ctl" id="ccbtn" aria-pressed="false" aria-label="Untertitel" title="Untertitel (C)" hidden><svg><use href="#i-cc"/></svg></button>
             <button class="ctl text" id="speed" aria-label="Geschwindigkeit" title="Geschwindigkeit">1×</button>
             <button class="ctl" id="full" aria-label="Vollbild" title="Vollbild (F)"><svg><use href="#i-full"/></svg></button>
           </div>
@@ -587,12 +595,21 @@
     if (it.url.endsWith(".m3u8") && window.Hls && Hls.isSupported()) {
       // hls.js wherever it works; Chrome's native HLS claims support but fails on
       // separate audio renditions. Native HLS only where hls.js cannot run (iOS).
-      hls = new Hls({ startPosition: startAt || 0 });
+      // Subtitles come as a separate rendition; the 608 captions in the video would double them.
+      hls = new Hls({ startPosition: startAt || 0, enableCEA708Captions: false, subtitleDisplay: subsOn() });
+      hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, applySubs);
       hls.loadSource(it.url);
       hls.attachMedia(video);
     } else {
       video.src = it.url;
     }
+    for (const t of video.querySelectorAll("track")) t.remove();
+    if (it.subtitles) {
+      const t = document.createElement("track");
+      Object.assign(t, { kind: "subtitles", srclang: "de", label: "Deutsch", src: it.subtitles });
+      video.appendChild(t);
+    }
+    applySubs();
     const mem = !it.live && store.get(it.id);
     const resume = startAt != null ? (hls ? null : startAt)
       : (mem && mem.pos > 5 && (!mem.dur || mem.pos / mem.dur < 0.95)) ? mem.pos : null;
@@ -607,6 +624,31 @@
     session(it);
     start(userGesture);
   }
+
+  /* Subtitles: the CC button's last state is the default for every edition. */
+  const subsOn = () => store.get("subtitles") === true;
+  const hasSubs = it => !!it && (!!it.subtitles || !!it.live);
+  function applySubs() {
+    const on = subsOn();
+    if (hls) {
+      hls.subtitleDisplay = on;
+      hls.subtitleTrack = on && hls.subtitleTracks.length ? 0 : -1;
+    } else {
+      for (const t of video.textTracks) t.mode = on ? "showing" : "disabled";
+    }
+    const btn = $("ccbtn");
+    btn.hidden = !hasSubs(current);
+    btn.setAttribute("aria-pressed", String(on));
+    btn.setAttribute("aria-label", on ? "Untertitel aus" : "Untertitel an");
+    btn.title = (on ? "Untertitel aus" : "Untertitel an") + " (C)";
+    if (cast.on) castSubs();
+  }
+  function toggleSubs() {
+    if (!hasSubs(current)) return;
+    store.set("subtitles", !subsOn());
+    applySubs();
+  }
+  video.textTracks.addEventListener("addtrack", () => { if (!hls) applySubs(); });
 
   function step(dir) {
     const i = items.findIndex(it => current && it.id === current.id) + dir;
@@ -824,6 +866,7 @@
   $("next").addEventListener("click", () => step(1));
   $("back").addEventListener("click", () => seekBy(-10));
   $("fwd").addEventListener("click", () => seekBy(30));
+  $("ccbtn").addEventListener("click", toggleSubs);
   $("speed").addEventListener("click", () => {
     video.playbackRate = SPEEDS[(SPEEDS.indexOf(video.playbackRate) + 1) % SPEEDS.length];
   });
@@ -866,6 +909,7 @@
       case "ArrowUp": volumeBy(0.05); break;
       case "ArrowDown": volumeBy(-0.05); break;
       case "s": openShare(); break;
+      case "c": toggleSubs(); break;
       case "m": video.muted = !video.muted; break;
       case "n": step(1); break;
       case "p": step(-1); break;
@@ -898,7 +942,7 @@
     const r = await fetch("/episodes.json", { cache: "no-store" });
     if (!r.ok) throw new Error("HTTP " + r.status);
     const data = await r.json();
-    const list = data.editions.map(e => ({ id: e.id, url: e.url, date: new Date(e.date) }));
+    const list = data.editions.map(e => ({ id: e.id, url: e.url, date: new Date(e.date), subtitles: e.subtitles }));
     if (data.live) list.unshift({ id: "live-" + data.live.date, url: data.live.url, date: new Date(data.live.date), end: new Date(data.live.end), live: true });
     return list;
   }
@@ -1147,6 +1191,14 @@
     cast.rc.addEventListener(E.CURRENT_TIME_CHANGED, tick);
   };
 
+  // Subtitles on the TV follow the CC button too.
+  function castSubs() {
+    const session = cast.on && window.cast && window.cast.framework && window.cast.framework.CastContext.getInstance().getCurrentSession();
+    const media = session && session.getMediaSession();
+    if (!media || !current || !current.subtitles) return;
+    media.editTracksInfo(new chrome.cast.media.EditTracksInfoRequest(subsOn() ? [1] : []), () => {}, () => {});
+  }
+
   function castLoad(session) {
     if (!session || !current) return;
     const at = video.currentTime;
@@ -1159,7 +1211,17 @@
     meta.subtitle = longDay(current.date);
     meta.images = [new chrome.cast.Image(location.origin + "/cover.jpg")];
     info.metadata = meta;
+    if (current.subtitles) {
+      const t = new chrome.cast.media.Track(1, chrome.cast.media.TrackType.TEXT);
+      t.trackContentId = new URL(current.subtitles, location.href).href;
+      t.trackContentType = "text/vtt";
+      t.subtype = chrome.cast.media.TextTrackType.SUBTITLES;
+      t.name = "Deutsch";
+      t.language = "de";
+      info.tracks = [t];
+    }
     const req = new chrome.cast.media.LoadRequest(info);
+    req.activeTrackIds = current.subtitles && subsOn() ? [1] : [];
     req.currentTime = at;
     req.autoplay = true;
     session.loadMedia(req).then(

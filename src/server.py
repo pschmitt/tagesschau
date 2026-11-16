@@ -14,6 +14,7 @@ every edition page links the previous ones. Each edition's JSON
 (api2u/<section>/ts-N.json) carries its air time and MP4 URLs.
 """
 
+import base64
 import json
 import mimetypes
 import os
@@ -51,6 +52,8 @@ _lock = threading.Lock()
 _known = {}  # ts id -> section, accumulated across polls
 _editions = {}  # ts id -> (datetime, url) ; immutable once published
 _lengths = {}  # url -> content length
+_external = {}  # ts id -> externalId (the ARD Mediathek item is named after it)
+_subs = {}  # ts id -> (checked at, WebVTT URL or None)
 _feed = {"at": 0.0, "xml": b""}
 
 
@@ -106,6 +109,8 @@ def edition(ts_id):
             continue
     if not url or not data.get("date"):
         return None  # not published yet; retry on the next poll
+    if data.get("externalId"):
+        _external[ts_id] = data["externalId"]
     _editions[ts_id] = (datetime.fromisoformat(data["date"]), url)
     return _editions[ts_id]
 
@@ -123,6 +128,38 @@ def editions():
             found.append((e[0], ts_id, e[1]))
     found.sort(reverse=True)
     return found[:KEEP]
+
+
+# --- Subtitles -----------------------------------------------------------------
+# tagesschau.de's JSON has no subtitles, but the ARD Mediathek item of the same
+# video does (WebVTT, timed to the same MP4). Its id is the base64 of a crid
+# built from the edition's externalId, with one of two suffixes.
+
+MEDIATHEK_ITEM = "https://api.ardmediathek.de/page-gateway/pages/ard/item/%s?embedded=true&mcV6=true"
+SUBS_URL_RE = re.compile(r'"(https://api\.ardmediathek\.de/player-service/subtitle/webvtt/[^"]+\.vtt)"')
+SUBS_RETRY = 600  # seconds before looking again for subtitles that were missing
+SUBS_RE = re.compile(r"^/subtitles/(ts-\d+)\.vtt$")
+
+
+def subtitles(ts_id):
+    """WebVTT URL of an edition's subtitles, or None."""
+    checked = _subs.get(ts_id)
+    if checked and (checked[1] or time.time() - checked[0] < SUBS_RETRY):
+        return checked[1]
+    found = None
+    external = _external.get(ts_id)
+    for suffix in ("-SENDUNGSVIDEO", "_ganzeSendung") if external else ():
+        crid = base64.urlsafe_b64encode(("crid://tagesschau.de/%s%s" % (external, suffix)).encode())
+        try:
+            page = get(MEDIATHEK_ITEM % crid.decode().rstrip("=")).read().decode("utf-8", "replace")
+        except Exception:
+            continue
+        m = SUBS_URL_RE.search(page)
+        if m:
+            found = m.group(1)
+            break
+    _subs[ts_id] = (time.time(), found)
+    return found
 
 
 def length(url):
@@ -208,7 +245,7 @@ SERVICE_WORKER = """self.addEventListener("notificationclick", e => {
 });
 """
 DOWNLOAD_RE = re.compile(r"^/download/(ts-\d+)$")
-SESSION_RE = re.compile(r"^/live/(\d+)-(\d+)-(\d+)/(index|video|audio)\.m3u8$")
+SESSION_RE = re.compile(r"^/live/(\d+)-(\d+)-(\d+)/(index|video|audio|subs)\.m3u8$")
 
 _epg = {}  # day -> (fetched at, [(start, end)])
 _upstream = {}  # url -> (fetched at, text)
@@ -257,8 +294,8 @@ def upstream(url):
 
 
 def renditions():
-    """Best video variant and default audio rendition of the live master."""
-    best, video, audio = -1, None, None
+    """Best video variant, default audio and subtitle renditions of the live master."""
+    best, video, audio, subs = -1, None, None, None
     lines = upstream(LIVE_MASTER).splitlines()
     for i, line in enumerate(lines):
         if line.startswith("#EXT-X-STREAM-INF"):
@@ -267,24 +304,34 @@ def renditions():
                 best, video = bw, (line, lines[i + 1])
         elif line.startswith("#EXT-X-MEDIA:TYPE=AUDIO") and "DEFAULT=YES" in line:
             audio = line
-    return video, audio
+        elif line.startswith("#EXT-X-MEDIA:TYPE=SUBTITLES") and subs is None:
+            subs = line
+    return video, audio, subs
 
 
 def master_playlist():
-    (inf, _), audio = renditions()
+    (inf, _), audio, subs = renditions()
     group = re.search(r'GROUP-ID="([^"]+)"', audio).group(1)
     audio = re.sub(r'URI="[^"]*"', 'URI="audio.m3u8"', audio)
     inf = re.sub(r",SUBTITLES=\"[^\"]*\"", "", inf)
     inf = re.sub(r'AUDIO="[^"]*"', 'AUDIO="%s"' % group, inf)
-    return "#EXTM3U\n#EXT-X-VERSION:4\n#EXT-X-INDEPENDENT-SEGMENTS\n%s\n%s\nvideo.m3u8\n" % (audio, inf)
+    media = [audio]
+    if subs:
+        # Offered but not on by default: the players turn it on from their setting.
+        media.append(
+            '#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="Deutsch",LANGUAGE="de",'
+            'DEFAULT=NO,AUTOSELECT=NO,FORCED=NO,URI="subs.m3u8"'
+        )
+        inf += ',SUBTITLES="subs"'
+    return "#EXTM3U\n#EXT-X-VERSION:4\n#EXT-X-INDEPENDENT-SEGMENTS\n%s\n%s\nvideo.m3u8\n" % ("\n".join(media), inf)
 
 
 def shifted_playlist(kind, start, end, began, now):
-    video, audio = renditions()
+    video, audio, subs = renditions()
     if kind == "video":
         url = urllib.parse.urljoin(LIVE_MASTER, video[1])
     else:
-        url = urllib.parse.urljoin(LIVE_MASTER, re.search(r'URI="([^"]+)"', audio).group(1))
+        url = urllib.parse.urljoin(LIVE_MASTER, re.search(r'URI="([^"]+)"', subs if kind == "subs" else audio).group(1))
     text = upstream(url)
     target = int(re.search(r"#EXT-X-TARGETDURATION:(\d+)", text).group(1))
     seq = int(re.search(r"#EXT-X-MEDIA-SEQUENCE:(\d+)", text).group(1))
@@ -339,7 +386,11 @@ def episodes_json(now):
             _episodes.update(at=time.time(), list=editions())
         found = _episodes["list"]
     data = {
-        "editions": [{"id": ts_id, "date": ts.isoformat(), "url": url} for ts, ts_id, url in found],
+        "editions": [
+            {"id": ts_id, "date": ts.isoformat(), "url": url}
+            | ({"subtitles": "%s/subtitles/%s.vtt" % (BASE, ts_id)} if subtitles(ts_id) else {})
+            for ts, ts_id, url in found
+        ],
         "live": None,
     }
     edition = current_edition(now)
@@ -442,8 +493,30 @@ class Handler(BaseHTTPRequestHandler):
             while chunk := upstream.read(1 << 20):
                 self.wfile.write(chunk)
 
+    def do_subtitles(self, ts_id):
+        """An edition's WebVTT subtitles from the ARD Mediathek, on our origin."""
+        try:
+            with _lock:
+                if ts_id not in _known:
+                    discover()
+                if ts_id in _known:
+                    edition(ts_id)
+            url = subtitles(ts_id)
+            body = get(url).read().decode("utf-8", "replace") if url else None
+        except Exception as exc:
+            self.send_error(502, str(exc)[:100])
+            return
+        if not body:
+            self.send_error(404, "no subtitles")
+            return
+        self.send_text(body, "text/vtt; charset=utf-8", "public, max-age=3600")
+
     def do_GET(self):
         path = self.path.split("?")[0]
+        m = SUBS_RE.match(path)
+        if m:
+            self.do_subtitles(m.group(1))
+            return
         m = DOWNLOAD_RE.match(path)
         if m:
             self.do_download(m.group(1))

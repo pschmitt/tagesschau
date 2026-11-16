@@ -95,6 +95,12 @@
     <string name="copied">Link kopiert</string>
     <string name="share_send">Teilen</string>
     <string name="share_from_here">Ab dieser Stelle starten</string>
+    <string name="auto_charging">Nur beim Laden</string>
+    <string name="auto_charging_help">Automatische Downloads nur, während das Telefon lädt.</string>
+    <string name="subtitles">Untertitel</string>
+    <string name="subtitles_help">Untertitel einblenden, wo es welche gibt. Im Player schaltet die CC-Taste sie um.</string>
+    <string name="subtitles_on">Untertitel an</string>
+    <string name="subtitles_off">Untertitel aus</string>
     <string name="auto_next">Danach die nächste Ausgabe abspielen</string>
     <string name="auto_next_help">Sonst hält die Wiedergabe nach der Ausgabe an.</string>
     <string name="auto_download">Automatisch herunterladen</string>

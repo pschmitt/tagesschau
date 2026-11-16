@@ -93,6 +93,7 @@ private fun SettingsScreen(activity: SettingsActivity) {
     var leaveMode by remember { mutableStateOf(settings.leaveMode) }
     var retention by remember { mutableStateOf(settings.retentionHours) }
     var autoNext by remember { mutableStateOf(settings.autoNext) }
+    var subtitles by remember { mutableStateOf(settings.subtitles) }
     var autoPlay by remember { mutableStateOf(settings.autoPlay) }
     var notifyNew by remember { mutableStateOf(settings.notifyNew) }
     var btDevices by remember { mutableStateOf(settings.bluetoothDevices) }
@@ -112,6 +113,7 @@ private fun SettingsScreen(activity: SettingsActivity) {
             if (granted) choosingBt = true
         }
     var autoDownload by remember { mutableStateOf(settings.autoDownload) }
+    var autoCharging by remember { mutableStateOf(settings.autoDownloadCharging) }
     var quality by remember { mutableStateOf(settings.downloadQuality) }
     var server by remember { mutableStateOf(settings.serverUrl) }
     var editServer by remember { mutableStateOf(false) }
@@ -256,6 +258,21 @@ private fun SettingsScreen(activity: SettingsActivity) {
                         colors = itemColors,
                     )
                     ListItem(
+                        headlineContent = { Text(stringResource(R.string.subtitles)) },
+                        supportingContent = { Text(stringResource(R.string.subtitles_help)) },
+                        leadingContent = { Icon(painterResource(R.drawable.ic_cc), null) },
+                        trailingContent = {
+                            Switch(
+                                subtitles,
+                                {
+                                    subtitles = it
+                                    settings.subtitles = it
+                                },
+                            )
+                        },
+                        colors = itemColors,
+                    )
+                    ListItem(
                         headlineContent = { Text(stringResource(R.string.auto_next)) },
                         supportingContent = { Text(stringResource(R.string.auto_next_help)) },
                         leadingContent = { Icon(painterResource(R.drawable.ic_ctl_next), null) },
@@ -334,6 +351,23 @@ private fun SettingsScreen(activity: SettingsActivity) {
                             }
                         }
                     }
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.auto_charging)) },
+                        supportingContent = { Text(stringResource(R.string.auto_charging_help)) },
+                        trailingContent = {
+                            Switch(
+                                autoCharging,
+                                {
+                                    autoCharging = it
+                                    settings.autoDownloadCharging = it
+                                    Downloads.scheduleAutoDownload(activity)
+                                },
+                                enabled = autoDownload != AutoDownload.OFF,
+                            )
+                        },
+                        colors = itemColors,
+                        modifier = Modifier.padding(start = 40.dp),
+                    )
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.download_quality)) },
                         colors = itemColors,

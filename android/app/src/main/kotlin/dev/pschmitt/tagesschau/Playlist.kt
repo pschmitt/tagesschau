@@ -3,6 +3,7 @@ package dev.pschmitt.tagesschau
 import android.content.Context
 import android.os.Bundle
 import androidx.core.net.toUri
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
@@ -33,6 +34,13 @@ object Playlist {
                         ".${Settings(context).playbackQuality}.h264.mp4",
                     )
         val server = Settings(context).serverUrl
+        // Subtitles: the saved file for a downloaded edition (fetched now if missing), the
+        // server's otherwise. A downloaded edition never gets the remote file: offline it would
+        // stop playback.
+        val downloaded = !e.live && Downloads.completedUri(context, e.id) != null
+        val saved = Subtitles.file(context, e.id).takeIf { it.exists() }
+        if (downloaded && saved == null && e.subtitles != null) Subtitles.save(context, e.id)
+        val subs = saved?.toUri()?.toString() ?: e.subtitles.takeIf { !downloaded && !e.live }
         val metadata =
             MediaMetadata.Builder()
                 .setTitle(e.title)
@@ -61,6 +69,18 @@ object Playlist {
                 if (url.contains(".m3u8")) MimeTypes.APPLICATION_M3U8 else MimeTypes.VIDEO_MP4
             )
             .setMediaMetadata(metadata)
+            .setSubtitleConfigurations(
+                listOfNotNull(
+                    subs?.let {
+                        MediaItem.SubtitleConfiguration.Builder(it.toUri())
+                            .setMimeType(MimeTypes.TEXT_VTT)
+                            .setLanguage("de")
+                            .setLabel("Deutsch")
+                            .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
+                            .build()
+                    }
+                )
+            )
             .build()
     }
 

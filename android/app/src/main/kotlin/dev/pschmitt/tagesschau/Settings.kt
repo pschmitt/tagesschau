@@ -62,6 +62,11 @@ class Settings(context: Context) {
         set(value) = prefs.edit { putString(KEY_LEAVE, value.name) }
 
     /** Continue with the next (older) edition when one ends. */
+    /** Subtitles on by default (the player's CC button switches them for the session). */
+    var subtitles: Boolean
+        get() = prefs.getBoolean(KEY_SUBTITLES, false)
+        set(value) = prefs.edit { putBoolean(KEY_SUBTITLES, value) }
+
     var autoNext: Boolean
         get() = prefs.getBoolean(KEY_AUTO_NEXT, false)
         set(value) = prefs.edit { putBoolean(KEY_AUTO_NEXT, value) }
@@ -124,6 +129,11 @@ class Settings(context: Context) {
                 .getOrDefault(AutoDownload.WIFI)
         set(value) = prefs.edit { putString(KEY_AUTO, value.name) }
 
+    /** Automatic downloads only while the phone is charging. */
+    var autoDownloadCharging: Boolean
+        get() = prefs.getBoolean(KEY_AUTO_CHARGING, false)
+        set(value) = prefs.edit { putBoolean(KEY_AUTO_CHARGING, value) }
+
     /** ARD's file variant for downloads: webxxl (1080p), webxl (720p) or webm (540p). */
     var downloadQuality: String
         get() = prefs.getString(KEY_QUALITY, null) ?: "webxl"
@@ -147,6 +157,8 @@ class Settings(context: Context) {
         private const val KEY_BT_VOLUME_LEVEL = "bluetooth_volume_level"
         private const val KEY_AUTOPLAY = "auto_play"
         const val KEY_AUTO_NEXT = "auto_next"
+        const val KEY_SUBTITLES = "subtitles"
+        private const val KEY_AUTO_CHARGING = "auto_download_charging"
         private const val KEY_QUALITY = "download_quality"
         private const val KEY_PLAY_QUALITY = "playback_quality"
     }
