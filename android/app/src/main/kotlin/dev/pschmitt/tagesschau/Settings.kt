@@ -26,8 +26,9 @@ enum class BluetoothMode {
     PIP,
 }
 
-/** How precise the big clock under the player is: 20:00, 20:00:06 or 20:00:06,123. */
+/** The big clock under the player: off, 20:00, 20:00:06 or 20:00:06,123. */
 enum class ClockFormat {
+    OFF,
     MINUTES,
     SECONDS,
     MILLIS,

@@ -606,35 +606,37 @@ private fun Clock(activity: MainActivity, st: PlayState, edition: Edition?) {
     }
     val t = (airTime ?: edition?.date)?.atZoneSameInstant(Edition.BERLIN)
     Column(Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 4.dp)) {
-        Text(
-            buildAnnotatedString {
-                append(t?.format(CLOCK) ?: "--:--")
-                withStyle(
-                    SpanStyle(
-                        fontSize = 26.sp,
-                        color = Palette.Mist,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                ) {
-                    if (format != ClockFormat.MINUTES) append(t?.format(SECONDS) ?: "")
-                }
-                withStyle(
-                    SpanStyle(
-                        fontSize = 18.sp,
-                        color = Palette.Mist.copy(alpha = 0.8f),
-                        fontWeight = FontWeight.SemiBold,
-                        fontFeatureSettings = "tnum",
-                    )
-                ) {
-                    if (airTime != null && format == ClockFormat.MILLIS)
-                        append(t?.format(MILLIS) ?: "")
-                }
-            },
-            fontSize = 64.sp,
-            fontWeight = FontWeight.Black,
-            letterSpacing = (-2).sp,
-            lineHeight = 64.sp,
-        )
+        // "Aus": only the date line below.
+        if (format != ClockFormat.OFF)
+            Text(
+                buildAnnotatedString {
+                    append(t?.format(CLOCK) ?: "--:--")
+                    withStyle(
+                        SpanStyle(
+                            fontSize = 26.sp,
+                            color = Palette.Mist,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    ) {
+                        if (format != ClockFormat.MINUTES) append(t?.format(SECONDS) ?: "")
+                    }
+                    withStyle(
+                        SpanStyle(
+                            fontSize = 18.sp,
+                            color = Palette.Mist.copy(alpha = 0.8f),
+                            fontWeight = FontWeight.SemiBold,
+                            fontFeatureSettings = "tnum",
+                        )
+                    ) {
+                        if (airTime != null && format == ClockFormat.MILLIS)
+                            append(t?.format(MILLIS) ?: "")
+                    }
+                },
+                fontSize = 64.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = (-2).sp,
+                lineHeight = 64.sp,
+            )
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(edition?.day ?: "", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
             if (edition?.live == true) {

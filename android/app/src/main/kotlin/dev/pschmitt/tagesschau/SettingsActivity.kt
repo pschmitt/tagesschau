@@ -269,6 +269,7 @@ private fun SettingsScreen(activity: SettingsActivity) {
                     ) {
                         val formats =
                             listOf(
+                                ClockFormat.OFF to "Aus",
                                 ClockFormat.MINUTES to "20:00",
                                 ClockFormat.SECONDS to "20:00:06",
                                 ClockFormat.MILLIS to ",123",

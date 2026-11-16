@@ -41,7 +41,7 @@ receivers can load the live sessions.
 - Controls as on YouTube: timeline above play/pause, volume
   (slider on hover, arrow keys) and the time; seeking, download, cast, share,
   settings (subtitles, speed, clock format; C toggles subtitles) and
-  fullscreen on the right. The big clock below shows minutes, seconds
+  fullscreen on the right. The big clock below is off or shows minutes, seconds
   (default) or milliseconds.
 - A double tap or double-click on the left or right third of the picture
   jumps 20 s back or ahead; further quick taps add 20 s each.

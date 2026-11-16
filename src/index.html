@@ -863,10 +863,14 @@
 
   // The big clock, with milliseconds, redrawn every frame (timeupdate comes only ~4×/s).
   let clockShown = "";
-  const CLOCK_FORMATS = [["min", "20:00"], ["s", "20:00:06"], ["ms", "20:00:06,123"]];
+  const CLOCK_FORMATS = [["off", "Aus"], ["min", "20:00"], ["s", "20:00:06"], ["ms", "20:00:06,123"]];
   const clockFormat = () => (CLOCK_FORMATS.some(([k]) => k === store.get("clock")) ? store.get("clock") : "s");
   function drawClock() {
     if (!clockEl || !current) return;
+    // "Aus": no big clock, the date line stays.
+    const off = clockFormat() === "off";
+    clockEl.style.display = off ? "none" : "";
+    if (off) return;
     const at = airAt(curTime());
     if (!at) {
       if (clockShown !== "-") { clockEl.textContent = hm(current.date); clockShown = "-"; }
@@ -1131,7 +1135,7 @@
   $("speedback").addEventListener("click", () => openMenu());
   $("clockitem").addEventListener("click", () => openMenu("clock"));
   $("clockback").addEventListener("click", () => openMenu());
-  // Big clock format: minutes, seconds (default) or milliseconds, remembered.
+  // Big clock format: off, minutes, seconds (default) or milliseconds, remembered.
   for (const [k, label] of CLOCK_FORMATS) {
     const b = document.createElement("button");
     b.setAttribute("role", "menuitemradio");
@@ -1488,8 +1492,15 @@
   syncNotify();
 
   /* Casting: hand the edition and position to the TV; take it back on disconnect */
-  window.__onGCastApiAvailable = available => {
-    if (!available || !window.cast || !window.cast.framework) return;
+  // The SDK may report the API before its framework script has run: wait for it (up to 15 s).
+  let castReady = false;
+  window.__onGCastApiAvailable = (available, tries = 0) => {
+    if (!available || castReady) return;
+    if (!window.cast || !window.cast.framework || !window.chrome || !chrome.cast || !chrome.cast.media) {
+      if (tries < 60) setTimeout(() => window.__onGCastApiAvailable(true, tries + 1), 250);
+      return;
+    }
+    castReady = true;
     const ctx = window.cast.framework.CastContext.getInstance();
     ctx.setOptions({
       receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
