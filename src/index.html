@@ -709,6 +709,13 @@
   function play(it, userGesture, startAt) {
     save();
     current = it;
+    // A live stream lives at /live, so a reload lands on it again; an edition at /.
+    const path = it.live ? "/live" : "/";
+    if (location.pathname !== path && /^\/(live\/?|player)?$/.test(location.pathname)) {
+      const q = new URLSearchParams(location.search);
+      q.delete("at");
+      history.replaceState(null, "", path + (q.size ? "?" + q : ""));
+    }
     if (hls) { hls.destroy(); hls = null; }
     if (it.url.endsWith(".m3u8") && window.Hls && Hls.isSupported()) {
       // hls.js wherever it works; Chrome's native HLS claims support but fails on
