@@ -132,7 +132,7 @@
   .from { display: flex; align-items: center; gap: 0.5rem; color: var(--ink); }
   .from input { accent-color: var(--signal); width: 1.1rem; height: 1.1rem; }
   .sub .close { position: absolute; top: 0.75rem; right: 0.75rem; }
-  @media (max-width: 420px) { .apps { grid-template-columns: 1fr; } }
+  @media (max-width: 420px) { .apps { grid-template-columns: 1fr; } .brand span { display: none; } }
 
   /* Player: picture and transport form one block */
   .stage { min-width: 0; }
@@ -326,12 +326,15 @@
     .vol input { display: none; }
     .time { font-size: 0.8rem; margin-left: 0.3rem; }
     .time .sep, .time #to { display: none; }
+    /* The player stays at the top while the list scrolls, as in the Android app. */
+    .stage { display: contents; }
+    .player { position: sticky; top: 0; z-index: 20; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35); }
     /* Phones: a bottom sheet over a dimmed page, like the Android app's. */
     .menu {
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; min-width: 0;
       max-height: 75vh; border-radius: 16px 16px 0 0; font-size: 1.05rem;
       padding: 0.5rem 0 calc(0.75rem + env(safe-area-inset-bottom));
-      box-shadow: 0 0 0 100vmax rgba(4, 16, 38, 0.6);
+      box-shadow: 0 0 0 100vmax rgba(4, 16, 38, 0.6); background: var(--deep);
       animation: sheet-up 0.2s ease-out;
     }
     .menu::before { content: ""; display: block; width: 2.5rem; height: 0.25rem; border-radius: 1rem; background: var(--mist); opacity: 0.5; margin: 0.2rem auto 0.5rem; }
