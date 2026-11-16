@@ -95,7 +95,16 @@ data class PlayState(
     /** The edition has a text track, and whether text tracks are switched on. */
     val hasSubs: Boolean = false,
     val subsOn: Boolean = false,
+    /**
+     * A live stream that is not at its live edge (scrubbed back, or started from the beginning).
+     */
+    val behindLive: Boolean = false,
 ) {
+    /** Show the LIVE chip: Das Erste live, or an edition still on air. */
+    val showLive: Boolean
+        get() =
+            !remote && (channel || (live && (end == null || OffsetDateTime.now().isBefore(end))))
+
     /** Broadcast time of a media position: the edition's air time plus the offset. */
     fun airAt(ms: Long): OffsetDateTime? = start?.plusNanos(ms * 1_000_000)
 
@@ -154,6 +163,10 @@ fun rememberPlayState(context: Context, c: MediaController?): PlayState {
                             hasSubs = c.currentTracks.containsType(C.TRACK_TYPE_TEXT),
                             subsOn =
                                 C.TRACK_TYPE_TEXT !in c.trackSelectionParameters.disabledTrackTypes,
+                            behindLive =
+                                (id == Edition.CHANNEL_ID || id?.startsWith("live-") == true) &&
+                                    (dur > 0 && dur - pos > 25_000 ||
+                                        Live.delayed(extras?.getString(Playlist.EXTRA_URL))),
                         )
                     }
                 delay(200)
@@ -445,8 +458,14 @@ fun VideoPlayer(
                                 color = Color.White,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.weight(1f),
                             )
+                            if (st.showLive) {
+                                LiveChip(st.behindLive) {
+                                    interaction++
+                                    Live.go(activity, scope, st)
+                                }
+                            }
+                            Spacer(Modifier.weight(1f))
                             Ctl(
                                 if (activity.fullscreen) R.drawable.ic_ctl_full_exit
                                 else R.drawable.ic_ctl_full,
@@ -880,6 +899,89 @@ fun PlayerSettingsSheet(activity: MainActivity, st: PlayState, onDismiss: () -> 
                 )
             }
         }
+    }
+}
+
+/** LIVE as on YouTube: a red dot at the live edge, grey when behind; tapping returns to it. */
+@Composable
+private fun LiveChip(behind: Boolean, onClick: () -> Unit) {
+    Row(
+        Modifier.padding(start = 10.dp)
+            .clip(RoundedCornerShape(50))
+            .background(Color(0xD910356F))
+            .clickable(enabled = behind, onClick = onClick)
+            .padding(horizontal = 9.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier.size(8.dp)
+                .clip(RoundedCornerShape(50))
+                .background(if (behind) Palette.Mist else Color(0xFFE53935))
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            stringResource(R.string.live),
+            color = if (behind) Palette.Mist else Color.White,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.5.sp,
+        )
+    }
+}
+
+/** Returning to the live edge of Das Erste live or of an edition on air. */
+object Live {
+    private val SESSION = Regex("""/live/(\d+)-(\d+)-(\d+)/""")
+
+    /** A time-shifted session started well after the edition began (it replays from its start). */
+    fun delayed(url: String?): Boolean {
+        val (start, _, began) = SESSION.find(url ?: return false)?.destructured ?: return false
+        return began.toLong() - start.toLong() > 60
+    }
+
+    fun go(activity: MainActivity, scope: kotlinx.coroutines.CoroutineScope, st: PlayState) {
+        val c = activity.controller ?: return
+        val url = st.url
+        val m = url?.let { SESSION.find(it) }
+        if (!st.channel && m != null && delayed(url)) {
+            // A session without the catch-up delay: its live edge is what airs now.
+            val (start, end, began) = m.destructured
+            val newUrl = url.replace("/$start-$end-$began/", "/$start-$end-$start/")
+            val item = c.currentMediaItem ?: return
+            val extras =
+                android.os.Bundle(item.mediaMetadata.extras).apply {
+                    putString(Playlist.EXTRA_URL, newUrl)
+                    putString(Playlist.EXTRA_REMOTE, newUrl)
+                }
+            c.replaceMediaItem(
+                c.currentMediaItemIndex,
+                item
+                    .buildUpon()
+                    .setUri(newUrl)
+                    .setMediaMetadata(item.mediaMetadata.buildUpon().setExtras(extras).build())
+                    .build(),
+            )
+            scope.launch {
+                // Its playlists start at the edition's beginning; seek once the new one is loaded.
+                repeat(50) {
+                    val d = c.duration
+                    if (
+                        d != C.TIME_UNSET &&
+                            d > 0 &&
+                            c.currentMediaItem?.localConfiguration?.uri.toString() == newUrl
+                    ) {
+                        c.seekTo((d - 12_000).coerceAtLeast(0))
+                        c.play()
+                        return@launch
+                    }
+                    delay(200)
+                }
+            }
+            return
+        }
+        if (st.channel) c.seekToDefaultPosition()
+        else c.seekTo((c.duration - 12_000).coerceAtLeast(0))
+        c.play()
     }
 }
 
