@@ -156,7 +156,7 @@ object Downloads {
         DownloadNotificationHelper(context, CHANNEL)
             .buildProgressNotification(
                 context,
-                R.drawable.ic_notification,
+                R.drawable.ic_tagesschau,
                 null,
                 null,
                 downloads,

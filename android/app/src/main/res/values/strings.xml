@@ -2,7 +2,6 @@
 <resources>
     <string name="settings">Einstellungen</string>
     <string name="server">Server</string>
-    <string name="retention_hours">Downloads behalten (Stunden)</string>
     <string name="prefer_live">Laufende Ausgabe ab Beginn</string>
     <string name="leave_mode">Beim Verlassen des Players</string>
     <string name="leave_pip">Bild-im-Bild weiterspielen</string>
@@ -35,11 +34,27 @@
     <string name="shizuku_permission_denied">Shizuku-Zugriff abgelehnt; in Shizuku freigeben.</string>
     <string name="shizuku_not_running">Shizuku ist installiert, läuft aber nicht.</string>
     <string name="shizuku_unavailable">Ohne Shizuku: Updates brauchen eine Bestätigung.</string>
-    <string name="shizuku_allow">Shizuku-Zugriff erlauben</string>
-    <string name="tasker_overlay_hint">Damit die Tasker-Aktion auch im Hintergrund abspielen kann, braucht die App die Berechtigung „Über anderen Apps einblenden“.</string>
-    <string name="tasker_overlay_grant">Berechtigung erteilen</string>
-    <string name="tasker_overlay_granted">Berechtigung erteilt</string>
+    <string name="tasker_overlay_hint">Nötig, damit die Tasker-Aktion auch im Hintergrund abspielen kann.</string>
     <string name="tasker_action">tagesschau abspielen</string>
     <string name="tasker_action_help">Spielt die neueste Ausgabe ab, oder die gerade laufende von ihrem Beginn an.</string>
     <string name="tasker_audio_only">Laufende Ausgabe nur als Ton</string>
+    <string name="back">Zurück</string>
+    <string name="playing">spielt</string>
+    <string name="on_air">läuft gerade</string>
+    <string name="section_playback">Wiedergabe</string>
+    <string name="section_downloads">Downloads</string>
+    <string name="section_server">Server</string>
+    <string name="section_tasker">Tasker</string>
+    <string name="prefer_live_help">Läuft eine Ausgabe, spielt sie ab ihrem Beginn statt der neuesten fertigen.</string>
+    <string name="leave_mode_help">Was passiert, wenn du während der Wiedergabe die App verlässt.</string>
+    <string name="retention">Downloads behalten</string>
+    <string name="retention_help">Ältere Ausgaben werden automatisch gelöscht.</string>
+    <string name="retention_1d">1 Tag</string>
+    <string name="retention_2d">2 Tage</string>
+    <string name="retention_3d">3 Tage</string>
+    <string name="retention_7d">1 Woche</string>
+    <string name="allow">Erlauben</string>
+    <string name="open">Öffnen</string>
+    <string name="tasker_overlay">Über anderen Apps einblenden</string>
+    <string name="disclaimer">Diese App ist kein Angebot der ARD, von ARD-aktuell oder tagesschau.de und steht mit ihnen in keiner Verbindung.</string>
 </resources>

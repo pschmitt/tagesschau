@@ -281,7 +281,7 @@ object Updater {
             )
         val n =
             NotificationCompat.Builder(context, CHANNEL)
-                .setSmallIcon(R.drawable.ic_notification)
+                .setSmallIcon(R.drawable.ic_tagesschau)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setContentIntent(open)

@@ -1,0 +1,331 @@
+package dev.pschmitt.tagesschau
+
+import android.content.Intent
+import android.os.Bundle
+import android.provider.Settings as AndroidSettings
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import dev.pschmitt.tagesschau.update.ShizukuInstaller
+import dev.pschmitt.tagesschau.update.ShizukuState
+import dev.pschmitt.tagesschau.update.Updater
+import kotlinx.coroutines.launch
+
+class SettingsActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent { TagesschauTheme { SettingsScreen(this) } }
+    }
+}
+
+private val RETENTION =
+    listOf(
+        24 to R.string.retention_1d,
+        48 to R.string.retention_2d,
+        72 to R.string.retention_3d,
+        168 to R.string.retention_7d,
+    )
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsScreen(activity: SettingsActivity) {
+    val settings = remember { Settings(activity) }
+    val scope = rememberCoroutineScope()
+    val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    var preferLive by remember { mutableStateOf(settings.preferLive) }
+    var leaveMode by remember { mutableStateOf(settings.leaveMode) }
+    var retention by remember { mutableStateOf(settings.retentionHours) }
+    var server by remember { mutableStateOf(settings.serverUrl) }
+    var editServer by remember { mutableStateOf(false) }
+    var overlay by remember { mutableStateOf(AndroidSettings.canDrawOverlays(activity)) }
+    val shizuku = remember { ShizukuInstaller.get(activity) }
+    val shizukuState by shizuku.state.collectAsState()
+    LaunchedEffect(Unit) { shizuku.refresh() }
+    LifecycleResumeEffect(Unit) {
+        overlay = AndroidSettings.canDrawOverlays(activity)
+        shizuku.refresh()
+        onPauseOrDispose {}
+    }
+    val itemColors = ListItemDefaults.colors(containerColor = Palette.Studio)
+
+    Scaffold(
+        modifier = Modifier.nestedScroll(scroll.nestedScrollConnection),
+        containerColor = Palette.Studio,
+        topBar = {
+            LargeTopAppBar(
+                title = { Text(stringResource(R.string.settings)) },
+                navigationIcon = {
+                    IconButton(onClick = { activity.finish() }) {
+                        Icon(painterResource(R.drawable.ic_back), stringResource(R.string.back))
+                    }
+                },
+                scrollBehavior = scroll,
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = Palette.Studio,
+                        scrolledContainerColor = Palette.Deep,
+                    ),
+            )
+        },
+    ) { padding ->
+        Column(Modifier.padding(padding).verticalScroll(rememberScrollState())) {
+            Section(R.string.section_playback)
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.prefer_live)) },
+                supportingContent = { Text(stringResource(R.string.prefer_live_help)) },
+                leadingContent = { Icon(painterResource(R.drawable.ic_play), null) },
+                trailingContent = {
+                    Switch(
+                        preferLive,
+                        {
+                            preferLive = it
+                            settings.preferLive = it
+                        },
+                    )
+                },
+                colors = itemColors,
+            )
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.leave_mode)) },
+                supportingContent = { Text(stringResource(R.string.leave_mode_help)) },
+                leadingContent = { Icon(painterResource(R.drawable.ic_pip), null) },
+                colors = itemColors,
+            )
+            LeaveMode.entries.forEach { mode ->
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            stringResource(
+                                when (mode) {
+                                    LeaveMode.PIP -> R.string.leave_pip
+                                    LeaveMode.AUDIO -> R.string.leave_audio
+                                    LeaveMode.STOP -> R.string.leave_stop
+                                }
+                            )
+                        )
+                    },
+                    leadingContent = { RadioButton(selected = leaveMode == mode, onClick = null) },
+                    modifier =
+                        Modifier.padding(start = 40.dp).selectable(
+                            selected = leaveMode == mode,
+                            role = Role.RadioButton,
+                        ) {
+                            leaveMode = mode
+                            settings.leaveMode = mode
+                        },
+                    colors = itemColors,
+                )
+            }
+
+            Section(R.string.section_downloads)
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.retention)) },
+                supportingContent = { Text(stringResource(R.string.retention_help)) },
+                leadingContent = { Icon(painterResource(R.drawable.ic_download), null) },
+                colors = itemColors,
+            )
+            SingleChoiceSegmentedButtonRow(
+                Modifier.fillMaxWidth().padding(start = 56.dp, end = 16.dp, bottom = 8.dp)
+            ) {
+                RETENTION.forEachIndexed { i, (hours, label) ->
+                    SegmentedButton(
+                        selected = retention == hours,
+                        onClick = {
+                            retention = hours
+                            settings.retentionHours = hours
+                            Downloads.prune(activity)
+                        },
+                        shape = SegmentedButtonDefaults.itemShape(i, RETENTION.size),
+                    ) {
+                        Text(stringResource(label), fontSize = 13.sp)
+                    }
+                }
+            }
+
+            Section(R.string.section_server)
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.server)) },
+                supportingContent = { Text(server) },
+                leadingContent = { Icon(painterResource(R.drawable.ic_server), null) },
+                modifier = Modifier.clickable { editServer = true },
+                colors = itemColors,
+            )
+
+            Section(R.string.updates)
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.update_check)) },
+                supportingContent = {
+                    Text("${BuildConfig.VERSION_NAME} (${BuildConfig.BUILD_COMMIT.take(7)})")
+                },
+                leadingContent = { Icon(painterResource(R.drawable.ic_update), null) },
+                modifier =
+                    Modifier.clickable {
+                        scope.launch {
+                            val update = runCatching { Updater.check() }.getOrNull()
+                            if (update == null) {
+                                toast(activity, R.string.update_none)
+                            } else {
+                                toast(activity, R.string.update_installing)
+                                if (
+                                    !runCatching { Updater.install(activity, update) }
+                                        .getOrDefault(false)
+                                ) {
+                                    toast(activity, R.string.update_failed)
+                                }
+                            }
+                        }
+                    },
+                colors = itemColors,
+            )
+            ListItem(
+                headlineContent = { Text("Shizuku") },
+                supportingContent = {
+                    Text(
+                        stringResource(
+                            when (shizukuState) {
+                                ShizukuState.READY -> R.string.shizuku_ready
+                                ShizukuState.PERMISSION_NEEDED -> R.string.shizuku_permission_needed
+                                ShizukuState.PERMISSION_DENIED -> R.string.shizuku_permission_denied
+                                ShizukuState.NOT_RUNNING -> R.string.shizuku_not_running
+                                ShizukuState.UNAVAILABLE -> R.string.shizuku_unavailable
+                            }
+                        )
+                    )
+                },
+                leadingContent = { Icon(painterResource(R.drawable.ic_shield), null) },
+                trailingContent = {
+                    when (shizukuState) {
+                        ShizukuState.PERMISSION_NEEDED ->
+                            FilledTonalButton(onClick = { shizuku.requestPermission() }) {
+                                Text(stringResource(R.string.allow))
+                            }
+                        ShizukuState.NOT_RUNNING,
+                        ShizukuState.PERMISSION_DENIED ->
+                            shizuku.managerLaunchIntent()?.let { open ->
+                                FilledTonalButton(onClick = { activity.startActivity(open) }) {
+                                    Text(stringResource(R.string.open))
+                                }
+                            }
+                        else -> Unit
+                    }
+                },
+                colors = itemColors,
+            )
+
+            Section(R.string.section_tasker)
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.tasker_overlay)) },
+                supportingContent = { Text(stringResource(R.string.tasker_overlay_hint)) },
+                leadingContent = { Icon(painterResource(R.drawable.ic_bolt), null) },
+                trailingContent = {
+                    Switch(
+                        overlay,
+                        {
+                            activity.startActivity(
+                                Intent(
+                                    AndroidSettings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    "package:${activity.packageName}".toUri(),
+                                )
+                            )
+                        },
+                    )
+                },
+                colors = itemColors,
+            )
+            Text(
+                stringResource(R.string.disclaimer),
+                color = Palette.Mist,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(16.dp),
+            )
+        }
+    }
+
+    if (editServer) {
+        var draft by remember { mutableStateOf(server) }
+        AlertDialog(
+            onDismissRequest = { editServer = false },
+            containerColor = Palette.Deep,
+            title = { Text(stringResource(R.string.server)) },
+            text = { OutlinedTextField(draft, { draft = it }, singleLine = true) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (draft.startsWith("http")) {
+                            settings.serverUrl = draft
+                            server = settings.serverUrl
+                        }
+                        editServer = false
+                    }
+                ) {
+                    Text(stringResource(R.string.save))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { editServer = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun Section(title: Int) {
+    Text(
+        stringResource(title),
+        color = Palette.Signal,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp,
+        modifier = Modifier.padding(start = 16.dp, top = 20.dp, bottom = 4.dp),
+    )
+}
+
+private fun toast(activity: SettingsActivity, id: Int) =
+    Toast.makeText(activity, activity.getString(id), Toast.LENGTH_LONG).show()

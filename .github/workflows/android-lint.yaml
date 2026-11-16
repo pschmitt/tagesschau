@@ -18,6 +18,8 @@ jobs:
     with:
       project-directory: android
       lint-baseline-path: ""
+      # The ktfmt dev shell lives in the Android flake, not the root (server) flake.
+      ktfmt-flake-ref: ./android#ktfmt
     secrets: inherit
     permissions:
       contents: write
