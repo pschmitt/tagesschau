@@ -159,6 +159,8 @@
   }
   .big-play svg { width: 2.4rem; height: 2.4rem; margin-left: 0.3rem; }
   .big-play[hidden], .unmute[hidden] { display: none; }
+  .big-play { animation: fade-in 0.2s ease-out; }
+  @keyframes fade-in { from { opacity: 0; } }
   .flash {
     position: absolute; inset: 0; margin: auto; width: 5.5rem; height: 5.5rem;
     border-radius: 50%; background: rgba(7, 29, 64, 0.72); display: grid; place-items: center;
@@ -186,7 +188,7 @@
     transition: opacity 0.25s ease;
   }
   .player.idle .transport { opacity: 0; pointer-events: none; }
-  @media (prefers-reduced-motion: reduce) { .transport { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .transport { transition: none; } .big-play { animation: none; } }
   .group { display: flex; align-items: center; gap: 0.15rem; flex-shrink: 0; }
   .group:first-child { flex-shrink: 1; min-width: 0; }
   .time { overflow: hidden; text-overflow: ellipsis; }
@@ -497,6 +499,7 @@
   const SPEEDS = [1, 1.25, 1.5, 1.75, 2, 0.75];
   let items = [];      // newest first; a live edition, if any, comes first
   let current = null;  // the item playing
+  let flashUntil = 0;  // the play/pause sign is showing until then
   let hls = null;
   let clockEl = null;
 
@@ -799,7 +802,8 @@
     const playing = !isPaused();
     icon($("toggle"), playing ? "pause" : "play");
     $("toggle").setAttribute("aria-label", playing ? "Pause" : "Abspielen");
-    $("bigplay").hidden = playing || video.seeking || (video.readyState < 2 && !video.error);
+    // While the play/pause sign flashes, the big play button waits (no two icons on top of each other).
+    $("bigplay").hidden = playing || video.seeking || (video.readyState < 2 && !video.error) || performance.now() < flashUntil;
     icon($("mute"), video.muted || video.volume === 0 ? "mute" : "vol");
     $("volume").value = video.muted ? 0 : video.volume;
     $("mute").setAttribute("aria-label", video.muted ? "Ton an" : "Ton aus");
@@ -903,6 +907,9 @@
   let acted = false;
   function pulse(kind) {
     if (!acted) return;
+    flashUntil = performance.now() + 650;
+    $("bigplay").hidden = true;
+    setTimeout(syncButtons, 660);
     flash.className = "flash " + kind;
     icon(flash, kind);
     void flash.offsetWidth; // restart the animation
