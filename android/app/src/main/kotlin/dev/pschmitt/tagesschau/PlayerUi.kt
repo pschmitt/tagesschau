@@ -988,7 +988,10 @@ object Live {
                     if (
                         d != C.TIME_UNSET &&
                             d > 0 &&
-                            c.currentMediaItem?.localConfiguration?.uri.toString() == newUrl
+                            c.currentMediaItem
+                                ?.mediaMetadata
+                                ?.extras
+                                ?.getString(Playlist.EXTRA_URL) == newUrl
                     ) {
                         c.seekTo((d - 12_000).coerceAtLeast(0))
                         c.play()

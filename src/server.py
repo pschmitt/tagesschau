@@ -237,6 +237,7 @@ LIVE_MASTER = os.environ.get(
 LIVE_MAX = timedelta(minutes=int(os.environ.get("TAGESSCHAU_LIVE_MINUTES", "90")))
 MIN_EDITION = timedelta(seconds=270)  # skips the 2-minute night summaries
 END_MARGIN = timedelta(seconds=60)
+CATCH_UP = timedelta(seconds=60)  # sessions begun later than this replay from the start
 MIN_DELAY = timedelta(seconds=15)  # segments must exist upstream before we list them
 # The web player's service worker: only needed so notifications work (also on Android Chrome).
 SERVICE_WORKER = """self.addEventListener("notificationclick", e => {
@@ -361,8 +362,11 @@ def shifted_playlist(kind, start, end, began, now):
         "#EXT-X-TARGETDURATION:%d" % target,
         "#EXT-X-MEDIA-SEQUENCE:%d" % (first or seq),
         "#EXT-X-PLAYLIST-TYPE:EVENT",
-        "#EXT-X-START:TIME-OFFSET=0,PRECISE=YES",
     ]
+    # A catch-up session starts at the edition's beginning; one without delay (the players' "LIVE")
+    # starts at its live edge, the players' default.
+    if began - start > CATCH_UP:
+        head.append("#EXT-X-START:TIME-OFFSET=0,PRECISE=YES")
     tail = ["#EXT-X-ENDLIST"] if now - delay + lead >= cutoff else []
     return "\n".join(head + out + tail) + "\n"
 
