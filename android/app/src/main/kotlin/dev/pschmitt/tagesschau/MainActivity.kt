@@ -103,6 +103,8 @@ class MainActivity : ComponentActivity() {
     var inPip by mutableStateOf(false)
         private set
 
+    var sharing by mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -165,6 +167,13 @@ class MainActivity : ComponentActivity() {
     fun play(editions: List<Edition>, index: Int) {
         val c = controller ?: return
         val e = editions[index]
+        if (e.channel) {
+            c.setMediaItem(Playlist.item(this, e))
+            c.prepare()
+            c.seekToDefaultPosition()
+            c.play()
+            return
+        }
         val resume = if (e.live) 0 else Positions.resumeAt(this, e.id)
         c.setMediaItems(editions.map { Playlist.item(this, it) }, index, resume)
         c.prepare()
@@ -264,6 +273,7 @@ private fun MainScreen(activity: MainActivity) {
     if (bigPicture) {
         if (activity.fullscreen) BackHandler { activity.setFullscreenMode(false) }
         VideoPlayer(activity, st, overlay = true, modifier = Modifier.fillMaxSize())
+        if (activity.sharing) ShareSheet(activity, st, st.url) { activity.sharing = false }
         return
     }
 
@@ -281,6 +291,8 @@ private fun MainScreen(activity: MainActivity) {
             runCatching { Api(settings.serverUrl).listing() }
                 .onSuccess {
                     listing = it
+                    if (Downloads.autoAllowed(activity))
+                        Downloads.autoAdd(activity, it.editions, viaService = true)
                     error = null
                 }
                 .onFailure { error = it.message }
@@ -370,6 +382,7 @@ private fun MainScreen(activity: MainActivity) {
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
             )
             Box(Modifier.background(Palette.Deep)) { Transport(activity, st) }
+            if (activity.sharing) ShareSheet(activity, st, st.url) { activity.sharing = false }
             PullToRefreshBox(
                 isRefreshing = loading,
                 onRefresh = ::refresh,
@@ -377,7 +390,17 @@ private fun MainScreen(activity: MainActivity) {
             ) {
                 LazyColumn(Modifier.fillMaxSize()) {
                     item(key = "clock") {
-                        Clock(airTime, editions.firstOrNull { it.id == currentId })
+                        Clock(
+                            airTime,
+                            if (currentId == Edition.CHANNEL_ID) Edition.channel()
+                            else editions.firstOrNull { it.id == currentId },
+                        )
+                    }
+                    item(key = Edition.CHANNEL_ID) {
+                        ChannelRow(playing = currentId == Edition.CHANNEL_ID) {
+                            val ch = Edition.channel()
+                            activity.play(listOf(ch), 0)
+                        }
                     }
                     if (error != null) {
                         item(key = "error") {
@@ -594,6 +617,31 @@ private fun EditionRow(
                         )
                     }
             }
+        }
+    }
+}
+
+/** Das Erste live, above the editions. */
+@Composable
+private fun ChannelRow(playing: Boolean, onPlay: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 6.dp)
+            .clip(RoundedCornerShape(6.dp))
+            .background(if (playing) Palette.Panel else Palette.Deep)
+            .clickable(onClick = onPlay)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFE53935)))
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text("Das Erste live", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text(
+                stringResource(if (playing) R.string.playing else R.string.channel_live),
+                color = Palette.Mist,
+                fontSize = 14.sp,
+            )
         }
     }
 }

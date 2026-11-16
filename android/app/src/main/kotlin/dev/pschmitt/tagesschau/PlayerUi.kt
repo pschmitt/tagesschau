@@ -1,7 +1,6 @@
 package dev.pschmitt.tagesschau
 
 import android.content.Context
-import android.content.Intent
 import android.view.ViewGroup
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -87,12 +86,17 @@ data class PlayState(
     val hasPrevious: Boolean = false,
     val hasNext: Boolean = false,
     val loaded: Boolean = false,
+    val url: String? = null,
 ) {
     /** Broadcast time of a media position: the edition's air time plus the offset. */
     fun airAt(ms: Long): OffsetDateTime? = start?.plusNanos(ms * 1_000_000)
 
+    /** Das Erste's live stream: the clock shows the current time. */
+    val channel: Boolean
+        get() = mediaId == Edition.CHANNEL_ID
+
     val air: OffsetDateTime?
-        get() = airAt(position)
+        get() = if (channel) OffsetDateTime.now() else airAt(position)
 
     /** The timeline in media ms: fixed to the scheduled end for live, else the file's length. */
     val span: Long
@@ -133,6 +137,7 @@ fun rememberPlayState(context: Context, c: MediaController?): PlayState {
                             hasPrevious = c.hasPreviousMediaItem(),
                             hasNext = c.hasNextMediaItem(),
                             loaded = c.mediaItemCount > 0,
+                            url = extras?.getString(Playlist.EXTRA_URL),
                         )
                     }
                 delay(200)
@@ -416,7 +421,7 @@ fun Transport(activity: MainActivity, st: PlayState, onInteract: () -> Unit = {}
             }
             Ctl(R.drawable.ic_share, R.string.share) {
                 onInteract()
-                shareMoment(activity, st)
+                activity.sharing = true
             }
             Box(
                 Modifier.height(44.dp)
@@ -555,39 +560,66 @@ private fun Timeline(st: PlayState, modifier: Modifier, onSeek: (Long) -> Unit) 
             drawCircle(Palette.Signal, 7.dp.toPx(), Offset(size.width * frac, y))
         }
         if (dragFrac >= 0 && span > 0) {
-            val t = st.airAt((dragFrac * span).toLong())?.hms() ?: ""
-            Text(
-                t,
-                color = Palette.Deep,
-                fontWeight = FontWeight.Bold,
-                fontSize = 12.sp,
-                modifier =
-                    Modifier.offset {
-                            IntOffset(
-                                (dragFrac * widthPx).roundToInt() - 32.dp.roundToPx(),
-                                -26.dp.roundToPx(),
-                            )
-                        }
-                        .background(Palette.Ink, RoundedCornerShape(3.dp))
-                        .padding(horizontal = 6.dp, vertical = 1.dp)
-                        .width(52.dp),
-            )
+            val ms = (dragFrac * span).toLong()
+            val t = st.airAt(ms)?.hms() ?: ""
+            val thumbUrl = if (st.live) null else st.url
+            val boxW = if (thumbUrl != null) 136.dp else 64.dp
+            val boxWpx = with(density) { boxW.toPx() }
+            val x =
+                (dragFrac * widthPx - boxWpx / 2).coerceIn(-boxWpx / 3, widthPx - boxWpx * 2 / 3)
+            Column(
+                Modifier.offset {
+                        IntOffset(
+                            x.roundToInt(),
+                            -(if (thumbUrl != null) 104.dp else 26.dp).roundToPx(),
+                        )
+                    }
+                    .width(boxW)
+                    .clip(RoundedCornerShape(5.dp))
+                    .background(Palette.Deep)
+            ) {
+                // Scrubbing thumbnail (as on the web): the low-quality file, seeking along.
+                if (thumbUrl != null)
+                    ScrubThumb(thumbUrl, ms, Modifier.fillMaxWidth().height(76.dp))
+                Text(
+                    t,
+                    color = Palette.Deep,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier =
+                        Modifier.fillMaxWidth().background(Palette.Ink).padding(vertical = 1.dp),
+                )
+            }
         }
     }
 }
 
-/** Shares a link to this moment, the web player's ?at= link. */
-private fun shareMoment(activity: MainActivity, st: PlayState) {
-    val at = st.air ?: return
-    val url = "${Settings(activity).serverUrl}/?at=${at.toEpochSecond()}"
-    val title = st.start?.let { "tagesschau ${it.hm()} Uhr" } ?: "tagesschau"
-    activity.startActivity(
-        Intent.createChooser(
-            Intent(Intent.ACTION_SEND)
-                .setType("text/plain")
-                .putExtra(Intent.EXTRA_SUBJECT, title)
-                .putExtra(Intent.EXTRA_TEXT, "$title: $url"),
-            activity.getString(R.string.share),
-        )
+/** A muted player on ARD's lowest-quality file that seeks to the nearest key frame. */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+@Composable
+private fun ScrubThumb(url: String, ms: Long, modifier: Modifier) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val low = url.replace(Regex("""\.web[a-z]+\.h264\.mp4$"""), ".webs.h264.mp4")
+    val player =
+        remember(low) {
+            androidx.media3.exoplayer.ExoPlayer.Builder(context).build().apply {
+                volume = 0f
+                setSeekParameters(androidx.media3.exoplayer.SeekParameters.CLOSEST_SYNC)
+                setMediaItem(androidx.media3.common.MediaItem.fromUri(low))
+                prepare()
+            }
+        }
+    androidx.compose.runtime.DisposableEffect(player) { onDispose { player.release() } }
+    LaunchedEffect(ms) { player.seekTo(ms) }
+    AndroidView(
+        factory = {
+            androidx.media3.ui.PlayerView(it).apply {
+                useController = false
+                this.player = player
+                setShutterBackgroundColor(android.graphics.Color.BLACK)
+            }
+        },
+        modifier = modifier,
     )
 }

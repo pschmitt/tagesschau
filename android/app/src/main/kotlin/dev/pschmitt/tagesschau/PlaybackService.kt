@@ -52,7 +52,19 @@ class PlaybackService : MediaSessionService() {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
         session = MediaSession.Builder(this, player).setSessionActivity(open).build()
+        // Stop after the current edition unless "continue with the next one" is on.
+        val settings = Settings(this)
+        player.pauseAtEndOfMediaItems = !settings.autoNext
+        prefsListener =
+            android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+                if (key == Settings.KEY_AUTO_NEXT)
+                    player.pauseAtEndOfMediaItems = !settings.autoNext
+            }
+        settings.prefs.registerOnSharedPreferenceChangeListener(prefsListener)
     }
+
+    private var prefsListener: android.content.SharedPreferences.OnSharedPreferenceChangeListener? =
+        null
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
 

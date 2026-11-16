@@ -81,6 +81,9 @@ private fun SettingsScreen(activity: SettingsActivity) {
     var preferLive by remember { mutableStateOf(settings.preferLive) }
     var leaveMode by remember { mutableStateOf(settings.leaveMode) }
     var retention by remember { mutableStateOf(settings.retentionHours) }
+    var autoNext by remember { mutableStateOf(settings.autoNext) }
+    var autoDownload by remember { mutableStateOf(settings.autoDownload) }
+    var quality by remember { mutableStateOf(settings.downloadQuality) }
     var server by remember { mutableStateOf(settings.serverUrl) }
     var editServer by remember { mutableStateOf(false) }
     var overlay by remember { mutableStateOf(AndroidSettings.canDrawOverlays(activity)) }
@@ -132,6 +135,21 @@ private fun SettingsScreen(activity: SettingsActivity) {
                 colors = itemColors,
             )
             ListItem(
+                headlineContent = { Text(stringResource(R.string.auto_next)) },
+                supportingContent = { Text(stringResource(R.string.auto_next_help)) },
+                leadingContent = { Icon(painterResource(R.drawable.ic_ctl_next), null) },
+                trailingContent = {
+                    Switch(
+                        autoNext,
+                        {
+                            autoNext = it
+                            settings.autoNext = it
+                        },
+                    )
+                },
+                colors = itemColors,
+            )
+            ListItem(
                 headlineContent = { Text(stringResource(R.string.leave_mode)) },
                 supportingContent = { Text(stringResource(R.string.leave_mode_help)) },
                 leadingContent = { Icon(painterResource(R.drawable.ic_pip), null) },
@@ -164,6 +182,57 @@ private fun SettingsScreen(activity: SettingsActivity) {
             }
 
             Section(R.string.section_downloads)
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.auto_download)) },
+                supportingContent = { Text(stringResource(R.string.auto_download_help)) },
+                leadingContent = { Icon(painterResource(R.drawable.ic_download), null) },
+                colors = itemColors,
+            )
+            SingleChoiceSegmentedButtonRow(
+                Modifier.fillMaxWidth().padding(start = 56.dp, end = 16.dp, bottom = 8.dp)
+            ) {
+                val modes =
+                    listOf(
+                        AutoDownload.OFF to R.string.auto_off,
+                        AutoDownload.WIFI to R.string.auto_wifi,
+                        AutoDownload.ALWAYS to R.string.auto_always,
+                    )
+                modes.forEachIndexed { i, (mode, label) ->
+                    SegmentedButton(
+                        selected = autoDownload == mode,
+                        onClick = {
+                            autoDownload = mode
+                            settings.autoDownload = mode
+                            Downloads.scheduleAutoDownload(activity)
+                        },
+                        shape = SegmentedButtonDefaults.itemShape(i, modes.size),
+                    ) {
+                        Text(stringResource(label), fontSize = 13.sp)
+                    }
+                }
+            }
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.download_quality)) },
+                colors = itemColors,
+                modifier = Modifier.padding(start = 40.dp),
+            )
+            SingleChoiceSegmentedButtonRow(
+                Modifier.fillMaxWidth().padding(start = 56.dp, end = 16.dp, bottom = 8.dp)
+            ) {
+                val qualities = listOf("webxxl" to "1080p", "webxl" to "720p", "webm" to "540p")
+                qualities.forEachIndexed { i, (q, label) ->
+                    SegmentedButton(
+                        selected = quality == q,
+                        onClick = {
+                            quality = q
+                            settings.downloadQuality = q
+                        },
+                        shape = SegmentedButtonDefaults.itemShape(i, qualities.size),
+                    ) {
+                        Text(label, fontSize = 13.sp)
+                    }
+                }
+            }
             ListItem(
                 headlineContent = { Text(stringResource(R.string.retention)) },
                 supportingContent = { Text(stringResource(R.string.retention_help)) },

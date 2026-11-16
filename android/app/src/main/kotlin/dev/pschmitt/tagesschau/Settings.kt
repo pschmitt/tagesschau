@@ -10,9 +10,17 @@ enum class LeaveMode {
     STOP,
 }
 
+/** Automatic downloads of new editions: off, on Wi-Fi (unmetered networks) or always. */
+enum class AutoDownload {
+    OFF,
+    WIFI,
+    ALWAYS,
+}
+
 /** User settings, kept in SharedPreferences. */
 class Settings(context: Context) {
-    private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    val prefs: android.content.SharedPreferences =
+        context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
     /** Base URL of the tagesschau server (github.com/pschmitt/tagesschau). */
     var serverUrl: String
@@ -36,6 +44,22 @@ class Settings(context: Context) {
                 .getOrDefault(LeaveMode.PIP)
         set(value) = prefs.edit { putString(KEY_LEAVE, value.name) }
 
+    /** Continue with the next (older) edition when one ends. */
+    var autoNext: Boolean
+        get() = prefs.getBoolean(KEY_AUTO_NEXT, false)
+        set(value) = prefs.edit { putBoolean(KEY_AUTO_NEXT, value) }
+
+    var autoDownload: AutoDownload
+        get() =
+            runCatching { AutoDownload.valueOf(prefs.getString(KEY_AUTO, null) ?: "") }
+                .getOrDefault(AutoDownload.WIFI)
+        set(value) = prefs.edit { putString(KEY_AUTO, value.name) }
+
+    /** ARD's file variant for downloads: webxxl (1080p), webxl (720p) or webm (540p). */
+    var downloadQuality: String
+        get() = prefs.getString(KEY_QUALITY, null) ?: "webxl"
+        set(value) = prefs.edit { putString(KEY_QUALITY, value) }
+
     companion object {
         const val DEFAULT_SERVER = "https://tagesschau.brkn.lol"
         const val DEFAULT_RETENTION_HOURS = 48
@@ -43,5 +67,8 @@ class Settings(context: Context) {
         private const val KEY_RETENTION = "retention_hours"
         private const val KEY_PREFER_LIVE = "prefer_live"
         private const val KEY_LEAVE = "leave_mode"
+        private const val KEY_AUTO = "auto_download"
+        const val KEY_AUTO_NEXT = "auto_next"
+        private const val KEY_QUALITY = "download_quality"
     }
 }

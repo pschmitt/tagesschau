@@ -11,19 +11,29 @@ import androidx.media3.common.MimeTypes
 object Playlist {
     const val EXTRA_DATE = "date"
     const val EXTRA_END = "end"
+    const val EXTRA_URL = "url"
 
-    fun item(context: Context, e: Edition, url: String = e.url): MediaItem {
+    fun item(context: Context, e: Edition, streamUrl: String = e.url): MediaItem {
+        // A downloaded edition plays its downloaded file (possibly another quality).
+        val url = if (e.live) streamUrl else Downloads.completedUri(context, e.id) ?: streamUrl
         val server = Settings(context).serverUrl
         val metadata =
             MediaMetadata.Builder()
                 .setTitle(e.title)
-                .setArtist(if (e.live) "${e.day}, läuft gerade" else e.day)
+                .setArtist(
+                    when {
+                        e.channel -> "Fernsehprogramm in Echtzeit"
+                        e.live -> "${e.day}, läuft gerade"
+                        else -> e.day
+                    }
+                )
                 .setAlbumTitle("tagesschau")
                 .setArtworkUri("$server/cover.jpg".toUri())
                 .setExtras(
                     Bundle().apply {
-                        putString(EXTRA_DATE, e.date.toString())
+                        if (!e.channel) putString(EXTRA_DATE, e.date.toString())
                         e.end?.let { putString(EXTRA_END, it.toString()) }
+                        putString(EXTRA_URL, url)
                     }
                 )
                 .build()

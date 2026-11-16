@@ -17,8 +17,10 @@ import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.exoplayer.scheduler.Requirements
 import androidx.media3.exoplayer.scheduler.Scheduler
+import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -27,6 +29,7 @@ import java.time.OffsetDateTime
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
@@ -79,18 +82,87 @@ object Downloads {
                 .apply { maxParallelDownloads = 2 }
                 .also { manager = it }
 
+    /** The edition's file in the download quality setting. */
+    private fun downloadUrl(context: Context, e: Edition): String =
+        e.url.replace(
+            Regex("""\.web[a-z]+\.h264\.mp4$"""),
+            ".${Settings(context).downloadQuality}.h264.mp4",
+        )
+
+    private fun request(context: Context, e: Edition): DownloadRequest {
+        val url = downloadUrl(context, e)
+        val data = JSONObject().put("id", e.id).put("date", e.date.toString()).put("url", url)
+        return DownloadRequest.Builder(e.id, url.toUri())
+            .setData(data.toString().toByteArray())
+            .build()
+    }
+
+    /** Starts a download through the service (with its progress notification); foreground only. */
     fun start(context: Context, e: Edition) {
-        val data = JSONObject().put("id", e.id).put("date", e.date.toString()).put("url", e.url)
-        val request =
-            DownloadRequest.Builder(e.id, e.url.toUri())
-                .setData(data.toString().toByteArray())
-                .build()
         DownloadService.sendAddDownload(
             context,
             TagesschauDownloadService::class.java,
-            request,
+            request(context, e),
             false,
         )
+    }
+
+    /** The downloaded file's URI when the edition is completely downloaded. */
+    fun completedUri(context: Context, id: String): String? =
+        runCatching { manager(context).downloadIndex.getDownload(id) }
+            .getOrNull()
+            ?.takeIf { it.state == Download.STATE_COMPLETED }
+            ?.request
+            ?.uri
+            ?.toString()
+
+    /** Whether automatic downloads may run on the current network. */
+    fun autoAllowed(context: Context): Boolean {
+        val mode = Settings(context).autoDownload
+        if (mode == AutoDownload.OFF) return false
+        val cm = context.getSystemService(android.net.ConnectivityManager::class.java)
+        val caps = cm.getNetworkCapabilities(cm.activeNetwork) ?: return false
+        val online = caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        val unmetered =
+            caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED)
+        return online && (mode == AutoDownload.ALWAYS || unmetered)
+    }
+
+    /**
+     * Adds downloads for the editions within the retention period that are not there yet. With
+     * [viaService] (app in the foreground) through the download service; otherwise directly on the
+     * download manager, which needs no service start (call on the main thread).
+     */
+    fun autoAdd(context: Context, editions: List<Edition>, viaService: Boolean): Int {
+        val cutoff = OffsetDateTime.now().minusHours(Settings(context).retentionHours.toLong())
+        val have = all(context).keys
+        val missing = editions.filter { !it.live && it.date.isAfter(cutoff) && it.id !in have }
+        missing.forEach { e ->
+            if (viaService) start(context, e) else manager(context).addDownload(request(context, e))
+        }
+        return missing.size
+    }
+
+    fun scheduleAutoDownload(context: Context) {
+        val mode = Settings(context).autoDownload
+        val wm = WorkManager.getInstance(context)
+        if (mode == AutoDownload.OFF) {
+            wm.cancelUniqueWork("auto-download")
+            return
+        }
+        val request =
+            PeriodicWorkRequestBuilder<AutoDownloadWorker>(1, TimeUnit.HOURS)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(
+                            if (mode == AutoDownload.WIFI) NetworkType.UNMETERED
+                            else NetworkType.CONNECTED
+                        )
+                        .setRequiresStorageNotLow(true)
+                        .build()
+                )
+                .build()
+        wm.enqueueUniquePeriodicWork("auto-download", ExistingPeriodicWorkPolicy.UPDATE, request)
     }
 
     fun remove(context: Context, id: String) =
@@ -182,6 +254,37 @@ class TagesschauDownloadService :
         downloads: MutableList<Download>,
         notMetRequirements: @Requirements.RequirementFlags Int,
     ): Notification = Downloads.notification(this, downloads, notMetRequirements)
+}
+
+/**
+ * Downloads new editions in the background (see [Downloads.autoAdd]) and stays alive while they
+ * run, up to nine minutes; unfinished downloads continue on the next run or app start.
+ */
+class AutoDownloadWorker(context: Context, params: WorkerParameters) :
+    CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
+        val ctx = applicationContext
+        if (Settings(ctx).autoDownload == AutoDownload.OFF) return Result.success()
+        val listing =
+            runCatching { Api(Settings(ctx).serverUrl).listing() }
+                .getOrElse {
+                    return Result.retry()
+                }
+        withContext(Dispatchers.Main) {
+            Downloads.prune(ctx)
+            Downloads.autoAdd(ctx, listing.editions, viaService = false)
+        }
+        val deadline = System.currentTimeMillis() + 9 * 60_000
+        while (System.currentTimeMillis() < deadline) {
+            val busy =
+                withContext(Dispatchers.Main) {
+                    Downloads.manager(ctx).currentDownloads.isNotEmpty()
+                }
+            if (!busy) break
+            delay(5_000)
+        }
+        return Result.success()
+    }
 }
 
 /** Deletes old downloads every few hours, see [Downloads.prune]. */

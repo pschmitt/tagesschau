@@ -17,6 +17,8 @@ data class Edition(
     val url: String,
     val live: Boolean = false,
     val end: OffsetDateTime? = null,
+    /** The Das Erste live channel itself (real time), not an edition. */
+    val channel: Boolean = false,
 ) {
     val time: String
         get() = date.atZoneSameInstant(BERLIN).format(TIME)
@@ -25,10 +27,18 @@ data class Edition(
         get() = date.atZoneSameInstant(BERLIN).format(DAY)
 
     val title: String
-        get() = "tagesschau $time Uhr"
+        get() = if (channel) "Das Erste live" else "tagesschau $time Uhr"
 
     companion object {
         val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
+        const val CHANNEL_ID = "daserste-live"
+        private const val CHANNEL_URL =
+            "https://daserste-live.ard-mcdn.de/daserste/live/hls/de/master.m3u8"
+
+        /** Das Erste's live stream, as it airs. */
+        fun channel() =
+            Edition(CHANNEL_ID, OffsetDateTime.now(), CHANNEL_URL, live = true, channel = true)
+
         private val TIME = DateTimeFormatter.ofPattern("HH:mm", Locale.GERMANY)
         private val DAY = DateTimeFormatter.ofPattern("EEEE, d. MMMM", Locale.GERMANY)
     }
