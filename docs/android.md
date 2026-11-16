@@ -66,6 +66,10 @@ notification says that playback started. With a delay (0 s by default, up to
 30 s) the notification counts down first and offers "Abbrechen" and "Jetzt
 abspielen".
 
+"Lautstärke beim Start festlegen" (off by default) sets the media volume to a
+chosen level when Bluetooth auto-play starts, and again a moment later, after
+Android has restored the device's own volume.
+
 "Bei Trennung weiterspielen" (on by default) keeps playback going on the
 phone's speaker when a Bluetooth device or headphones disconnect; off pauses it. Like the Tasker action, this needs "Über anderen Apps einblenden".
 

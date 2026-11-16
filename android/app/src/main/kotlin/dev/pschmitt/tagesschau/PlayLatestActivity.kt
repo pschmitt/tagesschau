@@ -28,7 +28,10 @@ class PlayLatestActivity : ComponentActivity() {
             intent.getBooleanExtra(PlaybackService.EXTRA_PREFER_LIVE, settings.preferLive)
         val audioOnly = intent.getBooleanExtra(PlaybackService.EXTRA_AUDIO_ONLY, true)
         val resume = intent.getBooleanExtra(PlaybackService.EXTRA_RESUME, true)
-        startService(PlaybackService.playLatestIntent(this, preferLive, audioOnly, resume))
+        startService(
+            PlaybackService.playLatestIntent(this, preferLive, audioOnly, resume)
+                .putExtra(MediaVolume.EXTRA, intent.getIntExtra(MediaVolume.EXTRA, -1))
+        )
         val f =
             MediaController.Builder(
                     this,

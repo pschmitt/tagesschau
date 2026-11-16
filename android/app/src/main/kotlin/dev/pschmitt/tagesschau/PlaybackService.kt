@@ -93,7 +93,16 @@ class PlaybackService : MediaSessionService() {
             val preferLive = intent.getBooleanExtra(EXTRA_PREFER_LIVE, true)
             val audioOnly = intent.getBooleanExtra(EXTRA_AUDIO_ONLY, true)
             val resume = intent.getBooleanExtra(EXTRA_RESUME, true)
-            scope.launch { playLatest(preferLive, audioOnly, resume) }
+            val volume = intent.getIntExtra(MediaVolume.EXTRA, -1)
+            scope.launch {
+                playLatest(preferLive, audioOnly, resume)
+                // Android restores the device's own volume once its audio route is active, which
+                // can come a moment after the connection: set it at the start and again a bit
+                // later.
+                MediaVolume.apply(this@PlaybackService, volume)
+                kotlinx.coroutines.delay(2500)
+                MediaVolume.apply(this@PlaybackService, volume)
+            }
         }
         return super.onStartCommand(intent, flags, startId)
     }

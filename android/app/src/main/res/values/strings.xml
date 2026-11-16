@@ -62,6 +62,9 @@
     <string name="bt_choose">Geräte wählen</string>
     <string name="bt_delay">Verzögerung</string>
     <string name="bt_resume">Fortsetzen, falls schon begonnen</string>
+    <string name="bt_volume">Lautstärke beim Start festlegen</string>
+    <string name="bt_volume_value">Medienlautstärke %1$d %%</string>
+    <string name="bt_volume_off">Lautstärke bleibt, wie sie ist</string>
     <string name="continue_on_disconnect">Bei Trennung weiterspielen</string>
     <string name="continue_on_disconnect_help">Wird ein Bluetooth-Gerät oder Kopfhörer getrennt, läuft die Wiedergabe über den Lautsprecher weiter. Aus: Pause.</string>
     <string name="bt_resume_help">Wurde die neueste Ausgabe schon angefangen, geht es dort weiter statt von vorn.</string>

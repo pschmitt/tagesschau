@@ -93,6 +93,16 @@ class Settings(context: Context) {
                 .getOrDefault(BluetoothMode.AUDIO)
         set(value) = prefs.edit { putString(KEY_BT_MODE, value.name) }
 
+    /** Media volume (percent) for Bluetooth auto-play, or -1 to leave the volume alone. */
+    var bluetoothVolume: Int
+        get() = prefs.getInt(KEY_BT_VOLUME, -1)
+        set(value) = prefs.edit { putInt(KEY_BT_VOLUME, value.coerceIn(-1, 100)) }
+
+    /** The slider's value while the fixed volume is off. */
+    var bluetoothVolumeLevel: Int
+        get() = prefs.getInt(KEY_BT_VOLUME_LEVEL, 50)
+        set(value) = prefs.edit { putInt(KEY_BT_VOLUME_LEVEL, value.coerceIn(0, 100)) }
+
     /** Keep playing (on the phone's speaker) when a Bluetooth device or headphones disconnect. */
     var continueOnDisconnect: Boolean
         get() = prefs.getBoolean(KEY_CONTINUE_ON_DISCONNECT, true)
@@ -133,6 +143,8 @@ class Settings(context: Context) {
         private const val KEY_BT_DELAY = "bluetooth_delay"
         private const val KEY_BT_RESUME = "bluetooth_resume"
         const val KEY_CONTINUE_ON_DISCONNECT = "continue_on_disconnect"
+        private const val KEY_BT_VOLUME = "bluetooth_volume"
+        private const val KEY_BT_VOLUME_LEVEL = "bluetooth_volume_level"
         private const val KEY_AUTOPLAY = "auto_play"
         const val KEY_AUTO_NEXT = "auto_next"
         private const val KEY_QUALITY = "download_quality"

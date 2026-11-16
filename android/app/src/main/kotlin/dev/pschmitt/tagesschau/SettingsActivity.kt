@@ -100,6 +100,10 @@ private fun SettingsScreen(activity: SettingsActivity) {
     var btDelay by remember { mutableStateOf(settings.bluetoothDelaySeconds) }
     var btResume by remember { mutableStateOf(settings.bluetoothResume) }
     var continueOnDisconnect by remember { mutableStateOf(settings.continueOnDisconnect) }
+    var btVolumeOn by remember { mutableStateOf(settings.bluetoothVolume >= 0) }
+    var btVolumeLevel by remember {
+        mutableStateOf(settings.bluetoothVolume.takeIf { it >= 0 } ?: settings.bluetoothVolumeLevel)
+    }
     var choosingBt by remember { mutableStateOf(false) }
     val btPermission =
         androidx.activity.compose.rememberLauncherForActivityResult(
@@ -461,6 +465,38 @@ private fun SettingsScreen(activity: SettingsActivity) {
                             }
                         }
                     }
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.bt_volume)) },
+                        supportingContent = {
+                            Text(
+                                if (btVolumeOn)
+                                    stringResource(R.string.bt_volume_value, btVolumeLevel)
+                                else stringResource(R.string.bt_volume_off)
+                            )
+                        },
+                        trailingContent = {
+                            Switch(
+                                btVolumeOn,
+                                {
+                                    btVolumeOn = it
+                                    settings.bluetoothVolume = if (it) btVolumeLevel else -1
+                                },
+                            )
+                        },
+                        colors = itemColors,
+                        modifier = Modifier.padding(start = 40.dp),
+                    )
+                    androidx.compose.material3.Slider(
+                        value = btVolumeLevel.toFloat(),
+                        onValueChange = {
+                            btVolumeLevel = it.toInt()
+                            settings.bluetoothVolumeLevel = btVolumeLevel
+                            if (btVolumeOn) settings.bluetoothVolume = btVolumeLevel
+                        },
+                        valueRange = 0f..100f,
+                        enabled = btVolumeOn,
+                        modifier = Modifier.padding(start = 72.dp, end = 24.dp),
+                    )
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.continue_on_disconnect)) },
                         supportingContent = {

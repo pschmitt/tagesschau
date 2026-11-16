@@ -85,6 +85,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import dev.pschmitt.tagesschau.update.Updater
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -114,12 +115,14 @@ class MainActivity : ComponentActivity() {
      */
     var pendingLatest by mutableStateOf(false)
     var pendingPip = false
+    var pendingVolume = -1
 
     private fun handleIntent(intent: Intent?) {
         intent ?: return
         intent.getStringExtra(EXTRA_PLAY_ID)?.let { pendingPlayId = it }
         if (intent.getBooleanExtra(EXTRA_PLAY_LATEST, false)) {
             pendingPip = intent.getBooleanExtra(EXTRA_PIP, false)
+            pendingVolume = intent.getIntExtra(MediaVolume.EXTRA, -1)
             pendingLatest = true
         }
     }
@@ -406,6 +409,15 @@ private fun MainScreen(activity: MainActivity) {
         // No delay here: resetting pendingLatest restarts (cancels) this effect. The activity
         // enters picture-in-picture as soon as playback runs (see onIsPlayingChanged).
         if (activity.pendingPip) activity.pipWhenPlaying = true
+        // Fixed start volume, set again after the device's audio route has taken over.
+        val volume = activity.pendingVolume
+        if (volume >= 0) {
+            MediaVolume.apply(activity, volume)
+            activity.lifecycleScope.launch {
+                delay(2500)
+                MediaVolume.apply(activity, volume)
+            }
+        }
     }
     // A notification asked for an edition: play it once the list is there.
     LaunchedEffect(controller, listing, activity.pendingPlayId) {
