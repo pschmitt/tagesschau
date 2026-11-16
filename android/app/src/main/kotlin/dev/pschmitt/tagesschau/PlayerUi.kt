@@ -384,10 +384,13 @@ fun VideoPlayer(
                     // Top right: the player settings (YouTube's gear), as a bottom sheet.
                     Row(Modifier.align(Alignment.TopEnd).padding(4.dp)) {
                         // Google Cast (Media3's button, chooser and controller dialogs).
-                        if (st.hasSubs && !st.remote) {
+                        // Always shown; dimmed when the edition has no subtitles.
+                        if (!st.remote) {
                             Ctl(
-                                if (st.subsOn) R.drawable.ic_cc_on else R.drawable.ic_cc,
+                                if (st.subsOn && st.hasSubs) R.drawable.ic_cc_on
+                                else R.drawable.ic_cc,
                                 if (st.subsOn) R.string.subtitles_off else R.string.subtitles_on,
+                                enabled = st.hasSubs,
                             ) {
                                 interaction++
                                 c?.let {
