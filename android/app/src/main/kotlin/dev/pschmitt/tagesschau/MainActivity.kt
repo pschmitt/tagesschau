@@ -52,7 +52,9 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -431,7 +433,6 @@ private fun MainScreen(activity: MainActivity) {
         activity.pendingPlayId = null
     }
     val currentId = st.mediaId
-    val airTime = st.air
     DisposableEffect(Unit) {
         val manager = Downloads.manager(activity)
         downloads.putAll(Downloads.all(activity))
@@ -512,7 +513,8 @@ private fun MainScreen(activity: MainActivity) {
                 LazyColumn(Modifier.fillMaxSize()) {
                     item(key = "clock") {
                         Clock(
-                            airTime,
+                            activity,
+                            st,
                             if (currentId == Edition.CHANNEL_ID) Edition.channel()
                             else editions.firstOrNull { it.id == currentId },
                         )
@@ -568,10 +570,30 @@ private fun MainScreen(activity: MainActivity) {
 
 private val CLOCK = DateTimeFormatter.ofPattern("HH:mm")
 private val SECONDS = DateTimeFormatter.ofPattern(":ss")
+private val MILLIS = DateTimeFormatter.ofPattern(",SSS")
 
-/** The playhead as broadcast time, large, with the date below (as on the web). */
+/**
+ * The playhead as broadcast time, large, with milliseconds and the date below (as on the web).
+ * Redrawn every frame from the controller's position; the play state only updates every 200 ms.
+ */
 @Composable
-private fun Clock(airTime: OffsetDateTime?, edition: Edition?) {
+private fun Clock(activity: MainActivity, st: PlayState, edition: Edition?) {
+    val state by rememberUpdatedState(st)
+    var airTime by remember { mutableStateOf(st.air) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            withFrameMillis {
+                val s = state
+                val c = activity.controller
+                airTime =
+                    when {
+                        s.channel -> OffsetDateTime.now()
+                        c != null && s.start != null -> s.airAt(c.currentPosition)
+                        else -> s.air
+                    }
+            }
+        }
+    }
     val t = (airTime ?: edition?.date)?.atZoneSameInstant(Edition.BERLIN)
     Column(Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 4.dp)) {
         Text(
@@ -585,6 +607,16 @@ private fun Clock(airTime: OffsetDateTime?, edition: Edition?) {
                     )
                 ) {
                     append(t?.format(SECONDS) ?: "")
+                }
+                withStyle(
+                    SpanStyle(
+                        fontSize = 18.sp,
+                        color = Palette.Mist.copy(alpha = 0.8f),
+                        fontWeight = FontWeight.SemiBold,
+                        fontFeatureSettings = "tnum",
+                    )
+                ) {
+                    if (airTime != null) append(t?.format(MILLIS) ?: "")
                 }
             },
             fontSize = 64.sp,

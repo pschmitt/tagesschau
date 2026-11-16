@@ -257,7 +257,8 @@
     font-size: clamp(3rem, 7vw, 5.5rem); font-weight: 750; font-stretch: 112%;
     font-variant-numeric: tabular-nums; line-height: 0.9; letter-spacing: -0.03em;
   }
-  .clock small { font-size: 0.42em; font-weight: 600; color: var(--mist); letter-spacing: 0; margin-left: 0.15em; }
+  .clock small { font-size: 0.42em; font-weight: 600; color: var(--mist); letter-spacing: 0; margin-left: 0.15em; font-variant-numeric: tabular-nums; }
+  .clock small.ms { font-size: 0.3em; margin-left: 0; opacity: 0.8; }
   .when { color: var(--mist); font-size: 1.05rem; }
   .when strong { color: var(--ink); font-weight: 600; }
   .onair { color: var(--signal); font-weight: 700; }
@@ -755,16 +756,35 @@
     $("clocknow").textContent = at ? hms(at) : "--:--:--";
     $("to").textContent = sp ? hm(new Date(sp[1])) : "--:--";
     track.setAttribute("aria-valuetext", at ? hms(at) : "");
-    if (clockEl && at) {
-      const s = hms(at);
+    drawClock();
+  }
+
+  // The big clock, with milliseconds, redrawn every frame (timeupdate comes only ~4×/s).
+  let clockShown = "";
+  function drawClock() {
+    if (!clockEl || !current) return;
+    const at = airAt(curTime());
+    if (!at) {
+      if (clockShown !== "-") { clockEl.textContent = hm(current.date); clockShown = "-"; }
+      return;
+    }
+    const s = hms(at), ms = String(at.getMilliseconds()).padStart(3, "0");
+    if (clockShown === s + ms) return;
+    if (clockShown.slice(0, 8) !== s || !clockEl.querySelector(".ms")) {
       clockEl.replaceChildren(s.slice(0, 5));
       const small = document.createElement("small");
       small.textContent = s.slice(5);
-      clockEl.append(small);
-    } else if (clockEl) {
-      clockEl.textContent = hm(current.date);
+      const m = document.createElement("small");
+      m.className = "ms";
+      clockEl.append(small, m);
     }
+    clockEl.querySelector(".ms").textContent = "," + ms;
+    clockShown = s + ms;
   }
+  (function frame() {
+    if (!document.hidden) drawClock();
+    requestAnimationFrame(frame);
+  })();
 
   function syncButtons() {
     const playing = !isPaused();
