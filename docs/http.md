@@ -38,7 +38,7 @@ receivers can load the live sessions.
 
 ## Web player
 
-- Controls as on YouTube: timeline above previous, play/pause, next, volume
+- Controls as on YouTube: timeline above play/pause, volume
   (slider on hover, arrow keys) and the time; seeking, download, cast, share,
   subtitles (C), speed and fullscreen on the right.
 - Casting through Google Cast (Chrome): the cast button hands the edition and
