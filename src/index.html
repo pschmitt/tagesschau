@@ -54,6 +54,9 @@
     background: none; border: 1px solid var(--rule); border-radius: 999px; cursor: pointer;
     color: var(--ink); font-size: 0.9rem; font-weight: 600; padding: 0.45rem 0.95rem;
   }
+  .bar-actions { display: flex; align-items: center; gap: 0.4rem; }
+  #notifybtn { color: var(--mist); }
+  #notifybtn[aria-pressed="true"] { color: var(--signal); }
   .subscribe:hover { background: var(--deep); }
   .subscribe .short { display: none; }
 
@@ -141,8 +144,8 @@
 
   .transport {
     position: absolute; left: 0; right: 0; bottom: 0;
-    display: grid; grid-template-columns: auto 1fr auto; align-items: center;
-    gap: 1rem; padding: 2.5rem 0.9rem 0.6rem;
+    display: flex; flex-direction: column; gap: 0.1rem;
+    padding: 2.5rem 0.9rem 0.45rem;
     background: linear-gradient(to top, rgba(7, 29, 64, 0.92) 0%, rgba(7, 29, 64, 0.7) 55%, rgba(7, 29, 64, 0) 100%);
     transition: opacity 0.25s ease;
   }
@@ -157,10 +160,28 @@
   .ctl:disabled { opacity: 0.35; cursor: default; background: none; }
   .ctl svg { width: 1.35rem; height: 1.35rem; }
   .ctl.main svg { width: 1.7rem; height: 1.7rem; }
+  a.ctl[hidden], google-cast-launcher[hidden], .castinfo[hidden] { display: none; }
+  google-cast-launcher.ctl { --connected-color: var(--signal); --disconnected-color: var(--ink); padding: 0.55rem; width: 2.5rem; height: 2.5rem; }
+  .castinfo {
+    position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
+    background: rgba(7, 29, 64, 0.88); color: var(--ink); font-weight: 600; font-size: 1.1rem; padding: 1rem;
+    pointer-events: none;
+  }
   .ctl.text { width: auto; padding: 0 0.6rem; font-weight: 700; font-variant-numeric: tabular-nums; font-size: 0.95rem; }
 
   /* Timeline in broadcast time */
-  .line { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.75rem; min-width: 0; }
+  .line { min-width: 0; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+  .time { margin-left: 0.6rem; white-space: nowrap; font-size: 0.9rem; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .time .sep, .time #to { color: var(--mist); }
+  /* YouTube-style volume: the slider slides out next to the speaker on hover or focus. */
+  .vol { display: flex; align-items: center; }
+  .vol input {
+    width: 0; opacity: 0; margin: 0; accent-color: var(--ink); cursor: pointer;
+    transition: width 0.2s ease, opacity 0.2s ease, margin 0.2s ease;
+  }
+  .vol:hover input, .vol:focus-within input { width: 5rem; opacity: 1; margin: 0 0.35rem; }
+  @media (prefers-reduced-motion: reduce) { .vol input { transition: none; } }
   .line .edge { color: var(--mist); font-size: 0.85rem; font-variant-numeric: tabular-nums; font-stretch: 112%; font-weight: 600; }
   .track { position: relative; height: 1.75rem; cursor: pointer; touch-action: none; }
   .track .rail, .track .buf, .track .fill {
@@ -223,6 +244,14 @@
     margin: 0 0 0.35rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--rule);
   }
   .day ol { list-style: none; margin: 0; padding: 0; }
+  .day li { position: relative; }
+  .dl {
+    position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%);
+    width: 2.25rem; height: 2.25rem; display: grid; place-items: center; border-radius: 4px;
+    color: var(--mist);
+  }
+  .dl:hover { color: var(--ink); background: var(--deep); }
+  .dl svg { width: 1.2rem; height: 1.2rem; }
   .item {
     position: relative; width: 100%; display: grid; grid-template-columns: 5.5rem 1fr; align-items: baseline;
     gap: 0.75rem; text-align: left; background: none; border: 0; cursor: pointer;
@@ -258,10 +287,11 @@
     .well { aspect-ratio: auto; }
     .well video { aspect-ratio: 16 / 9; height: auto; }
     .big-play, .flash { bottom: 5.5rem; }
-    .transport { position: static; grid-template-columns: 1fr auto; row-gap: 0.1rem; background: var(--deep); padding: 0.4rem 0.6rem 0.5rem; }
+    .transport { position: static; background: var(--deep); padding: 0.4rem 0.6rem 0.5rem; }
+    .vol input { display: none; }
+    .time { font-size: 0.8rem; margin-left: 0.3rem; }
     .player.idle .transport { opacity: 1; pointer-events: auto; }
     .player.idle, .player.idle .well { cursor: auto; }
-    .line { grid-column: 1 / -1; grid-row: 1; }
     .ctl.opt { display: none; }
   }
 </style>
@@ -276,6 +306,7 @@
   <symbol id="i-fwd" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M20 12a8 8 0 1 1-2.4-5.7M20 4v4h-4"/><text x="12" y="15.5" font-size="7.5" font-weight="700" text-anchor="middle" fill="currentColor" font-family="Archivo, sans-serif">30</text></symbol>
   <symbol id="i-vol" viewBox="0 0 24 24"><path fill="currentColor" d="M4 9h4l5-4v14l-5-4H4z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
   <symbol id="i-mute" viewBox="0 0 24 24"><path fill="currentColor" d="M4 9h4l5-4v14l-5-4H4z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16 9l5 6M21 9l-5 6"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></symbol>
   <symbol id="i-share" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/></symbol>
   <symbol id="i-full" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
 </svg>
@@ -283,7 +314,10 @@
 <div class="shell">
   <header class="bar">
     <p class="brand"><img src="/logo.jpg" alt="" onerror="this.remove()"><b>tagesschau</b><span>alle Ausgaben</span></p>
+    <div class="bar-actions">
+    <button class="ctl" id="notifybtn" aria-pressed="false" title="Bei neuen Ausgaben benachrichtigen" aria-label="Bei neuen Ausgaben benachrichtigen"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg></button>
     <button class="subscribe" id="subscribe"><span class="long">Als Podcast abonnieren</span><span class="short">Abonnieren</span></button>
+    </div>
   </header>
 
   <dialog class="sub" id="subdialog" aria-labelledby="subtitle">
@@ -308,28 +342,35 @@
         <div class="skip back" id="skipback" aria-hidden="true"></div>
         <div class="skip ahead" id="skipahead" aria-hidden="true"></div>
         <button class="unmute" id="unmute" hidden>Ton einschalten</button>
+        <div class="castinfo" id="castinfo" hidden></div>
       <div class="transport" id="transport">
-        <div class="group">
-          <button class="ctl" id="prev" aria-label="Neuere Ausgabe" title="Neuere Ausgabe"><svg><use href="#i-prev"/></svg></button>
-          <button class="ctl main" id="toggle" aria-label="Abspielen" title="Abspielen (Leertaste)"><svg><use href="#i-play"/></svg></button>
-          <button class="ctl" id="next" aria-label="Ältere Ausgabe" title="Ältere Ausgabe"><svg><use href="#i-next"/></svg></button>
-        </div>
         <div class="line">
-          <span class="edge" id="from">--:--</span>
           <div class="track" id="track" role="slider" tabindex="0" aria-label="Position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
             <div class="rail"></div><div class="buf" id="buf"></div><div class="fill" id="fill"></div>
             <div class="knob" id="knob"></div><div class="tip" id="tip" hidden></div>
             <div class="thumb" id="thumb" hidden><video id="tv" muted playsinline preload="none"></video><span id="ttime"></span></div>
           </div>
-          <span class="edge" id="to">--:--</span>
         </div>
-        <div class="group">
-          <button class="ctl opt" id="back" aria-label="10 Sekunden zurück" title="10 Sekunden zurück (J)"><svg><use href="#i-back"/></svg></button>
-          <button class="ctl opt" id="fwd" aria-label="30 Sekunden vor" title="30 Sekunden vor (L)"><svg><use href="#i-fwd"/></svg></button>
-          <button class="ctl" id="sharebtn" aria-label="Diese Stelle teilen" title="Diese Stelle teilen (S)"><svg><use href="#i-share"/></svg></button>
-          <button class="ctl text" id="speed" aria-label="Geschwindigkeit" title="Geschwindigkeit">1×</button>
-          <button class="ctl" id="mute" aria-label="Ton aus" title="Ton aus (M)"><svg><use href="#i-vol"/></svg></button>
-          <button class="ctl" id="full" aria-label="Vollbild" title="Vollbild (F)"><svg><use href="#i-full"/></svg></button>
+        <div class="row">
+          <div class="group">
+            <button class="ctl" id="prev" aria-label="Neuere Ausgabe" title="Neuere Ausgabe (P)"><svg><use href="#i-prev"/></svg></button>
+            <button class="ctl main" id="toggle" aria-label="Abspielen" title="Abspielen (Leertaste)"><svg><use href="#i-play"/></svg></button>
+            <button class="ctl" id="next" aria-label="Ältere Ausgabe" title="Ältere Ausgabe (N)"><svg><use href="#i-next"/></svg></button>
+            <div class="vol">
+              <button class="ctl" id="mute" aria-label="Ton aus" title="Ton aus (M)"><svg><use href="#i-vol"/></svg></button>
+              <input type="range" id="volume" min="0" max="1" step="0.05" value="1" aria-label="Lautstärke">
+            </div>
+            <span class="time"><span id="clocknow">--:--:--</span><span class="sep"> / </span><span id="to">--:--</span><span id="from" hidden></span></span>
+          </div>
+          <div class="group">
+            <button class="ctl opt" id="back" aria-label="10 Sekunden zurück" title="10 Sekunden zurück (J)"><svg><use href="#i-back"/></svg></button>
+            <button class="ctl opt" id="fwd" aria-label="30 Sekunden vor" title="30 Sekunden vor (L)"><svg><use href="#i-fwd"/></svg></button>
+            <a class="ctl opt" id="dlbtn" href="#" download aria-label="Diese Ausgabe herunterladen" title="Diese Ausgabe herunterladen"><svg><use href="#i-download"/></svg></a>
+            <google-cast-launcher class="ctl" id="castbtn" title="Auf Fernseher abspielen" hidden></google-cast-launcher>
+            <button class="ctl" id="sharebtn" aria-label="Diese Stelle teilen" title="Diese Stelle teilen (S)"><svg><use href="#i-share"/></svg></button>
+            <button class="ctl text" id="speed" aria-label="Geschwindigkeit" title="Geschwindigkeit">1×</button>
+            <button class="ctl" id="full" aria-label="Vollbild" title="Vollbild (F)"><svg><use href="#i-full"/></svg></button>
+          </div>
         </div>
       </div>
       </div>
@@ -404,9 +445,14 @@
   const icon = (btn, name) => btn.querySelector("use").setAttribute("href", "#i-" + name);
 
   // Broadcast time of the playhead: the stream's own date for live, else air time + offset.
+  // Casting (Google Cast, Default Media Receiver): while connected, the controls drive the TV.
+  const cast = { on: false, remote: null, rc: null, device: "" };
+  const curTime = () => (cast.on ? cast.remote.currentTime : video.currentTime);
+  const isPaused = () => (cast.on ? cast.remote.isPaused : video.paused);
+
   function airAt(t) {
     if (!current) return null;
-    if (hls && hls.playingDate && current.live) {
+    if (hls && hls.playingDate && current.live && !cast.on) {
       return new Date(hls.playingDate.getTime() + (t - video.currentTime) * 1000);
     }
     return new Date(current.date.getTime() + t * 1000);
@@ -428,8 +474,8 @@
   }
   // Media time for a broadcast time.
   function mediaAt(ms) {
-    const at = airAt(video.currentTime);
-    return at ? video.currentTime + (ms - at.getTime()) / 1000 : 0;
+    const at = airAt(curTime());
+    return at ? curTime() + (ms - at.getTime()) / 1000 : 0;
   }
 
   /* Rundown */
@@ -481,6 +527,17 @@
       }
       b.addEventListener("click", () => play(it, true));
       li.append(b);
+      if (!it.live) {
+        // Saved through the server (/download/<id>), which names the file.
+        const dl = document.createElement("a");
+        dl.className = "dl";
+        dl.href = "/download/" + encodeURIComponent(it.id);
+        dl.setAttribute("download", "");
+        dl.setAttribute("aria-label", "Herunterladen");
+        dl.title = "Herunterladen";
+        dl.innerHTML = '<svg viewBox="0 0 24 24"><use href="#i-download"/></svg>';
+        li.append(dl);
+      }
       list.append(li);
     }
     const i = items.findIndex(it => current && it.id === current.id);
@@ -543,6 +600,9 @@
       video.addEventListener("loadedmetadata", () => { video.currentTime = resume; }, { once: true });
     }
     caption(it);
+    const dlbtn = $("dlbtn");
+    dlbtn.hidden = !!it.live;
+    dlbtn.href = it.live ? "#" : "/download/" + encodeURIComponent(it.id);
     render();
     session(it);
     start(userGesture);
@@ -553,13 +613,18 @@
     if (i >= 0 && i < items.length) play(items[i], true);
   }
   function seekTo(t) {
+    if (cast.on) {
+      cast.remote.currentTime = Math.max(0, t);
+      cast.rc.seek();
+      return;
+    }
     const [a, b] = range();
     video.currentTime = Math.max(a, Math.min(Math.max(a, b - 0.5), t));
   }
-  const seekBy = s => seekTo(video.currentTime + s);
+  const seekBy = s => seekTo(curTime() + s);
   function save() {
-    if (current && !current.live && video.currentTime > 0) {
-      store.set(current.id, { pos: video.currentTime, dur: isFinite(video.duration) ? video.duration : 0 });
+    if (current && !current.live && curTime() > 0) {
+      store.set(current.id, { pos: curTime(), dur: isFinite(video.duration) ? video.duration : 0 });
     }
   }
 
@@ -567,7 +632,7 @@
   function tick() {
     if (!current) return;
     const sp = span();
-    const at = airAt(video.currentTime);
+    const at = airAt(curTime());
     const frac = ms => sp ? Math.max(0, Math.min(1, (ms - sp[0]) / (sp[1] - sp[0]))) : 0;
     const p = at ? frac(at.getTime()) : 0;
     fill.style.width = knob.style.left = (p * 100) + "%";
@@ -579,6 +644,7 @@
       buf.style.width = "0%";
     }
     $("from").textContent = hm(current.date);
+    $("clocknow").textContent = at ? hms(at) : "--:--:--";
     $("to").textContent = sp ? hm(new Date(sp[1])) : "--:--";
     track.setAttribute("aria-valuetext", at ? hms(at) : "");
     if (clockEl && at) {
@@ -593,11 +659,12 @@
   }
 
   function syncButtons() {
-    const playing = !video.paused;
+    const playing = !isPaused();
     icon($("toggle"), playing ? "pause" : "play");
     $("toggle").setAttribute("aria-label", playing ? "Pause" : "Abspielen");
     $("bigplay").hidden = playing || video.seeking || (video.readyState < 2 && !video.error);
-    icon($("mute"), video.muted ? "mute" : "vol");
+    icon($("mute"), video.muted || video.volume === 0 ? "mute" : "vol");
+    $("volume").value = video.muted ? 0 : video.volume;
     $("mute").setAttribute("aria-label", video.muted ? "Ton an" : "Ton aus");
     $("speed").textContent = String(video.playbackRate).replace(".", ",") + "×";
     if ("mediaSession" in navigator) navigator.mediaSession.playbackState = playing ? "playing" : "paused";
@@ -708,7 +775,7 @@
   ["pointerdown", "keydown"].forEach(e => document.addEventListener(e, () => { acted = true; }, true));
 
   /* Buttons */
-  const toggle = () => (video.paused ? video.play() : video.pause());
+  const toggle = () => (cast.on ? cast.rc.playOrPause() : video.paused ? video.play() : video.pause());
   $("toggle").addEventListener("click", toggle);
   $("bigplay").addEventListener("click", ev => { ev.stopPropagation(); video.play(); });
   // Touch: double-tap the left or right third to jump 20 s. That starts a seek mode
@@ -760,7 +827,25 @@
   $("speed").addEventListener("click", () => {
     video.playbackRate = SPEEDS[(SPEEDS.indexOf(video.playbackRate) + 1) % SPEEDS.length];
   });
-  $("mute").addEventListener("click", () => { video.muted = !video.muted; $("unmute").hidden = true; });
+  $("mute").addEventListener("click", () => {
+    video.muted = !video.muted;
+    if (!video.muted && video.volume === 0) video.volume = 0.5;
+    $("unmute").hidden = true;
+  });
+  // Volume, remembered per viewer.
+  const savedVol = store.get("volume");
+  if (typeof savedVol === "number") video.volume = savedVol;
+  $("volume").addEventListener("input", ev => {
+    const v = Number(ev.target.value);
+    video.volume = v;
+    video.muted = v === 0;
+    store.set("volume", v);
+  });
+  function volumeBy(d) {
+    video.muted = false;
+    video.volume = Math.max(0, Math.min(1, Math.round((video.volume + d) * 20) / 20));
+    store.set("volume", video.volume);
+  }
   $("unmute").addEventListener("click", ev => { ev.stopPropagation(); video.muted = false; $("unmute").hidden = true; video.play(); });
   function fullscreen() {
     if (document.fullscreenElement) document.exitFullscreen();
@@ -778,6 +863,8 @@
       case "j": case "ArrowLeft": if (ev.target === track) return; seekBy(-10); break;
       case "l": case "ArrowRight": if (ev.target === track) return; seekBy(30); break;
       case "f": fullscreen(); break;
+      case "ArrowUp": volumeBy(0.05); break;
+      case "ArrowDown": volumeBy(-0.05); break;
       case "s": openShare(); break;
       case "m": video.muted = !video.muted; break;
       case "n": step(1); break;
@@ -819,6 +906,7 @@
   async function init() {
     try {
       items = await load();
+      notifyCheck(items);
     } catch (e) {
       notice.hidden = false;
       notice.textContent = "Die Ausgaben konnten nicht geladen werden (" + e.message + "). Die Seite versucht es in einer Minute erneut.";
@@ -848,6 +936,7 @@
     setInterval(async () => {
       try {
         const fresh = await load();
+        notifyCheck(fresh);
         if (current) {
           const same = fresh.find(it => it.id === current.id);
           if (same) Object.assign(same, { url: current.url });
@@ -1003,8 +1092,100 @@
     }).catch(() => {}));
   }
 
+  /* Notifications while the page is open: an edition goes on air or a new one is published */
+  const notifyBtn = $("notifybtn");
+  let notifySeen = null; // ids known at the last check
+  const notifyOn = () =>
+    store.get("notify") === true && "Notification" in window && Notification.permission === "granted";
+  function syncNotify() { notifyBtn.setAttribute("aria-pressed", notifyOn() ? "true" : "false"); }
+  async function notifyShow(title, body, url) {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification(title, { body, icon: "/logo.jpg", badge: "/logo.jpg", data: { url } });
+    } catch (_) {
+      try { new Notification(title, { body, icon: "/logo.jpg" }); } catch (_) {}
+    }
+  }
+  function notifyCheck(list) {
+    if (notifySeen && notifyOn()) {
+      for (const it of list) {
+        if (notifySeen.has(it.id)) continue;
+        const url = "/?at=" + Math.floor(it.date.getTime() / 1000);
+        if (it.live) notifyShow("tagesschau " + hm(it.date) + " Uhr läuft gerade", "Ab Beginn ansehen", url);
+        else notifyShow("Neue Ausgabe: tagesschau " + hm(it.date) + " Uhr", longDay(it.date), url);
+      }
+    }
+    notifySeen = new Set(list.map(it => it.id));
+  }
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+  notifyBtn.addEventListener("click", async () => {
+    if (!("Notification" in window)) return;
+    if (notifyOn()) { store.set("notify", false); syncNotify(); return; }
+    const perm = await Notification.requestPermission();
+    store.set("notify", perm === "granted");
+    syncNotify();
+  });
+  syncNotify();
+
+  /* Casting: hand the edition and position to the TV; take it back on disconnect */
+  window.__onGCastApiAvailable = available => {
+    if (!available || !window.cast || !window.cast.framework) return;
+    const ctx = window.cast.framework.CastContext.getInstance();
+    ctx.setOptions({
+      receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+      autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
+    });
+    $("castbtn").hidden = false;
+    cast.remote = new window.cast.framework.RemotePlayer();
+    cast.rc = new window.cast.framework.RemotePlayerController(cast.remote);
+    const E = window.cast.framework.RemotePlayerEventType;
+    cast.rc.addEventListener(E.IS_CONNECTED_CHANGED, () => {
+      if (cast.remote.isConnected) castLoad(ctx.getCurrentSession());
+      else castEnd();
+    });
+    cast.rc.addEventListener(E.IS_PAUSED_CHANGED, () => { syncButtons(); tick(); });
+    cast.rc.addEventListener(E.CURRENT_TIME_CHANGED, tick);
+  };
+
+  function castLoad(session) {
+    if (!session || !current) return;
+    const at = video.currentTime;
+    video.pause();
+    const live = current.url.includes(".m3u8");
+    const info = new chrome.cast.media.MediaInfo(current.url, live ? "application/x-mpegurl" : "video/mp4");
+    info.streamType = chrome.cast.media.StreamType.BUFFERED;
+    const meta = new chrome.cast.media.GenericMediaMetadata();
+    meta.title = "tagesschau " + hm(current.date) + " Uhr";
+    meta.subtitle = longDay(current.date);
+    meta.images = [new chrome.cast.Image(location.origin + "/cover.jpg")];
+    info.metadata = meta;
+    const req = new chrome.cast.media.LoadRequest(info);
+    req.currentTime = at;
+    req.autoplay = true;
+    session.loadMedia(req).then(
+      () => {
+        cast.on = true;
+        cast.device = session.getCastDevice().friendlyName || "Fernseher";
+        $("castinfo").textContent = "Läuft auf " + cast.device;
+        $("castinfo").hidden = false;
+        syncButtons();
+      },
+      err => { notice.hidden = false; notice.textContent = "Übertragen fehlgeschlagen (" + err + ")."; },
+    );
+  }
+
+  function castEnd() {
+    if (!cast.on) return;
+    const t = cast.remote.currentTime;
+    cast.on = false;
+    $("castinfo").hidden = true;
+    if (t > 0) video.currentTime = t;
+    syncButtons();
+  }
+
   init();
 })();
 </script>
+<script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
 </body>
 </html>

@@ -201,6 +201,13 @@ LIVE_MAX = timedelta(minutes=int(os.environ.get("TAGESSCHAU_LIVE_MINUTES", "90")
 MIN_EDITION = timedelta(seconds=270)  # skips the 2-minute night summaries
 END_MARGIN = timedelta(seconds=60)
 MIN_DELAY = timedelta(seconds=15)  # segments must exist upstream before we list them
+# The web player's service worker: only needed so notifications work (also on Android Chrome).
+SERVICE_WORKER = """self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  e.waitUntil(clients.openWindow((e.notification.data && e.notification.data.url) || "/"));
+});
+"""
+DOWNLOAD_RE = re.compile(r"^/download/(ts-\d+)$")
 SESSION_RE = re.compile(r"^/live/(\d+)-(\d+)-(\d+)/(index|video|audio)\.m3u8$")
 
 _epg = {}  # day -> (fetched at, [(start, end)])
@@ -351,6 +358,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.send_header("Cache-Control", cache)
+        # Cast receivers and other origins load the live playlists and the JSON.
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -394,10 +403,56 @@ class Handler(BaseHTTPRequestHandler):
         if self.command != "HEAD":
             self.wfile.write(body)
 
+    def do_download(self, ts_id):
+        """Passes an edition's MP4 through with a file name, so browsers save it."""
+        query = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+        quality = (query.get("q") or [PREFERRED])[0]
+        if quality not in QUALITIES:
+            self.send_error(400, "unknown quality")
+            return
+        try:
+            with _lock:
+                if ts_id not in _known:
+                    discover()
+                found = edition(ts_id) if ts_id in _known else None
+        except Exception as exc:
+            self.send_error(502, str(exc)[:100])
+            return
+        if not found:
+            self.send_error(404, "unknown edition")
+            return
+        date, url = found
+        url = re.sub(r"\.web[a-z]+\.h264\.mp4$", ".%s.h264.mp4" % quality, url)
+        name = date.strftime("tagesschau-%Y-%m-%d-%H%M.mp4")
+        try:
+            upstream = get(url)
+        except Exception as exc:
+            self.send_error(502, str(exc)[:100])
+            return
+        with upstream:
+            self.send_response(200)
+            self.send_header("Content-Type", "video/mp4")
+            self.send_header("Content-Disposition", 'attachment; filename="%s"' % name)
+            length = upstream.headers.get("Content-Length")
+            if length:
+                self.send_header("Content-Length", length)
+            self.end_headers()
+            if self.command == "HEAD":
+                return
+            while chunk := upstream.read(1 << 20):
+                self.wfile.write(chunk)
+
     def do_GET(self):
         path = self.path.split("?")[0]
+        m = DOWNLOAD_RE.match(path)
+        if m:
+            self.do_download(m.group(1))
+            return
         if IMAGES.get(path):
             self.send_image(path)
+            return
+        if path == "/sw.js":
+            self.send_text(SERVICE_WORKER, "text/javascript; charset=utf-8")
             return
         if path.startswith("/live"):
             self.do_live(path)
