@@ -5,6 +5,7 @@ package dev.pschmitt.tagesschau
 import android.Manifest
 import android.app.PictureInPictureParams
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
@@ -96,6 +97,10 @@ import kotlinx.coroutines.launch
  * picture-in-picture (or audio only, or stop: a setting) when the app is left.
  */
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(Lang.wrap(newBase))
+    }
+
     lateinit var playerView: PlayerView
     private var future: ListenableFuture<MediaController>? = null
     var controller by mutableStateOf<MediaController?>(null)
@@ -499,7 +504,11 @@ private fun MainScreen(activity: MainActivity) {
                         Spacer(Modifier.width(10.dp))
                         Text("tagesschau", fontWeight = FontWeight.ExtraBold)
                         Spacer(Modifier.width(6.dp))
-                        Text("alle Ausgaben", color = Palette.Mist, fontSize = 16.sp)
+                        Text(
+                            stringResource(R.string.all_editions),
+                            color = Palette.Mist,
+                            fontSize = 16.sp,
+                        )
                     }
                 },
                 actions = {
@@ -683,8 +692,8 @@ private fun DayHeader(e: Edition) {
     val date = e.date.atZoneSameInstant(Edition.BERLIN).toLocalDate()
     val label =
         when (date) {
-            today -> "Heute"
-            today.minusDays(1) -> "Gestern"
+            today -> stringResource(R.string.today)
+            today.minusDays(1) -> stringResource(R.string.yesterday)
             else -> e.day
         }
     Column(Modifier.padding(start = 16.dp, end = 16.dp, top = 18.dp, bottom = 4.dp)) {
@@ -827,7 +836,11 @@ private fun ChannelRow(playing: Boolean, onPlay: () -> Unit) {
         Box(Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFE53935)))
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
-            Text("Das Erste live", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text(
+                stringResource(R.string.channel_title),
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+            )
             Text(
                 stringResource(if (playing) R.string.playing else R.string.channel_live),
                 color = Palette.Mist,

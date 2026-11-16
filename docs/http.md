@@ -56,6 +56,9 @@ receivers can load the live sessions.
 
 - `?at=<unix seconds>` opens the edition with that moment and starts there
   (the player's share dialog creates these).
+- `?lang=de|en|fr` sets the language and remembers it. Without it the page
+  uses the remembered choice, else the first of the browser's preferred
+  languages it has, else English. The footer links to each language.
 - `?untertitel=1` (or `?subs=1`) shows subtitles for this visit, `=0` hides
   them. Without it the CC button's last state applies (off at first).
 - `?ton=1` (or `?sound=1`) never starts muted: when the browser blocks

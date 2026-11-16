@@ -1,9 +1,12 @@
 package dev.pschmitt.tagesschau
 
+import android.content.Context
+import android.text.format.DateFormat
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.OffsetDateTime
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
@@ -25,11 +28,20 @@ data class Edition(
     val time: String
         get() = date.atZoneSameInstant(BERLIN).format(TIME)
 
+    /** The day in the app's current locale, e.g. "Montag, 16. November". */
     val day: String
-        get() = date.atZoneSameInstant(BERLIN).format(DAY)
+        get() = formatDay(date.atZoneSameInstant(BERLIN))
 
-    val title: String
-        get() = if (channel) "Das Erste live" else "tagesschau $time Uhr"
+    /** Localized title, e.g. "tagesschau 20:00 Uhr" (German), "tagesschau 20h00" (French). */
+    fun title(context: Context): String {
+        if (channel) return context.getString(R.string.channel_title)
+        val at = date.atZoneSameInstant(BERLIN)
+        return context.getString(
+            R.string.edition_title,
+            "%02d".format(at.hour),
+            "%02d".format(at.minute),
+        )
+    }
 
     companion object {
         val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
@@ -41,8 +53,14 @@ data class Edition(
         fun channel() =
             Edition(CHANNEL_ID, OffsetDateTime.now(), CHANNEL_URL, live = true, channel = true)
 
-        private val TIME = DateTimeFormatter.ofPattern("HH:mm", Locale.GERMANY)
-        private val DAY = DateTimeFormatter.ofPattern("EEEE, d. MMMM", Locale.GERMANY)
+        private val TIME = DateTimeFormatter.ofPattern("HH:mm", Locale.ROOT)
+
+        /** Weekday, day and month in the default locale's order and language (no year). */
+        fun formatDay(at: ZonedDateTime): String {
+            val locale = Locale.getDefault()
+            val pattern = DateFormat.getBestDateTimePattern(locale, "EEEEdMMMM")
+            return DateTimeFormatter.ofPattern(pattern, locale).format(at)
+        }
     }
 }
 

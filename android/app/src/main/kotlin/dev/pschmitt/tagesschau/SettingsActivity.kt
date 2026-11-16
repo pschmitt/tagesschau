@@ -1,5 +1,6 @@
 package dev.pschmitt.tagesschau
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings as AndroidSettings
@@ -57,6 +58,10 @@ import dev.pschmitt.tagesschau.update.Updater
 import kotlinx.coroutines.launch
 
 class SettingsActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(Lang.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -130,7 +135,8 @@ private fun SettingsScreen(activity: SettingsActivity) {
         onPauseOrDispose {}
     }
     val itemColors = ListItemDefaults.colors(containerColor = Palette.Studio)
-    var page by remember { mutableStateOf(Page.ROOT) }
+    // Kept across a recreate (e.g. after switching the language).
+    var page by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(Page.ROOT) }
     androidx.activity.compose.BackHandler(enabled = page != Page.ROOT) { page = Page.ROOT }
 
     /** A row on the overview that opens a page. */
@@ -509,6 +515,33 @@ private fun SettingsScreen(activity: SettingsActivity) {
                     )
                 }
                 Page.ADVANCED -> {
+                    Section(R.string.language)
+                    var lang by remember { mutableStateOf(Lang.current(activity)) }
+                    SingleChoiceSegmentedButtonRow(
+                        Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
+                    ) {
+                        Lang.CODES.forEachIndexed { i, code ->
+                            SegmentedButton(
+                                selected = lang == code,
+                                onClick = {
+                                    lang = code
+                                    Lang.set(activity, code)
+                                },
+                                shape = SegmentedButtonDefaults.itemShape(i, Lang.CODES.size),
+                            ) {
+                                Text(
+                                    when (code) {
+                                        "" -> stringResource(R.string.language_system)
+                                        "de" -> "Deutsch"
+                                        "en" -> "English"
+                                        else -> "Français"
+                                    },
+                                    fontSize = 12.sp,
+                                    maxLines = 1,
+                                )
+                            }
+                        }
+                    }
                     Section(R.string.section_bluetooth)
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.bt_autoplay)) },

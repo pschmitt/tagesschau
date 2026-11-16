@@ -281,6 +281,8 @@
     text-decoration-thickness: 1px; text-underline-offset: 0.2em; white-space: nowrap;
   }
   footer.fine a:hover, footer.fine a:focus-visible { color: var(--signal); text-decoration-color: currentColor; }
+  footer.fine .langs { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-top: 0.6rem; }
+  footer.fine .langs a[aria-current="true"] { color: var(--mist); text-decoration: none; cursor: default; }
   footer.fine a svg { width: 1em; height: 1em; vertical-align: -0.15em; margin-right: 0.3em; }
 
   /* Rundown */
@@ -412,55 +414,55 @@
 
 <div class="shell">
   <header class="bar">
-    <p class="brand"><img src="/logo.jpg" alt="" onerror="this.remove()"><b>tagesschau</b><span>alle Ausgaben</span></p>
+    <p class="brand"><img src="/logo.jpg" alt="" onerror="this.remove()"><b>tagesschau</b><span data-i18n="brand_sub">alle Ausgaben</span></p>
     <div class="bar-actions">
-    <button class="ctl" id="notifybtn" aria-pressed="false" title="Bei neuen Ausgaben benachrichtigen" aria-label="Bei neuen Ausgaben benachrichtigen"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg></button>
-    <button class="subscribe" id="subscribe"><span class="long">Als Podcast abonnieren</span><span class="short">Abonnieren</span></button>
+    <button class="ctl" id="notifybtn" aria-pressed="false" data-i18n-title="notify" data-i18n-aria="notify" title="Bei neuen Ausgaben benachrichtigen" aria-label="Bei neuen Ausgaben benachrichtigen"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg></button>
+    <button class="subscribe" id="subscribe"><span class="long" data-i18n="subscribe_long">Als Podcast abonnieren</span><span class="short" data-i18n="subscribe_short">Abonnieren</span></button>
     </div>
   </header>
 
   <dialog class="sub" id="subdialog" aria-labelledby="subtitle">
-    <button class="ctl close" id="subclose" aria-label="Schließen"><svg viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg></button>
-    <h2 id="subtitle">Als Podcast abonnieren</h2>
-    <p>Alle tagesschau-Ausgaben der letzten 48 Stunden, neueste zuerst.</p>
+    <button class="ctl close" id="subclose" data-i18n-aria="close" aria-label="Schließen"><svg viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <h2 id="subtitle" data-i18n="subscribe_long">Als Podcast abonnieren</h2>
+    <p data-i18n="sub_lead">Alle tagesschau-Ausgaben der letzten 48 Stunden, neueste zuerst.</p>
     <div class="copy">
-      <input id="feedurl" readonly aria-label="Feed-Adresse">
-      <button class="pill" id="copy">Kopieren</button>
-      <button class="pill quiet" id="share" hidden>Teilen</button>
+      <input id="feedurl" readonly data-i18n-aria="feed_addr" aria-label="Feed-Adresse">
+      <button class="pill" id="copy" data-i18n="copy">Kopieren</button>
+      <button class="pill quiet" id="share" data-i18n="share" hidden>Teilen</button>
     </div>
     <ul class="apps" id="apps"></ul>
-    <p class="note">Spotify und YouTube Music können keine eigenen Feeds abonnieren. Jede andere Podcast-App nimmt die Adresse oben. Die Android-App hat einen eigenen Player mit Downloads und aktualisiert sich selbst.</p>
+    <p class="note" data-i18n="sub_note">Spotify und YouTube Music können keine eigenen Feeds abonnieren. Jede andere Podcast-App nimmt die Adresse oben. Die Android-App hat einen eigenen Player mit Downloads und aktualisiert sich selbst.</p>
   </dialog>
 
   <main class="stage">
     <div class="player" id="player">
       <div class="well" id="well">
         <video id="video" playsinline preload="auto" poster="/cover.jpg"></video>
-        <button class="big-play" id="bigplay" aria-label="Abspielen" hidden><svg><use href="#i-play"/></svg></button>
+        <button class="big-play" id="bigplay" data-i18n-aria="play" aria-label="Abspielen" hidden><svg><use href="#i-play"/></svg></button>
         <div class="flash" id="flash" aria-hidden="true"><svg><use href="#i-play"/></svg></div>
         <div class="skip back" id="skipback" aria-hidden="true"></div>
         <div class="skip ahead" id="skipahead" aria-hidden="true"></div>
-        <button class="unmute" id="unmute" hidden>Ton einschalten</button>
+        <button class="unmute" id="unmute" data-i18n="unmute" hidden>Ton einschalten</button>
         <div class="castinfo" id="castinfo" hidden></div>
-      <div class="menu" id="setmenu" role="menu" aria-label="Einstellungen" hidden>
+      <div class="menu" id="setmenu" role="menu" data-i18n-aria="settings" aria-label="Einstellungen" hidden>
         <div id="setmain">
-          <div class="sheet-title">Einstellungen</div>
-          <button role="menuitemcheckbox" id="ccitem" aria-checked="false" title="Untertitel (C)"><svg><use href="#i-cc"/></svg><span class="label">Untertitel<small id="ccnote" hidden>Für diese Ausgabe keine</small></span><span class="switch"></span></button>
-          <button role="menuitem" id="speeditem" aria-haspopup="menu"><svg><use href="#i-speed"/></svg><span class="label">Geschwindigkeit</span><span class="val" id="speedval">Normal</span><svg><use href="#i-chev"/></svg></button>
-          <button role="menuitem" id="clockitem" aria-haspopup="menu"><svg><use href="#i-clock"/></svg><span class="label">Uhrzeit</span><span class="val" id="clockval"></span><svg><use href="#i-chev"/></svg></button>
+          <div class="sheet-title" data-i18n="settings">Einstellungen</div>
+          <button role="menuitemcheckbox" id="ccitem" aria-checked="false" data-i18n-title="subtitles" data-hint="C" title="Untertitel (C)"><svg><use href="#i-cc"/></svg><span class="label"><span data-i18n="subtitles">Untertitel</span><small id="ccnote" data-i18n="no_subs" hidden>Für diese Ausgabe keine</small></span><span class="switch"></span></button>
+          <button role="menuitem" id="speeditem" aria-haspopup="menu"><svg><use href="#i-speed"/></svg><span class="label" data-i18n="speed">Geschwindigkeit</span><span class="val" id="speedval">Normal</span><svg><use href="#i-chev"/></svg></button>
+          <button role="menuitem" id="clockitem" aria-haspopup="menu"><svg><use href="#i-clock"/></svg><span class="label" data-i18n="clock">Uhrzeit</span><span class="val" id="clockval"></span><svg><use href="#i-chev"/></svg></button>
         </div>
         <div id="setspeed" hidden>
-          <button class="head" id="speedback"><svg><use href="#i-chevback"/></svg><span class="label">Geschwindigkeit</span></button>
+          <button class="head" id="speedback"><svg><use href="#i-chevback"/></svg><span class="label" data-i18n="speed">Geschwindigkeit</span></button>
           <div id="speedlist"></div>
         </div>
         <div id="setclock" hidden>
-          <button class="head" id="clockback"><svg><use href="#i-chevback"/></svg><span class="label">Uhrzeit</span></button>
+          <button class="head" id="clockback"><svg><use href="#i-chevback"/></svg><span class="label" data-i18n="clock">Uhrzeit</span></button>
           <div id="clocklist"></div>
         </div>
       </div>
       <div class="transport" id="transport">
         <div class="line">
-          <div class="track" id="track" role="slider" tabindex="0" aria-label="Position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="track" id="track" role="slider" tabindex="0" data-i18n-aria="position" aria-label="Position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
             <div class="rail"></div><div class="buf" id="buf"></div><div class="fill" id="fill"></div>
             <div class="knob" id="knob"></div><div class="tip" id="tip" hidden></div>
             <div class="thumb" id="thumb" hidden><video id="tv" muted playsinline preload="none"></video><span id="ttime"></span></div>
@@ -468,22 +470,22 @@
         </div>
         <div class="row">
           <div class="group">
-            <button class="ctl main" id="toggle" aria-label="Abspielen" title="Abspielen (Leertaste)"><svg><use href="#i-play"/></svg></button>
+            <button class="ctl main" id="toggle" aria-label="Abspielen" data-i18n-title="play" data-hint="space" title="Abspielen (Leertaste)"><svg><use href="#i-play"/></svg></button>
             <div class="vol">
-              <button class="ctl" id="mute" aria-label="Ton aus" title="Ton aus (M)"><svg><use href="#i-vol"/></svg></button>
-              <input type="range" id="volume" min="0" max="1" step="0.05" value="1" aria-label="Lautstärke">
+              <button class="ctl" id="mute" aria-label="Ton aus" data-i18n-title="mute" data-hint="M" title="Ton aus (M)"><svg><use href="#i-vol"/></svg></button>
+              <input type="range" id="volume" min="0" max="1" step="0.05" value="1" data-i18n-aria="volume" aria-label="Lautstärke">
             </div>
             <span class="time"><span id="clocknow">--:--:--</span><span class="sep"> / </span><span id="to">--:--</span><span id="from" hidden></span></span>
-            <button class="live" id="livebtn" hidden title="Zum Live-Bild"><span class="ldot"></span>LIVE</button>
+            <button class="live" id="livebtn" hidden data-i18n-title="to_live" title="Zum Live-Bild"><span class="ldot"></span><span data-i18n="live_pill">LIVE</span></button>
           </div>
           <div class="group">
-            <button class="ctl opt" id="back" aria-label="10 Sekunden zurück" title="10 Sekunden zurück (J)"><svg><use href="#i-back"/></svg></button>
-            <button class="ctl opt" id="fwd" aria-label="30 Sekunden vor" title="30 Sekunden vor (L)"><svg><use href="#i-fwd"/></svg></button>
-            <a class="ctl opt" id="dlbtn" href="#" download aria-label="Diese Ausgabe herunterladen" title="Diese Ausgabe herunterladen"><svg><use href="#i-download"/></svg></a>
-            <google-cast-launcher class="ctl" id="castbtn" title="Auf Fernseher abspielen" hidden></google-cast-launcher>
-            <button class="ctl" id="sharebtn" aria-label="Diese Stelle teilen" title="Diese Stelle teilen (S)"><svg><use href="#i-share"/></svg></button>
-            <button class="ctl" id="setbtn" aria-haspopup="menu" aria-expanded="false" aria-controls="setmenu" aria-label="Einstellungen" title="Einstellungen"><svg><use href="#i-gear"/></svg></button>
-            <button class="ctl" id="full" aria-label="Vollbild" title="Vollbild (F)"><svg><use href="#i-full"/></svg></button>
+            <button class="ctl opt" id="back" data-i18n-aria="back10" data-i18n-title="back10" data-hint="J" aria-label="10 Sekunden zurück" title="10 Sekunden zurück (J)"><svg><use href="#i-back"/></svg></button>
+            <button class="ctl opt" id="fwd" data-i18n-aria="fwd30" data-i18n-title="fwd30" data-hint="L" aria-label="30 Sekunden vor" title="30 Sekunden vor (L)"><svg><use href="#i-fwd"/></svg></button>
+            <a class="ctl opt" id="dlbtn" href="#" download data-i18n-aria="download_this" data-i18n-title="download_this" aria-label="Diese Ausgabe herunterladen" title="Diese Ausgabe herunterladen"><svg><use href="#i-download"/></svg></a>
+            <google-cast-launcher class="ctl" id="castbtn" data-i18n-title="cast_tv" title="Auf Fernseher abspielen" hidden></google-cast-launcher>
+            <button class="ctl" id="sharebtn" data-i18n-aria="share_moment" data-i18n-title="share_moment" data-hint="S" aria-label="Diese Stelle teilen" title="Diese Stelle teilen (S)"><svg><use href="#i-share"/></svg></button>
+            <button class="ctl" id="setbtn" aria-haspopup="menu" aria-expanded="false" aria-controls="setmenu" data-i18n-aria="settings" data-i18n-title="settings" aria-label="Einstellungen" title="Einstellungen"><svg><use href="#i-gear"/></svg></button>
+            <button class="ctl" id="full" data-i18n-aria="fullscreen" data-i18n-title="fullscreen" data-hint="F" aria-label="Vollbild" title="Vollbild (F)"><svg><use href="#i-full"/></svg></button>
           </div>
         </div>
       </div>
@@ -494,14 +496,14 @@
   </main>
 
   <dialog class="sub" id="sharedlg" aria-labelledby="sharetitle">
-    <button class="ctl close" id="shareclose" aria-label="Schließen"><svg viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg></button>
-    <h2 id="sharetitle">Diese Stelle teilen</h2>
+    <button class="ctl close" id="shareclose" data-i18n-aria="close" aria-label="Schließen"><svg viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <h2 id="sharetitle" data-i18n="share_moment">Diese Stelle teilen</h2>
     <p id="shareedition"></p>
     <div class="preview"><video id="pv" muted playsinline preload="auto"></video></div>
     <div class="pick">
       <span class="stime" id="stime">--:--:--</span>
       <div class="srange-wrap" id="swrap">
-        <input type="range" id="srange" step="1" aria-label="Zeitpunkt">
+        <input type="range" id="srange" step="1" data-i18n-aria="moment" aria-label="Zeitpunkt">
         <div class="thumb" id="sthumb" hidden><video id="stv" muted playsinline preload="none"></video><span id="sttime"></span></div>
       </div>
       <div class="nudge">
@@ -510,26 +512,149 @@
         <button class="pill quiet" data-n="1">+1 s</button>
         <button class="pill quiet" data-n="5">+5 s</button>
       </div>
-      <label class="from"><input type="checkbox" id="sfrom" checked> Ab dieser Stelle starten</label>
+      <label class="from"><input type="checkbox" id="sfrom" checked> <span data-i18n="start_here">Ab dieser Stelle starten</span></label>
     </div>
     <div class="copy">
-      <input id="surl" readonly aria-label="Link">
-      <button class="pill" id="scopy">Kopieren</button>
-      <button class="pill quiet" id="sshare" hidden>Teilen</button>
+      <input id="surl" readonly data-i18n-aria="link" aria-label="Link">
+      <button class="pill" id="scopy" data-i18n="copy">Kopieren</button>
+      <button class="pill quiet" id="sshare" data-i18n="share" hidden>Teilen</button>
     </div>
   </dialog>
 
-  <nav class="rundown" id="rundown" aria-label="Ausgaben"></nav>
+  <nav class="rundown" id="rundown" data-i18n-aria="editions" aria-label="Ausgaben"></nav>
 
   <footer class="fine">
-    <p>Diese Seite ist kein Angebot der ARD, von ARD-aktuell oder tagesschau.de und steht mit ihnen in keiner Verbindung.</p>
-    <p>Alle Sendungen, Bilder und Marken gehören ihren Rechteinhabern. Die Videos kommen unverändert von den Servern der ARD; diese Seite speichert keine Sendungen.</p>
-    <p>Freie Software unter der GPL-3.0, samt Android-App: <a href="https://github.com/pschmitt/tagesschau" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Quelltext auf GitHub</a></p>
+    <p data-i18n="footer1">Diese Seite ist kein Angebot der ARD, von ARD-aktuell oder tagesschau.de und steht mit ihnen in keiner Verbindung.</p>
+    <p data-i18n="footer2">Alle Sendungen, Bilder und Marken gehören ihren Rechteinhabern. Die Videos kommen unverändert von den Servern der ARD; diese Seite speichert keine Sendungen.</p>
+    <p><span data-i18n="footer3">Freie Software unter der GPL-3.0, samt Android-App:</span> <a href="https://github.com/pschmitt/tagesschau" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span data-i18n="source">Quelltext auf GitHub</span></a></p>
+    <p class="langs" id="langs"></p>
   </footer>
 </div>
 
 <script>
 (() => {
+  /* Languages: ?lang=de|en|fr (remembered), else the remembered one, else the first of the
+     browser's preferred languages we have, else English. */
+  const LANGS = { de: "Deutsch", en: "English", fr: "Français" };
+  const LOCALE = { de: "de-DE", en: "en-GB", fr: "fr-FR" };
+  const lang = (() => {
+    const q = new URLSearchParams(location.search).get("lang");
+    if (q && LANGS[q]) { try { localStorage.setItem("ts:lang", JSON.stringify(q)); } catch (_) {} return q; }
+    try { const s = JSON.parse(localStorage.getItem("ts:lang")); if (LANGS[s]) return s; } catch (_) {}
+    return (navigator.languages || [navigator.language || ""]).map(l => String(l).slice(0, 2)).find(l => LANGS[l]) || "en";
+  })();
+  const T = {
+    de: {
+      title: "tagesschau, alle Ausgaben", brand_sub: "alle Ausgaben", notify: "Bei neuen Ausgaben benachrichtigen",
+      subscribe_long: "Als Podcast abonnieren", subscribe_short: "Abonnieren", close: "Schließen",
+      sub_lead: "Alle tagesschau-Ausgaben der letzten 48 Stunden, neueste zuerst.", feed_addr: "Feed-Adresse",
+      copy: "Kopieren", copied: "Kopiert", share: "Teilen",
+      sub_note: "Spotify und YouTube Music können keine eigenen Feeds abonnieren. Jede andere Podcast-App nimmt die Adresse oben. Die Android-App hat einen eigenen Player mit Downloads und aktualisiert sich selbst.",
+      play: "Abspielen", pause: "Pause", unmute: "Ton einschalten", settings: "Einstellungen", subtitles: "Untertitel",
+      no_subs: "Für diese Ausgabe keine", speed: "Geschwindigkeit", normal: "Normal", clock: "Uhrzeit", off: "Aus",
+      position: "Position", mute: "Ton aus", sound_on: "Ton an", volume: "Lautstärke", to_live: "Zum Live-Bild",
+      jump_live: "Zum Live-Bild springen", live: "Live", live_pill: "LIVE", back10: "10 Sekunden zurück",
+      fwd30: "30 Sekunden vor", download_this: "Diese Ausgabe herunterladen", download: "Herunterladen",
+      cast_tv: "Auf Fernseher abspielen", share_moment: "Diese Stelle teilen", fullscreen: "Vollbild",
+      moment: "Zeitpunkt", start_here: "Ab dieser Stelle starten", link: "Link", editions: "Ausgaben",
+      footer1: "Diese Seite ist kein Angebot der ARD, von ARD-aktuell oder tagesschau.de und steht mit ihnen in keiner Verbindung.",
+      footer2: "Alle Sendungen, Bilder und Marken gehören ihren Rechteinhabern. Die Videos kommen unverändert von den Servern der ARD; diese Seite speichert keine Sendungen.",
+      footer3: "Freie Software unter der GPL-3.0, samt Android-App:", source: "Quelltext auf GitHub",
+      today: "Heute", yesterday: "Gestern", edition: "tagesschau {time} Uhr", channel: "Das Erste live",
+      realtime: "Fernsehprogramm in Echtzeit", playing: "spielt", on_air_start: "läuft gerade, ab Beginn",
+      on_air: "läuft gerade", in_realtime: "in Echtzeit", seen: "gesehen", resume_at: "weiter ab {time}",
+      plain: "tagesschau", load_failed: "Die Ausgaben konnten nicht geladen werden ({err}). Die Seite versucht es in einer Minute erneut.",
+      none_48h: "In den letzten 48 Stunden ist keine Ausgabe erschienen.",
+      shared_gone: "Die geteilte Ausgabe ist nicht mehr verfügbar; hier gibt es nur die letzten 48 Stunden.",
+      android_app: "Android-App", feed_browser: "Feed im Browser", notify_live: "{title} läuft gerade",
+      watch_start: "Ab Beginn ansehen", notify_new: "Neue Ausgabe: {title}", tv: "Fernseher",
+      playing_on: "Läuft auf {device}", cast_failed: "Übertragen fehlgeschlagen ({err}).", space: "Leertaste",
+      skip: "{n} Sekunden",
+    },
+    en: {
+      title: "tagesschau, all editions", brand_sub: "all editions", notify: "Notify me about new editions",
+      subscribe_long: "Subscribe as a podcast", subscribe_short: "Subscribe", close: "Close",
+      sub_lead: "Every tagesschau edition from the last 48 hours, newest first.", feed_addr: "Feed address",
+      copy: "Copy", copied: "Copied", share: "Share",
+      sub_note: "Spotify and YouTube Music can't subscribe to custom feeds. Any other podcast app takes the address above. The Android app has its own player with downloads and updates itself.",
+      play: "Play", pause: "Pause", unmute: "Turn on sound", settings: "Settings", subtitles: "Subtitles",
+      no_subs: "None for this edition", speed: "Speed", normal: "Normal", clock: "Clock", off: "Off",
+      position: "Position", mute: "Mute", sound_on: "Unmute", volume: "Volume", to_live: "Go to live",
+      jump_live: "Jump to live", live: "Live", live_pill: "LIVE", back10: "Back 10 seconds",
+      fwd30: "Forward 30 seconds", download_this: "Download this edition", download: "Download",
+      cast_tv: "Play on TV", share_moment: "Share this moment", fullscreen: "Full screen",
+      moment: "Moment", start_here: "Start at this moment", link: "Link", editions: "Editions",
+      footer1: "This site is not a service of ARD, ARD-aktuell or tagesschau.de and is not affiliated with them.",
+      footer2: "All programmes, images and trademarks belong to their owners. The videos come unchanged from ARD's servers; this site stores no programmes.",
+      footer3: "Free software under the GPL-3.0, Android app included:", source: "Source code on GitHub",
+      today: "Today", yesterday: "Yesterday", edition: "tagesschau {time}", channel: "Das Erste live",
+      realtime: "The channel in real time", playing: "playing", on_air_start: "on air, from the start",
+      on_air: "on air", in_realtime: "in real time", seen: "watched", resume_at: "continue at {time}",
+      plain: "tagesschau", load_failed: "Couldn't load the editions ({err}). The page tries again in a minute.",
+      none_48h: "No edition was published in the last 48 hours.",
+      shared_gone: "The shared edition is no longer available; this site only keeps the last 48 hours.",
+      android_app: "Android app", feed_browser: "Feed in the browser", notify_live: "{title} is on air",
+      watch_start: "Watch from the start", notify_new: "New edition: {title}", tv: "TV",
+      playing_on: "Playing on {device}", cast_failed: "Casting failed ({err}).", space: "Space",
+      skip: "{n} seconds",
+    },
+    fr: {
+      title: "tagesschau, toutes les éditions", brand_sub: "toutes les éditions", notify: "M'avertir des nouvelles éditions",
+      subscribe_long: "S'abonner au podcast", subscribe_short: "S'abonner", close: "Fermer",
+      sub_lead: "Toutes les éditions du tagesschau des dernières 48 heures, la plus récente d'abord.", feed_addr: "Adresse du flux",
+      copy: "Copier", copied: "Copié", share: "Partager",
+      sub_note: "Spotify et YouTube Music ne peuvent pas s'abonner à des flux personnalisés. Toute autre application de podcast accepte l'adresse ci-dessus. L'application Android a son propre lecteur avec téléchargements et se met à jour toute seule.",
+      play: "Lecture", pause: "Pause", unmute: "Activer le son", settings: "Réglages", subtitles: "Sous-titres",
+      no_subs: "Aucun pour cette édition", speed: "Vitesse", normal: "Normale", clock: "Horloge", off: "Désactivée",
+      position: "Position", mute: "Couper le son", sound_on: "Rétablir le son", volume: "Volume", to_live: "Aller au direct",
+      jump_live: "Revenir au direct", live: "En direct", live_pill: "DIRECT", back10: "Reculer de 10 secondes",
+      fwd30: "Avancer de 30 secondes", download_this: "Télécharger cette édition", download: "Télécharger",
+      cast_tv: "Lire sur la télé", share_moment: "Partager ce moment", fullscreen: "Plein écran",
+      moment: "Instant", start_here: "Commencer à ce moment", link: "Lien", editions: "Éditions",
+      footer1: "Ce site n'est pas un service de l'ARD, d'ARD-aktuell ni de tagesschau.de et n'a aucun lien avec eux.",
+      footer2: "Toutes les émissions, images et marques appartiennent à leurs ayants droit. Les vidéos proviennent telles quelles des serveurs de l'ARD ; ce site ne stocke aucune émission.",
+      footer3: "Logiciel libre sous GPL-3.0, application Android comprise :", source: "Code source sur GitHub",
+      today: "Aujourd'hui", yesterday: "Hier", edition: "tagesschau de {time}", channel: "Das Erste live",
+      realtime: "La chaîne en temps réel", playing: "en cours", on_air_start: "en direct, depuis le début",
+      on_air: "en direct", in_realtime: "en temps réel", seen: "vue", resume_at: "reprendre à {time}",
+      plain: "tagesschau", load_failed: "Impossible de charger les éditions ({err}). Nouvel essai dans une minute.",
+      none_48h: "Aucune édition n'a été publiée ces dernières 48 heures.",
+      shared_gone: "L'édition partagée n'est plus disponible ; ce site ne garde que les dernières 48 heures.",
+      android_app: "Application Android", feed_browser: "Flux dans le navigateur", notify_live: "{title} est en direct",
+      watch_start: "Regarder depuis le début", notify_new: "Nouvelle édition : {title}", tv: "télé",
+      playing_on: "Lecture sur {device}", cast_failed: "Échec de la diffusion ({err}).", space: "Espace",
+      skip: "{n} secondes",
+    },
+  };
+  const t = (key, vars = {}) => (T[lang][key] ?? T.de[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
+  const DECIMAL = lang === "en" ? "." : ",";
+  function applyI18n() {
+    document.documentElement.lang = lang;
+    document.title = t("title");
+    for (const el of document.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n);
+    for (const el of document.querySelectorAll("[data-i18n-aria]")) el.setAttribute("aria-label", t(el.dataset.i18nAria));
+    for (const el of document.querySelectorAll("[data-i18n-title]")) {
+      const hint = el.dataset.hint;
+      el.title = t(el.dataset.i18nTitle) + (hint ? " (" + (hint === "space" ? t("space") : hint) + ")" : "");
+    }
+    // Language links in the footer: the same page in each language.
+    const box = document.getElementById("langs");
+    if (box) {
+      box.replaceChildren();
+      for (const [code, name] of Object.entries(LANGS)) {
+        const a = document.createElement("a");
+        const u = new URL(location.href);
+        u.searchParams.set("lang", code);
+        u.searchParams.delete("at");
+        a.href = u.pathname + u.search;
+        a.textContent = name;
+        a.lang = code;
+        if (code === lang) a.setAttribute("aria-current", "true");
+        box.append(a);
+      }
+    }
+  }
+  applyI18n();
   const $ = id => document.getElementById(id);
   const video = $("video"), player = $("player"), well = $("well");
   const track = $("track"), fill = $("fill"), buf = $("buf"), knob = $("knob"), tip = $("tip");
@@ -548,14 +673,14 @@
   };
 
   const tz = "Europe/Berlin";
-  const hm = d => d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: tz });
-  const hms = d => d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: tz });
-  const longDay = d => d.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", timeZone: tz });
+  const hm = d => d.toLocaleTimeString(LOCALE[lang], { hour: "2-digit", minute: "2-digit", timeZone: tz });
+  const hms = d => d.toLocaleTimeString(LOCALE[lang], { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: tz });
+  const longDay = d => d.toLocaleDateString(LOCALE[lang], { weekday: "long", day: "numeric", month: "long", timeZone: tz });
   const dayKey = d => d.toLocaleDateString("sv-SE", { timeZone: tz });
   function dayLabel(d) {
     const k = dayKey(d);
-    if (k === dayKey(new Date())) return "Heute";
-    if (k === dayKey(new Date(Date.now() - 864e5))) return "Gestern";
+    if (k === dayKey(new Date())) return t("today");
+    if (k === dayKey(new Date(Date.now() - 864e5))) return t("yesterday");
     return longDay(d);
   }
   const icon = (btn, name) => btn.querySelector("use").setAttribute("href", "#i-" + name);
@@ -602,7 +727,7 @@
   /* Rundown */
   // Das Erste's live stream itself (2 h window; hls.js starts at the live edge).
   const CHANNEL = { id: "daserste-live", url: "https://daserste-live.ard-mcdn.de/daserste/live/hls/de/master.m3u8", live: true, channel: true, get date() { return new Date(); } };
-  const title = it => it.channel ? "Das Erste live" : "tagesschau " + hm(it.date) + " Uhr";
+  const title = it => it.channel ? t("channel") : t("edition", { time: hm(it.date) });
 
   function render() {
     rundown.replaceChildren();
@@ -610,8 +735,9 @@
     ch.className = "channel";
     ch.setAttribute("aria-current", String(!!(current && current.channel)));
     const chText = document.createElement("span");
-    chText.innerHTML = "<strong>Das Erste live</strong><span class=sub></span>";
-    chText.querySelector(".sub").textContent = current && current.channel ? "spielt" : "Fernsehprogramm in Echtzeit";
+    chText.innerHTML = "<strong></strong><span class=sub></span>";
+    chText.querySelector("strong").textContent = t("channel");
+    chText.querySelector(".sub").textContent = current && current.channel ? t("playing") : t("realtime");
     const dot = document.createElement("span");
     dot.className = "dot";
     ch.append(dot, chText);
@@ -644,15 +770,15 @@
       if (it.live) {
         const dot = document.createElement("span");
         dot.className = "dot";
-        d.append(dot, "läuft gerade, ab Beginn");
+        d.append(dot, t("on_air_start"));
       } else if (current && it.id === current.id) {
-        d.textContent = "spielt";
+        d.textContent = t("playing");
       } else if (mem && mem.dur && mem.pos / mem.dur > 0.95) {
-        d.textContent = "gesehen";
+        d.textContent = t("seen");
       } else if (mem && mem.pos > 5) {
-        d.textContent = "weiter ab " + hm(new Date(it.date.getTime() + mem.pos * 1000));
+        d.textContent = t("resume_at", { time: hm(new Date(it.date.getTime() + mem.pos * 1000)) });
       } else {
-        d.textContent = "tagesschau";
+        d.textContent = t("plain");
       }
       b.append(t, d);
       if (mem && mem.dur && !it.live) {
@@ -669,8 +795,8 @@
         dl.className = "dl";
         dl.href = "/download/" + encodeURIComponent(it.id);
         dl.setAttribute("download", "");
-        dl.setAttribute("aria-label", "Herunterladen");
-        dl.title = "Herunterladen";
+        dl.setAttribute("aria-label", t("download"));
+        dl.title = t("download");
         dl.innerHTML = '<svg viewBox="0 0 24 24"><use href="#i-download"/></svg>';
         li.append(dl);
       }
@@ -685,12 +811,12 @@
     const w = document.createElement("span");
     w.className = "when";
     const s = document.createElement("strong");
-    s.textContent = it.channel ? "Das Erste live" : longDay(it.date);
+    s.textContent = it.channel ? t("channel") : longDay(it.date);
     w.append(s);
     if (it.live) {
       const o = document.createElement("span");
       o.className = "onair";
-      o.textContent = it.channel ? " in Echtzeit" : " läuft gerade";
+      o.textContent = " " + (it.channel ? t("in_realtime") : t("on_air"));
       w.append(o);
     }
     now.append(clockEl, w);
@@ -828,7 +954,7 @@
     if (!on) return;
     const behind = behindLive();
     b.classList.toggle("at", !behind);
-    b.setAttribute("aria-label", behind ? "Zum Live-Bild springen" : "Live");
+    b.setAttribute("aria-label", behind ? t("jump_live") : t("live"));
     b.disabled = !behind;
   }
   function goLive() {
@@ -891,7 +1017,7 @@
 
   // The big clock, with milliseconds, redrawn every frame (timeupdate comes only ~4×/s).
   let clockShown = "";
-  const CLOCK_FORMATS = [["off", "Aus"], ["min", "20:00"], ["s", "20:00:06"], ["ms", "20:00:06,123"]];
+  const CLOCK_FORMATS = [["off", t("off")], ["min", "20:00"], ["s", "20:00:06"], ["ms", "20:00:06" + DECIMAL + "123"]];
   const clockFormat = () => (CLOCK_FORMATS.some(([k]) => k === store.get("clock")) ? store.get("clock") : "s");
   function drawClock() {
     if (!clockEl || !current) return;
@@ -915,7 +1041,7 @@
       m.className = "ms";
       clockEl.append(small, m);
     }
-    clockEl.querySelector(".ms").textContent = ms && "," + ms;
+    clockEl.querySelector(".ms").textContent = ms && DECIMAL + ms;
     clockShown = s + ms;
   }
   (function frame() {
@@ -926,13 +1052,13 @@
   function syncButtons() {
     const playing = !isPaused();
     icon($("toggle"), playing ? "pause" : "play");
-    $("toggle").setAttribute("aria-label", playing ? "Pause" : "Abspielen");
+    $("toggle").setAttribute("aria-label", playing ? t("pause") : t("play"));
     // While the play/pause sign flashes, the big play button waits (no two icons on top of each other).
     $("bigplay").hidden = playing || video.seeking || (video.readyState < 2 && !video.error) || performance.now() < flashUntil;
     const muted = vol.muted() || vol.level() === 0;
     icon($("mute"), muted ? "mute" : "vol");
     $("volume").value = vol.muted() ? 0 : vol.level();
-    $("mute").setAttribute("aria-label", muted ? "Ton an" : "Ton aus");
+    $("mute").setAttribute("aria-label", muted ? t("sound_on") : t("mute"));
     $("speedval").textContent = speedLabel(video.playbackRate);
     for (const b of $("speedlist").children) b.setAttribute("aria-checked", String(Number(b.dataset.rate) === video.playbackRate));
     if ("mediaSession" in navigator) navigator.mediaSession.playbackState = playing ? "playing" : "paused";
@@ -1201,7 +1327,7 @@
     for (const b of $("clocklist").children) b.setAttribute("aria-checked", String(b.dataset.fmt === f));
   }
   syncClockMenu();
-  const speedLabel = r => r === 1 ? "Normal" : String(r).replace(".", ",") + "×";
+  const speedLabel = r => r === 1 ? t("normal") : String(r).replace(".", DECIMAL) + "×";
   for (const r of [...SPEEDS].sort((a, b) => a - b)) {
     const b = document.createElement("button");
     b.setAttribute("role", "menuitemradio");
@@ -1295,7 +1421,7 @@
     if (!("mediaSession" in navigator)) return;
     navigator.mediaSession.metadata = new MediaMetadata({
       title: title(it),
-      artist: it.channel ? "Fernsehprogramm in Echtzeit" : longDay(it.date) + (it.live ? ", läuft gerade" : ""),
+      artist: it.channel ? t("realtime") : longDay(it.date) + (it.live ? ", " + t("on_air") : ""),
       album: "tagesschau, alle Ausgaben",
       artwork: [{ src: "/cover.jpg", sizes: "1400x1400", type: "image/jpeg" }],
     });
@@ -1325,14 +1451,14 @@
       notifyCheck(items);
     } catch (e) {
       notice.hidden = false;
-      notice.textContent = "Die Ausgaben konnten nicht geladen werden (" + e.message + "). Die Seite versucht es in einer Minute erneut.";
+      notice.textContent = t("load_failed", { err: e.message });
       setTimeout(init, 60e3);
       return;
     }
     notice.hidden = true;
     if (!items.length) {
       notice.hidden = false;
-      notice.textContent = "In den letzten 48 Stunden ist keine Ausgabe erschienen.";
+      notice.textContent = t("none_48h");
       return;
     }
     // A shared link (?at=<unix seconds>) opens the edition with that moment.
@@ -1353,7 +1479,7 @@
     } else {
       if (at) {
         notice.hidden = false;
-        notice.textContent = "Die geteilte Ausgabe ist nicht mehr verfügbar; hier gibt es nur die letzten 48 Stunden.";
+        notice.textContent = t("shared_gone");
       }
       play(items[0], false);
     }
@@ -1384,8 +1510,8 @@
     ["Overcast", "overcast://x-callback-url/add?url=" + enc, "#FC7E0F", "M12 24C5.389 24.018.017 18.671 0 12.061V12C0 5.35 5.351 0 12 0s12 5.35 12 12c0 6.649-5.351 12-12 12zm0-4.751l.9-.899-.9-3.45-.9 3.45.9.899zm-1.15-.05L10.4 20.9l1.05-1.052-.6-.649zm2.3 0l-.6.601 1.05 1.051-.45-1.652zm.85 3.102L12 20.3l-2 2.001c.65.1 1.3.199 2 .199s1.35-.05 2-.199zM12 1.5C6.201 1.5 1.5 6.201 1.5 12c-.008 4.468 2.825 8.446 7.051 9.899l2.25-8.35c-.511-.372-.809-.968-.801-1.6 0-1.101.9-2.001 2-2.001s2 .9 2 2.001c0 .649-.301 1.2-.801 1.6l2.25 8.35c4.227-1.453 7.06-5.432 7.051-9.899 0-5.799-4.701-10.5-10.5-10.5zm6.85 15.7c-.255.319-.714.385-1.049.15-.313-.207-.4-.628-.194-.941.014-.021.028-.04.044-.06 0 0 1.35-1.799 1.35-4.35s-1.35-4.35-1.35-4.35c-.239-.289-.198-.719.091-.957.02-.016.039-.031.06-.044.335-.235.794-.169 1.049.15.1.101 1.65 2.15 1.65 5.2S18.949 17.1 18.85 17.2zm-3.651-1.95c-.3-.3-.249-.85.051-1.15 0 0 .75-.799.75-2.1s-.75-2.051-.75-2.1c-.3-.301-.3-.801-.051-1.15.232-.303.666-.357.969-.125.029.022.056.047.082.074C16.301 8.75 17.5 10 17.5 12s-1.199 3.25-1.25 3.301c-.301.299-.75.25-1.051-.051zm-6.398 0c-.301.301-.75.35-1.051.051C7.699 15.199 6.5 14 6.5 12s1.199-3.199 1.25-3.301c.301-.299.801-.299 1.051.051.3.3.249.85-.051 1.15 0 .049-.75.799-.75 2.1s.75 2.1.75 2.1c.3.3.351.799.051 1.15zm-2.602 2.101c-.335.234-.794.169-1.05-.15C5.051 17.1 3.5 15.05 3.5 12s1.551-5.1 1.649-5.2c.256-.319.715-.386 1.05-.15.313.206.4.628.194.941-.013.02-.028.04-.043.059C6.35 7.65 5 9.449 5 12s1.35 4.35 1.35 4.35c.25.3.15.75-.151 1.001z"],
     ["AntennaPod", "https://antennapod.org/deeplink/subscribe?url=" + enc + "&title=" + encodeURIComponent("tagesschau (alle Ausgaben)"), "#364FF3", "M12 0A12 12 0 0 0 0 12a12 12 0 0 0 7.188 10.98l3.339-9.459a2.118 2.118 0 1 1 2.946 0l3.339 9.46A12 12 0 0 0 24 12 12 12 0 0 0 12 0m0 2.824a9.177 9.177 0 0 1 4.969 16.892l-.486-1.376a7.765 7.765 0 1 0-8.967 0l-.485 1.376A9.177 9.177 0 0 1 12 2.824m0 3.529a5.647 5.647 0 0 1 3.739 9.879l-.521-1.478a4.235 4.235 0 1 0-6.436 0l-.522 1.478A5.647 5.647 0 0 1 12 6.353m0 8.298-1.618 4.584a7.4 7.4 0 0 0 3.236 0zm-2.21 6.258-.937 2.656A12 12 0 0 0 12 24a12 12 0 0 0 3.146-.435l-.937-2.656a9.2 9.2 0 0 1-2.209.267 9.2 9.2 0 0 1-2.21-.267"],
     ["Podcast Addict", "podcastaddict://" + bare, "#F4842D", "M5.36.037C2.41.037 0 2.447 0 5.397v13.207c0 2.95 2.41 5.36 5.36 5.36h13.28c2.945 0 5.36-2.41 5.36-5.36V5.396c0-2.95-2.415-5.36-5.36-5.36zm6.585 4.285a7.72 7.72 0 017.717 7.544l.005 7.896h-3.39v-1.326a7.68 7.68 0 01-4.327 1.326 7.777 7.777 0 01-2.384-.378v-4.63a3.647 3.647 0 002.416.91 3.666 3.666 0 003.599-2.97h-1.284a2.416 2.416 0 01-4.73-.66v-.031c0-1.095.728-2.023 1.728-2.316V8.403a3.67 3.67 0 00-2.975 3.6v6.852a7.72 7.72 0 013.625-14.533zm.031 1.87V7.43h.006a4.575 4.575 0 014.573 4.574v.01h1.237v-.01a5.81 5.81 0 00-5.81-5.81zm0 2.149v1.246h.006a2.413 2.413 0 012.415 2.416v.01h1.247v-.01a3.662 3.662 0 00-3.662-3.662zm0 2.252c-.78 0-1.409.629-1.409 1.41 0 .78.629 1.409 1.41 1.409.78 0 1.409-.629 1.409-1.41 0-.78-.629-1.409-1.41-1.409z"],
-    ["Android-App", "https://github.com/pschmitt/tagesschau/releases/download/latest/tagesschau-android-latest-app-release.apk", "#3DDC84", "M18.4395 5.5586c-.675 1.1664-1.352 2.3318-2.0274 3.498-.0366-.0155-.0742-.0286-.1113-.043-1.8249-.6957-3.484-.8-4.42-.787-1.8551.0185-3.3544.4643-4.2597.8203-.084-.1494-1.7526-3.021-2.0215-3.4864a1.1451 1.1451 0 0 0-.1406-.1914c-.3312-.364-.9054-.4859-1.379-.203-.475.282-.7136.9361-.3886 1.5019 1.9466 3.3696-.0966-.2158 1.9473 3.3593.0172.031-.4946.2642-1.3926 1.0177C2.8987 12.176.452 14.772 0 18.9902h24c-.119-1.1108-.3686-2.099-.7461-3.0683-.7438-1.9118-1.8435-3.2928-2.7402-4.1836a12.1048 12.1048 0 0 0-2.1309-1.6875c.6594-1.122 1.312-2.2559 1.9649-3.3848.2077-.3615.1886-.7956-.0079-1.1191a1.1001 1.1001 0 0 0-.8515-.5332c-.5225-.0536-.9392.3128-1.0488.5449zm-.0391 8.461c.3944.5926.324 1.3306-.1563 1.6503-.4799.3197-1.188.0985-1.582-.4941-.3944-.5927-.324-1.3307.1563-1.6504.4727-.315 1.1812-.1086 1.582.4941zM7.207 13.5273c.4803.3197.5506 1.0577.1563 1.6504-.394.5926-1.1038.8138-1.584.4941-.48-.3197-.5503-1.0577-.1563-1.6504.4008-.6021 1.1087-.8106 1.584-.4941z"],
-    ["Feed im Browser", feed, "#10356F", "M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20 5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"],
+    [t("android_app"), "https://github.com/pschmitt/tagesschau/releases/download/latest/tagesschau-android-latest-app-release.apk", "#3DDC84", "M18.4395 5.5586c-.675 1.1664-1.352 2.3318-2.0274 3.498-.0366-.0155-.0742-.0286-.1113-.043-1.8249-.6957-3.484-.8-4.42-.787-1.8551.0185-3.3544.4643-4.2597.8203-.084-.1494-1.7526-3.021-2.0215-3.4864a1.1451 1.1451 0 0 0-.1406-.1914c-.3312-.364-.9054-.4859-1.379-.203-.475.282-.7136.9361-.3886 1.5019 1.9466 3.3696-.0966-.2158 1.9473 3.3593.0172.031-.4946.2642-1.3926 1.0177C2.8987 12.176.452 14.772 0 18.9902h24c-.119-1.1108-.3686-2.099-.7461-3.0683-.7438-1.9118-1.8435-3.2928-2.7402-4.1836a12.1048 12.1048 0 0 0-2.1309-1.6875c.6594-1.122 1.312-2.2559 1.9649-3.3848.2077-.3615.1886-.7956-.0079-1.1191a1.1001 1.1001 0 0 0-.8515-.5332c-.5225-.0536-.9392.3128-1.0488.5449zm-.0391 8.461c.3944.5926.324 1.3306-.1563 1.6503-.4799.3197-1.188.0985-1.582-.4941-.3944-.5927-.324-1.3307.1563-1.6504.4727-.315 1.1812-.1086 1.582.4941zM7.207 13.5273c.4803.3197.5506 1.0577.1563 1.6504-.394.5926-1.1038.8138-1.584.4941-.48-.3197-.5503-1.0577-.1563-1.6504.4008-.6021 1.1087-.8106 1.584-.4941z"],
+    [t("feed_browser"), feed, "#10356F", "M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20 5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"],
   ];
   const dlg = $("subdialog");
   $("feedurl").value = feed;
@@ -1415,8 +1541,8 @@
   $("copy").addEventListener("click", async () => {
     try { await navigator.clipboard.writeText(feed); }
     catch (_) { $("feedurl").select(); document.execCommand("copy"); }
-    $("copy").textContent = "Kopiert";
-    setTimeout(() => { $("copy").textContent = "Kopieren"; }, 2000);
+    $("copy").textContent = t("copied");
+    setTimeout(() => { $("copy").textContent = t("copy"); }, 2000);
   });
   if (navigator.share) {
     $("share").hidden = false;
@@ -1458,7 +1584,7 @@
     srange.min = start;
     srange.max = Math.max(end, start + 1000);
     srange.value = Math.min(Math.max(nowAt.getTime(), start), Number(srange.max));
-    $("shareedition").textContent = "tagesschau " + hm(current.date) + " Uhr, " + longDay(current.date);
+    $("shareedition").textContent = title(current) + ", " + longDay(current.date);
     if (phls) { phls.destroy(); phls = null; }
     const offset = (Number(srange.value) - start) / 1000;
     if (current.url.endsWith(".m3u8") && window.Hls && Hls.isSupported()) {
@@ -1508,8 +1634,8 @@
     const url = shareUrl();
     try { await navigator.clipboard.writeText(url); }
     catch (_) { $("surl").select(); document.execCommand("copy"); }
-    $("scopy").textContent = "Kopiert";
-    setTimeout(() => { $("scopy").textContent = "Kopieren"; }, 2000);
+    $("scopy").textContent = t("copied");
+    setTimeout(() => { $("scopy").textContent = t("copy"); }, 2000);
   });
   if (navigator.share) {
     $("sshare").hidden = false;
@@ -1537,8 +1663,8 @@
       for (const it of list) {
         if (notifySeen.has(it.id)) continue;
         const url = "/?at=" + Math.floor(it.date.getTime() / 1000);
-        if (it.live) notifyShow("tagesschau " + hm(it.date) + " Uhr läuft gerade", "Ab Beginn ansehen", url);
-        else notifyShow("Neue Ausgabe: tagesschau " + hm(it.date) + " Uhr", longDay(it.date), url);
+        if (it.live) notifyShow(t("notify_live", { title: title(it) }), t("watch_start"), url);
+        else notifyShow(t("notify_new", { title: title(it) }), longDay(it.date), url);
       }
     }
     notifySeen = new Set(list.map(it => it.id));
@@ -1628,12 +1754,12 @@
     session.loadMedia(req).then(
       () => {
         cast.on = true;
-        cast.device = session.getCastDevice().friendlyName || "Fernseher";
-        $("castinfo").textContent = "Läuft auf " + cast.device;
+        cast.device = session.getCastDevice().friendlyName || t("tv");
+        $("castinfo").textContent = t("playing_on", { device: cast.device });
         $("castinfo").hidden = false;
         syncButtons();
       },
-      err => { notice.hidden = false; notice.textContent = "Übertragen fehlgeschlagen (" + err + ")."; },
+      err => { notice.hidden = false; notice.textContent = t("cast_failed", { err }); },
     );
   }
 

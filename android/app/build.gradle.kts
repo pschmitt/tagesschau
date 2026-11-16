@@ -72,6 +72,8 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
+    androidResources { localeFilters += listOf("de", "en", "fr") }
+
     buildFeatures {
         compose = true
         buildConfig = true

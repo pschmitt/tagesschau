@@ -1,6 +1,7 @@
 package dev.pschmitt.tagesschau
 
 import android.content.ComponentName
+import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -18,6 +19,10 @@ import com.google.common.util.concurrent.ListenableFuture
  * it too. Extras: [PlaybackService.EXTRA_PREFER_LIVE], [PlaybackService.EXTRA_AUDIO_ONLY].
  */
 class PlayLatestActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(Lang.wrap(newBase))
+    }
+
     private var future: ListenableFuture<MediaController>? = null
     private val handler = Handler(Looper.getMainLooper())
 

@@ -88,6 +88,7 @@ with each download, so they work offline too.
 
 | Setting | Default | |
 | --- | --- | --- |
+| Sprache (Erweitert) | System | German, English or French; the system language by default (English when it is none of them). On Android 13+ also in the system's per-app language settings |
 | Beim Öffnen | Neueste tagesschau | What the app shows when it starts: the latest tagesschau or Das Erste live (at its live edge) |
 | Beim Öffnen abspielen | Nur Bild (stumm) | Start the newest edition when the app opens: picture and sound, picture only (with a "Ton einschalten" button), sound only, or nothing |
 | Laufende Ausgabe ab Beginn | on | Play the edition on air from its start, else the newest finished one (Tasker and app start) |

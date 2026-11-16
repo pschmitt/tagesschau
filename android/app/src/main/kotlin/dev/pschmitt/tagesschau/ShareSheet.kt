@@ -78,9 +78,17 @@ fun ShareSheet(activity: MainActivity, st: PlayState, streamUrl: String?, onDism
     val air = start.plusNanos(ms * 1_000_000).atZoneSameInstant(Edition.BERLIN)
     val linkSeconds = if (fromHere) air.toEpochSecond() else start.toEpochSecond()
     val url = "${Settings(context).serverUrl}/?at=$linkSeconds"
+    val startAt = start.atZoneSameInstant(Edition.BERLIN)
     val title =
-        "tagesschau ${start.atZoneSameInstant(Edition.BERLIN).format(HM)} Uhr, ${
-        start.atZoneSameInstant(Edition.BERLIN).format(DAY)}"
+        stringResource(
+            R.string.share_title,
+            stringResource(
+                R.string.edition_title,
+                "%02d".format(startAt.hour),
+                "%02d".format(startAt.minute),
+            ),
+            Edition.formatDay(startAt),
+        )
 
     fun seek(to: Long) {
         ms = to.coerceIn(0, span)
@@ -174,6 +182,4 @@ fun ShareSheet(activity: MainActivity, st: PlayState, streamUrl: String?, onDism
     }
 }
 
-private val HM = DateTimeFormatter.ofPattern("HH:mm")
 private val HMS = DateTimeFormatter.ofPattern("HH:mm:ss")
-private val DAY = DateTimeFormatter.ofPattern("EEEE, d. MMMM", java.util.Locale.GERMANY)

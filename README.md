@@ -30,7 +30,7 @@ plays from ARD's servers.
   as RSS for any podcast app.
 - **Web player**: starts the newest edition, shows the playhead in broadcast
   time, remembers positions, seeks with thumbnails and double taps, shows
-  subtitles, and shares links to a moment.
+  subtitles, and shares links to a moment; in German, English and French.
 - **Time-shifted live stream**: `/live` returns an HLS stream of the edition
   on air (or aired in the last 90 minutes) that starts at its first second, cut
   from Das Erste's two-hour live window.

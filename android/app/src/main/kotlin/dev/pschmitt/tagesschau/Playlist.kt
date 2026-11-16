@@ -43,11 +43,11 @@ object Playlist {
         val subs = saved?.toUri()?.toString() ?: e.subtitles.takeIf { !downloaded && !e.live }
         val metadata =
             MediaMetadata.Builder()
-                .setTitle(e.title)
+                .setTitle(e.title(context))
                 .setArtist(
                     when {
-                        e.channel -> "Fernsehprogramm in Echtzeit"
-                        e.live -> "${e.day}, läuft gerade"
+                        e.channel -> context.getString(R.string.channel_live)
+                        e.live -> context.getString(R.string.day_on_air, e.day)
                         else -> e.day
                     }
                 )

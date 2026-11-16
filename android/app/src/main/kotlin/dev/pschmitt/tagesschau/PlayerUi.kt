@@ -399,7 +399,7 @@ fun VideoPlayer(
                 ) {
                     Text(if (skipSide < 0) "◀◀◀" else "▶▶▶", color = Color.White, fontSize = 14.sp)
                     Text(
-                        "$skipTotal Sekunden",
+                        stringResource(R.string.seconds_count, skipTotal),
                         color = Color.White,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 13.sp,

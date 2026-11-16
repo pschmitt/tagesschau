@@ -83,6 +83,10 @@ object TaskerPlugin {
 
 @OptIn(ExperimentalMaterial3Api::class)
 class TaskerEditActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(Lang.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val old = TaskerPlugin.options(intent.getBundleExtra(TaskerPlugin.EXTRA_BUNDLE))
