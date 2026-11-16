@@ -368,6 +368,7 @@ private fun MainScreen(activity: MainActivity) {
                     listing = it
                     if (Downloads.autoAllowed(activity))
                         Downloads.autoAdd(activity, it.editions, viaService = true)
+                    runCatching { Downloads.resumePending(activity) }
                     error = null
                 }
                 .onFailure { error = it.message }

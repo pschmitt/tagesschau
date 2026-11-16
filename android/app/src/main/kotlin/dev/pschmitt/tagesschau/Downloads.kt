@@ -81,7 +81,12 @@ object Downloads {
                     http(),
                     Executors.newFixedThreadPool(2),
                 )
-                .apply { maxParallelDownloads = 2 }
+                .apply {
+                    maxParallelDownloads = 2
+                    // A new DownloadManager starts paused and only DownloadService resumes it, so
+                    // downloads queued without the service (the background worker) never ran.
+                    resumeDownloads()
+                }
                 .also { manager = it }
 
     /** The edition's file in the download quality setting. */
@@ -108,6 +113,20 @@ object Downloads {
             request(context, e),
             false,
         )
+    }
+
+    /**
+     * Runs queued or interrupted downloads through the service (progress notification, survives the
+     * app going to the background); foreground only.
+     */
+    fun resumePending(context: Context) {
+        val pending =
+            all(context).values.any {
+                it.state == Download.STATE_QUEUED ||
+                    it.state == Download.STATE_DOWNLOADING ||
+                    it.state == Download.STATE_RESTARTING
+            }
+        if (pending) DownloadService.start(context, TagesschauDownloadService::class.java)
     }
 
     /** The downloaded file's URI when the edition is completely downloaded. */
