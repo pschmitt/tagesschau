@@ -100,6 +100,11 @@
     <string name="clock_format">Uhrzeit unter dem Player</string>
     <string name="clock_format_help">Aus, Minuten, Sekunden oder Millisekunden</string>
     <string name="live">LIVE</string>
+    <string name="play_target">Beim Öffnen</string>
+    <string name="play_target_help">Was die App beim Start zeigt</string>
+    <string name="bt_target">Was abspielen</string>
+    <string name="play_target_tagesschau">Neueste tagesschau</string>
+    <string name="play_target_channel">Das Erste live</string>
     <string name="subtitles">Untertitel</string>
     <string name="subtitles_help">Untertitel einblenden, wo es welche gibt. Im Player schaltet die CC-Taste sie um.</string>
     <string name="subtitles_on">Untertitel an</string>

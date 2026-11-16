@@ -98,9 +98,10 @@ class PlaybackService : MediaSessionService() {
             val preferLive = intent.getBooleanExtra(EXTRA_PREFER_LIVE, true)
             val audioOnly = intent.getBooleanExtra(EXTRA_AUDIO_ONLY, true)
             val resume = intent.getBooleanExtra(EXTRA_RESUME, true)
+            val channel = intent.getBooleanExtra(EXTRA_CHANNEL, false)
             val volume = intent.getIntExtra(MediaVolume.EXTRA, -1)
             scope.launch {
-                playLatest(preferLive, audioOnly, resume)
+                playLatest(preferLive, audioOnly, resume, channel)
                 // Android restores the device's own volume once its audio route is active, which
                 // can come a moment after the connection: set it at the start and again a bit
                 // later.
@@ -112,8 +113,13 @@ class PlaybackService : MediaSessionService() {
         return super.onStartCommand(intent, flags, startId)
     }
 
-    private suspend fun playLatest(preferLive: Boolean, audioOnly: Boolean, resumeLatest: Boolean) {
-        val items = Playlist.latest(this, preferLive, audioOnly)
+    private suspend fun playLatest(
+        preferLive: Boolean,
+        audioOnly: Boolean,
+        resumeLatest: Boolean,
+        channel: Boolean = false,
+    ) {
+        val items = Playlist.latest(this, preferLive, audioOnly, channel)
         val player = session?.player ?: return
         if (items.isEmpty()) return
         // Whatever an earlier auto-play muted or switched off: sound on, picture as asked.
@@ -126,7 +132,9 @@ class PlaybackService : MediaSessionService() {
         // Continue the latest edition where it was left, if wanted (Bluetooth: a setting).
         val date = items[0].mediaMetadata.extras?.getString(Playlist.EXTRA_DATE)
         val resume = if (resumeLatest && date != null) Positions.resumeAt(this, date) else 0L
-        player.setMediaItems(items, 0, resume)
+        // Das Erste live starts at its live edge (the default position), an edition at `resume`.
+        val channel = items[0].mediaId == Edition.CHANNEL_ID
+        player.setMediaItems(items, 0, if (channel) androidx.media3.common.C.TIME_UNSET else resume)
         player.prepare()
         player.play()
     }
@@ -152,6 +160,8 @@ class PlaybackService : MediaSessionService() {
         const val EXTRA_PREFER_LIVE = "prefer_live"
         const val EXTRA_AUDIO_ONLY = "audio_only"
         const val EXTRA_RESUME = "resume"
+        /** Play Das Erste live instead of the latest tagesschau. */
+        const val EXTRA_CHANNEL = "channel"
         const val SEEK_MS = 20_000L
 
         fun playLatestIntent(

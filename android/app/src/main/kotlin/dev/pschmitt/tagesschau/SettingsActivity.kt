@@ -96,6 +96,8 @@ private fun SettingsScreen(activity: SettingsActivity) {
     var subtitles by remember { mutableStateOf(settings.subtitles) }
     var clockFormat by remember { mutableStateOf(settings.clockFormat) }
     var autoPlay by remember { mutableStateOf(settings.autoPlay) }
+    var playTarget by remember { mutableStateOf(settings.playTarget) }
+    var btTarget by remember { mutableStateOf(settings.bluetoothTarget) }
     var notifyNew by remember { mutableStateOf(settings.notifyNew) }
     var btDevices by remember { mutableStateOf(settings.bluetoothDevices) }
     var btMode by remember { mutableStateOf(settings.bluetoothMode) }
@@ -210,6 +212,38 @@ private fun SettingsScreen(activity: SettingsActivity) {
                 }
                 Page.PLAYBACK -> {
                     ListItem(
+                        headlineContent = { Text(stringResource(R.string.play_target)) },
+                        supportingContent = { Text(stringResource(R.string.play_target_help)) },
+                        leadingContent = { Icon(painterResource(R.drawable.ic_play), null) },
+                        colors = itemColors,
+                    )
+                    PlayTarget.entries.forEach { target ->
+                        ListItem(
+                            headlineContent = {
+                                Text(
+                                    stringResource(
+                                        when (target) {
+                                            PlayTarget.TAGESSCHAU -> R.string.play_target_tagesschau
+                                            PlayTarget.CHANNEL -> R.string.play_target_channel
+                                        }
+                                    )
+                                )
+                            },
+                            leadingContent = {
+                                RadioButton(selected = playTarget == target, onClick = null)
+                            },
+                            modifier =
+                                Modifier.padding(start = 40.dp).selectable(
+                                    selected = playTarget == target,
+                                    role = Role.RadioButton,
+                                ) {
+                                    playTarget = target
+                                    settings.playTarget = target
+                                },
+                            colors = itemColors,
+                        )
+                    }
+                    ListItem(
                         headlineContent = { Text(stringResource(R.string.auto_play)) },
                         supportingContent = { Text(stringResource(R.string.auto_play_help)) },
                         leadingContent = { Icon(painterResource(R.drawable.ic_ctl_play), null) },
@@ -254,6 +288,8 @@ private fun SettingsScreen(activity: SettingsActivity) {
                                     preferLive = it
                                     settings.preferLive = it
                                 },
+                                // Only about editions; Das Erste live always starts live.
+                                enabled = playTarget == PlayTarget.TAGESSCHAU,
                             )
                         },
                         colors = itemColors,
@@ -561,6 +597,32 @@ private fun SettingsScreen(activity: SettingsActivity) {
                         enabled = btVolumeOn,
                         modifier = Modifier.padding(start = 72.dp, end = 24.dp),
                     )
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.bt_target)) },
+                        colors = itemColors,
+                        modifier = Modifier.padding(start = 40.dp),
+                    )
+                    SingleChoiceSegmentedButtonRow(
+                        Modifier.fillMaxWidth().padding(start = 56.dp, end = 16.dp, bottom = 8.dp)
+                    ) {
+                        val targets =
+                            listOf(
+                                PlayTarget.TAGESSCHAU to R.string.play_target_tagesschau,
+                                PlayTarget.CHANNEL to R.string.play_target_channel,
+                            )
+                        targets.forEachIndexed { i, (t, label) ->
+                            SegmentedButton(
+                                selected = btTarget == t,
+                                onClick = {
+                                    btTarget = t
+                                    settings.bluetoothTarget = t
+                                },
+                                shape = SegmentedButtonDefaults.itemShape(i, targets.size),
+                            ) {
+                                Text(stringResource(label), fontSize = 13.sp)
+                            }
+                        }
+                    }
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.continue_on_disconnect)) },
                         supportingContent = {

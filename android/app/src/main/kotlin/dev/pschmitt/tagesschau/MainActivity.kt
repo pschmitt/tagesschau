@@ -384,10 +384,17 @@ private fun MainScreen(activity: MainActivity) {
         val c = controller ?: return@LaunchedEffect
         val l = listing ?: return@LaunchedEffect
         if (c.mediaItemCount == 0 && l.all.isNotEmpty()) {
-            // The edition on air (if wanted), else the newest one; then the auto-play setting.
-            val start = if (settings.preferLive || l.live == null) 0 else 1
-            c.setMediaItems(l.all.map { Playlist.item(activity, it) }, start, 0)
-            c.prepare()
+            // Das Erste live, or the edition on air (if wanted), else the newest one; then the
+            // auto-play setting.
+            if (settings.playTarget == PlayTarget.CHANNEL) {
+                c.setMediaItem(Playlist.item(activity, Edition.channel()))
+                c.prepare()
+                c.seekToDefaultPosition()
+            } else {
+                val start = if (settings.preferLive || l.live == null) 0 else 1
+                c.setMediaItems(l.all.map { Playlist.item(activity, it) }, start, 0)
+                c.prepare()
+            }
             when (settings.autoPlay) {
                 AutoPlay.VIDEO_SOUND -> activity.setMedia(video = true, sound = true)
                 AutoPlay.VIDEO_ONLY -> activity.setMedia(video = true, sound = false)
@@ -403,12 +410,16 @@ private fun MainScreen(activity: MainActivity) {
         val l = listing ?: return@LaunchedEffect
         if (controller == null || l.all.isEmpty()) return@LaunchedEffect
         activity.pendingLatest = false
-        val start = if (settings.preferLive || l.live == null) 0 else 1
-        activity.play(
-            l.all,
-            start.coerceAtMost(l.all.size - 1),
-            resumeLatest = settings.bluetoothResume,
-        )
+        if (settings.bluetoothTarget == PlayTarget.CHANNEL) {
+            activity.play(listOf(Edition.channel()), 0)
+        } else {
+            val start = if (settings.preferLive || l.live == null) 0 else 1
+            activity.play(
+                l.all,
+                start.coerceAtMost(l.all.size - 1),
+                resumeLatest = settings.bluetoothResume,
+            )
+        }
         // No delay here: resetting pendingLatest restarts (cancels) this effect. The activity
         // enters picture-in-picture as soon as playback runs (see onIsPlayingChanged).
         if (activity.pendingPip) activity.pipWhenPlaying = true

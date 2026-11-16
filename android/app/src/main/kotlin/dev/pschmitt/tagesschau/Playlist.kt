@@ -93,7 +93,10 @@ object Playlist {
         context: Context,
         preferLive: Boolean,
         audioOnlyLive: Boolean,
+        channel: Boolean = false,
     ): List<MediaItem> {
+        // Das Erste live asked for: the channel (at its live edge), nothing else.
+        if (channel) return listOf(item(context, Edition.channel()))
         val api = Api(Settings(context).serverUrl)
         val listing = runCatching { api.listing() }.getOrNull()
         if (listing == null) {

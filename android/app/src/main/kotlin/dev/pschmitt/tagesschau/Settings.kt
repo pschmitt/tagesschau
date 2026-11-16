@@ -34,6 +34,12 @@ enum class ClockFormat {
     MILLIS,
 }
 
+/** What starts on its own (app start, Bluetooth): the latest tagesschau or Das Erste live. */
+enum class PlayTarget {
+    TAGESSCHAU,
+    CHANNEL,
+}
+
 /** What starts when the app opens and nothing plays yet. */
 enum class AutoPlay {
     VIDEO_SOUND,
@@ -90,6 +96,12 @@ class Settings(context: Context) {
         get() = prefs.getString(KEY_PLAY_QUALITY, null) ?: "webxxl"
         set(value) = prefs.edit { putString(KEY_PLAY_QUALITY, value) }
 
+    var playTarget: PlayTarget
+        get() =
+            runCatching { PlayTarget.valueOf(prefs.getString(KEY_PLAY_TARGET, null) ?: "") }
+                .getOrDefault(PlayTarget.TAGESSCHAU)
+        set(value) = prefs.edit { putString(KEY_PLAY_TARGET, value.name) }
+
     var autoPlay: AutoPlay
         get() =
             runCatching { AutoPlay.valueOf(prefs.getString(KEY_AUTOPLAY, null) ?: "") }
@@ -128,6 +140,13 @@ class Settings(context: Context) {
         set(value) = prefs.edit { putBoolean(KEY_CONTINUE_ON_DISCONNECT, value) }
 
     /** Bluetooth auto-play continues the latest edition where it was left, if started before. */
+    /** What a Bluetooth connection starts. */
+    var bluetoothTarget: PlayTarget
+        get() =
+            runCatching { PlayTarget.valueOf(prefs.getString(KEY_BT_TARGET, null) ?: "") }
+                .getOrDefault(PlayTarget.TAGESSCHAU)
+        set(value) = prefs.edit { putString(KEY_BT_TARGET, value.name) }
+
     var bluetoothResume: Boolean
         get() = prefs.getBoolean(KEY_BT_RESUME, true)
         set(value) = prefs.edit { putBoolean(KEY_BT_RESUME, value) }
@@ -173,6 +192,8 @@ class Settings(context: Context) {
         const val KEY_AUTO_NEXT = "auto_next"
         const val KEY_SUBTITLES = "subtitles"
         const val KEY_CLOCK = "clock_format"
+        private const val KEY_PLAY_TARGET = "play_target"
+        private const val KEY_BT_TARGET = "bluetooth_play_target"
         private const val KEY_AUTO_CHARGING = "auto_download_charging"
         private const val KEY_QUALITY = "download_quality"
         private const val KEY_PLAY_QUALITY = "playback_quality"

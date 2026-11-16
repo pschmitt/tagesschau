@@ -59,8 +59,9 @@ every 15 minutes). Tapping a notification plays that edition.
 ## Bluetooth
 
 Settings, Bluetooth, Bei Verbindung abspielen picks paired devices (car,
-headphones, speakers). When one of them connects, the latest edition starts:
-the edition on air from its start if that setting is on, else the newest one.
+headphones, speakers). When one of them connects, "Was abspielen" decides what
+starts: the latest edition (the one on air from its start if that setting is
+on, else the newest one) or Das Erste live at its live edge.
 The mode decides how: "Nur Ton" (audio in the background), "Video" (the app
 opens and plays) or "Bild-im-Bild" (straight into picture-in-picture). A
 notification says that playback started. With a delay (0 s by default, up to
@@ -87,6 +88,7 @@ with each download, so they work offline too.
 
 | Setting | Default | |
 | --- | --- | --- |
+| Beim Öffnen | Neueste tagesschau | What the app shows when it starts: the latest tagesschau or Das Erste live (at its live edge) |
 | Beim Öffnen abspielen | Nur Bild (stumm) | Start the newest edition when the app opens: picture and sound, picture only (with a "Ton einschalten" button), sound only, or nothing |
 | Laufende Ausgabe ab Beginn | on | Play the edition on air from its start, else the newest finished one (Tasker and app start) |
 | Uhrzeit unter dem Player | 20:00:06 | The big clock: off, minutes, seconds or milliseconds |

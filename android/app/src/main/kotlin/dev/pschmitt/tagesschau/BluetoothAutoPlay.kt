@@ -95,6 +95,10 @@ object BluetoothAutoPlay {
                             .putExtra(PlaybackService.EXTRA_PREFER_LIVE, settings.preferLive)
                             .putExtra(PlaybackService.EXTRA_AUDIO_ONLY, true)
                             .putExtra(PlaybackService.EXTRA_RESUME, settings.bluetoothResume)
+                            .putExtra(
+                                PlaybackService.EXTRA_CHANNEL,
+                                settings.bluetoothTarget == PlayTarget.CHANNEL,
+                            )
                     BluetoothMode.VIDEO,
                     BluetoothMode.PIP ->
                         Intent(context, MainActivity::class.java)
