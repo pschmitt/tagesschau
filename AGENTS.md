@@ -19,7 +19,7 @@ nixfmt --check flake.nix nix/*.nix && statix check . && deadnix --fail nix flake
 ```
 
 Build and run `nix flake check` on an ad-hoc `rworker` or a remote build host,
-not on the machine the agent runs on. The NixOS VM test needs KVM.
+not on the machine the agent runs on.
 
 ## Conventions
 
