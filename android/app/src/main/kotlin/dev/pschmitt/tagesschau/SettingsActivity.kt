@@ -82,6 +82,7 @@ private fun SettingsScreen(activity: SettingsActivity) {
     var leaveMode by remember { mutableStateOf(settings.leaveMode) }
     var retention by remember { mutableStateOf(settings.retentionHours) }
     var autoNext by remember { mutableStateOf(settings.autoNext) }
+    var autoPlay by remember { mutableStateOf(settings.autoPlay) }
     var autoDownload by remember { mutableStateOf(settings.autoDownload) }
     var quality by remember { mutableStateOf(settings.downloadQuality) }
     var server by remember { mutableStateOf(settings.serverUrl) }
@@ -119,6 +120,38 @@ private fun SettingsScreen(activity: SettingsActivity) {
     ) { padding ->
         Column(Modifier.padding(padding).verticalScroll(rememberScrollState())) {
             Section(R.string.section_playback)
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.auto_play)) },
+                supportingContent = { Text(stringResource(R.string.auto_play_help)) },
+                leadingContent = { Icon(painterResource(R.drawable.ic_ctl_play), null) },
+                colors = itemColors,
+            )
+            AutoPlay.entries.forEach { mode ->
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            stringResource(
+                                when (mode) {
+                                    AutoPlay.VIDEO_SOUND -> R.string.auto_play_both
+                                    AutoPlay.VIDEO_ONLY -> R.string.auto_play_video
+                                    AutoPlay.SOUND_ONLY -> R.string.auto_play_sound
+                                    AutoPlay.NONE -> R.string.auto_play_none
+                                }
+                            )
+                        )
+                    },
+                    leadingContent = { RadioButton(selected = autoPlay == mode, onClick = null) },
+                    modifier =
+                        Modifier.padding(start = 40.dp).selectable(
+                            selected = autoPlay == mode,
+                            role = Role.RadioButton,
+                        ) {
+                            autoPlay = mode
+                            settings.autoPlay = mode
+                        },
+                    colors = itemColors,
+                )
+            }
             ListItem(
                 headlineContent = { Text(stringResource(R.string.prefer_live)) },
                 supportingContent = { Text(stringResource(R.string.prefer_live_help)) },

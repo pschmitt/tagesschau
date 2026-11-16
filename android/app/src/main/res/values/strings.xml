@@ -48,6 +48,14 @@
     <string name="share">Diese Stelle teilen</string>
     <string name="fullscreen">Vollbild</string>
     <string name="watched">gesehen</string>
+    <string name="auto_play">Beim Öffnen abspielen</string>
+    <string name="auto_play_help">Startet die neueste Ausgabe (oder die laufende ab Beginn), wenn nichts läuft.</string>
+    <string name="auto_play_both">Bild und Ton</string>
+    <string name="auto_play_video">Nur Bild (stumm)</string>
+    <string name="auto_play_sound">Nur Ton</string>
+    <string name="auto_play_none">Nicht abspielen</string>
+    <string name="unmute">Ton einschalten</string>
+    <string name="video_on">Bild einschalten</string>
     <string name="player_settings">Wiedergabe-Einstellungen</string>
     <string name="speed">Geschwindigkeit</string>
     <string name="quality">Qualität</string>

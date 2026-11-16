@@ -53,6 +53,7 @@ downloaded or deleted from the list or the gear sheet.
 
 | Setting | Default | |
 | --- | --- | --- |
+| Beim Öffnen abspielen | Nur Bild (stumm) | Start the newest edition when the app opens: picture and sound, picture only (with a "Ton einschalten" button), sound only, or nothing |
 | Laufende Ausgabe ab Beginn | on | Play the edition on air from its start, else the newest finished one (Tasker and app start) |
 | Danach die nächste Ausgabe abspielen | off | Continue with the next edition, or stop after one |
 | Beim Verlassen des Players | Bild-im-Bild | Picture-in-picture, audio only, or stop |

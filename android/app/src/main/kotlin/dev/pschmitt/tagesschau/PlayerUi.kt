@@ -87,6 +87,8 @@ data class PlayState(
     val hasNext: Boolean = false,
     val loaded: Boolean = false,
     val url: String? = null,
+    val muted: Boolean = false,
+    val videoOff: Boolean = false,
 ) {
     /** Broadcast time of a media position: the edition's air time plus the offset. */
     fun airAt(ms: Long): OffsetDateTime? = start?.plusNanos(ms * 1_000_000)
@@ -138,6 +140,9 @@ fun rememberPlayState(context: Context, c: MediaController?): PlayState {
                             hasNext = c.hasNextMediaItem(),
                             loaded = c.mediaItemCount > 0,
                             url = extras?.getString(Playlist.EXTRA_URL),
+                            muted = c.volume == 0f,
+                            videoOff =
+                                C.TRACK_TYPE_VIDEO in c.trackSelectionParameters.disabledTrackTypes,
                         )
                     }
                 delay(200)
@@ -292,6 +297,24 @@ fun VideoPlayer(
                     }
                 }
         )
+        // Auto-play started without sound or picture: one tap turns it on.
+        if ((st.muted || st.videoOff) && !activity.inPip) {
+            Box(
+                Modifier.align(Alignment.TopStart)
+                    .padding(10.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(Palette.Signal)
+                    .clickable { activity.setMedia(video = true, sound = true) }
+                    .padding(horizontal = 14.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    stringResource(if (st.muted) R.string.unmute else R.string.video_on),
+                    color = Palette.Deep,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                )
+            }
+        }
         // Double tap: a half circle on that side with the seconds jumped.
         if (skipAlpha.value > 0f && skipSide != 0) {
             BoxWithConstraints(Modifier.fillMaxSize()) {

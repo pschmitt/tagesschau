@@ -17,6 +17,14 @@ enum class AutoDownload {
     ALWAYS,
 }
 
+/** What starts when the app opens and nothing plays yet. */
+enum class AutoPlay {
+    VIDEO_SOUND,
+    VIDEO_ONLY,
+    SOUND_ONLY,
+    NONE,
+}
+
 /** User settings, kept in SharedPreferences. */
 class Settings(context: Context) {
     val prefs: android.content.SharedPreferences =
@@ -54,6 +62,12 @@ class Settings(context: Context) {
         get() = prefs.getString(KEY_PLAY_QUALITY, null) ?: "webxxl"
         set(value) = prefs.edit { putString(KEY_PLAY_QUALITY, value) }
 
+    var autoPlay: AutoPlay
+        get() =
+            runCatching { AutoPlay.valueOf(prefs.getString(KEY_AUTOPLAY, null) ?: "") }
+                .getOrDefault(AutoPlay.VIDEO_ONLY)
+        set(value) = prefs.edit { putString(KEY_AUTOPLAY, value.name) }
+
     var autoDownload: AutoDownload
         get() =
             runCatching { AutoDownload.valueOf(prefs.getString(KEY_AUTO, null) ?: "") }
@@ -73,6 +87,7 @@ class Settings(context: Context) {
         private const val KEY_PREFER_LIVE = "prefer_live"
         private const val KEY_LEAVE = "leave_mode"
         private const val KEY_AUTO = "auto_download"
+        private const val KEY_AUTOPLAY = "auto_play"
         const val KEY_AUTO_NEXT = "auto_next"
         private const val KEY_QUALITY = "download_quality"
         private const val KEY_PLAY_QUALITY = "playback_quality"

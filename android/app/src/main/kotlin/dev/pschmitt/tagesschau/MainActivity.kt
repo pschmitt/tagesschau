@@ -165,8 +165,20 @@ class MainActivity : ComponentActivity() {
         super.onStop()
     }
 
+    /** Picture and sound on or off (auto-play); choosing an edition turns both back on. */
+    fun setMedia(video: Boolean, sound: Boolean) {
+        val c = controller ?: return
+        c.trackSelectionParameters =
+            c.trackSelectionParameters
+                .buildUpon()
+                .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_VIDEO, !video)
+                .build()
+        c.volume = if (sound) 1f else 0f
+    }
+
     fun play(editions: List<Edition>, index: Int) {
         val c = controller ?: return
+        setMedia(video = true, sound = true)
         val e = editions[index]
         if (e.channel) {
             c.setMediaItem(Playlist.item(this, e))
@@ -309,8 +321,17 @@ private fun MainScreen(activity: MainActivity) {
         val c = controller ?: return@LaunchedEffect
         val l = listing ?: return@LaunchedEffect
         if (c.mediaItemCount == 0 && l.all.isNotEmpty()) {
-            c.setMediaItems(l.all.map { Playlist.item(activity, it) }, 0, 0)
+            // The edition on air (if wanted), else the newest one; then the auto-play setting.
+            val start = if (settings.preferLive || l.live == null) 0 else 1
+            c.setMediaItems(l.all.map { Playlist.item(activity, it) }, start, 0)
             c.prepare()
+            when (settings.autoPlay) {
+                AutoPlay.VIDEO_SOUND -> activity.setMedia(video = true, sound = true)
+                AutoPlay.VIDEO_ONLY -> activity.setMedia(video = true, sound = false)
+                AutoPlay.SOUND_ONLY -> activity.setMedia(video = false, sound = true)
+                AutoPlay.NONE -> Unit
+            }
+            if (settings.autoPlay != AutoPlay.NONE) c.play()
         }
     }
     val currentId = st.mediaId
