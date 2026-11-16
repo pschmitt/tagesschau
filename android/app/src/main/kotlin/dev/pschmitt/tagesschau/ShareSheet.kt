@@ -58,6 +58,8 @@ fun ShareSheet(activity: MainActivity, st: PlayState, streamUrl: String?, onDism
     val span = st.span.takeIf { it > 0 } ?: st.position.coerceAtLeast(1)
     var ms by remember { mutableLongStateOf(st.position.coerceIn(0, span)) }
     var fromHere by remember { mutableStateOf(true) }
+    val copiedText = stringResource(R.string.copied)
+    val shareTitle = stringResource(R.string.share)
 
     // The preview plays the 540p file (or the live stream) muted, seeking to the nearest key frame.
     val preview = remember {
@@ -142,7 +144,7 @@ fun ShareSheet(activity: MainActivity, st: PlayState, streamUrl: String?, onDism
                         context
                             .getSystemService(ClipboardManager::class.java)
                             .setPrimaryClip(ClipData.newPlainText(title, url))
-                        activity.toast(context.getString(R.string.copied))
+                        activity.toast(copiedText)
                     },
                     colors =
                         ButtonDefaults.buttonColors(
@@ -160,7 +162,7 @@ fun ShareSheet(activity: MainActivity, st: PlayState, streamUrl: String?, onDism
                                     .setType("text/plain")
                                     .putExtra(Intent.EXTRA_SUBJECT, title)
                                     .putExtra(Intent.EXTRA_TEXT, "$title: $url"),
-                                context.getString(R.string.share),
+                                shareTitle,
                             )
                         )
                     }

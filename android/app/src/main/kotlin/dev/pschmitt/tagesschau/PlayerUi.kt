@@ -14,13 +14,14 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,6 +32,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,11 +49,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -181,10 +181,12 @@ private fun OffsetDateTime.hms() = atZoneSameInstant(Edition.BERLIN).format(HMS)
 private val SPEEDS = listOf(1f, 1.25f, 1.5f, 1.75f, 2f, 0.75f)
 
 /**
- * The picture with the web player's behaviour: tap to play or pause (or to bring back hidden
- * controls), double tap on the left or right third to jump 20 s with every further tap adding 20 s,
- * a big play button while paused and a short play/pause sign on toggling. With [overlay] the
- * controls sit on the picture and hide while playing; otherwise they go below it.
+ * The picture with YouTube's mobile player behaviour, in the web player's colours: controls on the
+ * picture (hidden until a tap, hidden again 3 s into playback), previous / play-pause / next in the
+ * middle, share and speed top right, broadcast time bottom left, fullscreen bottom right, the
+ * timeline along the bottom edge (a thin progress line while the controls are hidden). Double taps
+ * on the sides jump 20 s and every further tap adds 20 s; swipe up for fullscreen, down to leave
+ * it.
  */
 @Composable
 fun VideoPlayer(
@@ -195,34 +197,22 @@ fun VideoPlayer(
 ) {
     val c = activity.controller
     val scope = rememberCoroutineScope()
-    var controlsVisible by remember { mutableStateOf(true) }
+    var controlsVisible by remember { mutableStateOf(false) }
     var interaction by remember { mutableIntStateOf(0) }
-    val flash = remember { Animatable(0f) }
-    var flashPlay by remember { mutableStateOf(true) }
     var skipSide by remember { mutableIntStateOf(0) }
     var skipTotal by remember { mutableIntStateOf(0) }
     val skipAlpha = remember { Animatable(0f) }
+    val density = LocalDensity.current
 
-    // Controls on the picture hide 2.5 s after the last interaction while playing.
-    LaunchedEffect(overlay, st.playing, interaction, controlsVisible) {
-        if (overlay && st.playing && controlsVisible) {
-            delay(2500)
+    // Hidden again 3 s after the last interaction while playing; always shown while paused.
+    LaunchedEffect(st.playing, interaction, controlsVisible) {
+        if (st.playing && controlsVisible) {
+            delay(3000)
             controlsVisible = false
         }
-        if (!st.playing) controlsVisible = true
     }
+    LaunchedEffect(st.playing, st.loaded) { if (!st.playing && st.loaded) controlsVisible = true }
 
-    fun toggle() {
-        val cc = c ?: return
-        flashPlay = !cc.isPlaying
-        if (cc.isPlaying) cc.pause() else cc.play()
-        scope.launch {
-            flash.snapTo(1f)
-            flash.animateTo(0f, tween(650))
-        }
-    }
-
-    // Tap handling as on the web: single taps wait briefly on the sides to tell double taps apart.
     var lastTap by remember { mutableLongStateOf(0L) }
     var lastSide by remember { mutableIntStateOf(0) }
     var seekUntil by remember { mutableLongStateOf(0L) }
@@ -240,7 +230,7 @@ fun VideoPlayer(
         cc.seekTo((cc.currentPosition + side * 20_000L).coerceAtLeast(0))
         scope.launch {
             skipAlpha.snapTo(1f)
-            delay(300)
+            delay(450)
             skipAlpha.animateTo(0f, tween(400))
         }
     }
@@ -250,129 +240,195 @@ fun VideoPlayer(
             factory = { activity.playerView.also { (it.parent as? ViewGroup)?.removeView(it) } },
             modifier = Modifier.fillMaxSize(),
         )
+        // Gestures: taps (show/hide, double-tap seeking) and vertical swipes (fullscreen).
+        var dragY by remember { mutableFloatStateOf(0f) }
         Box(
-            Modifier.fillMaxSize().pointerInput(overlay) {
-                awaitEachGesture {
-                    awaitFirstDown()
-                    val up = waitForUpOrCancellation() ?: return@awaitEachGesture
-                    interaction++
-                    val w = size.width
-                    val x = up.position.x
-                    val side =
+            Modifier.fillMaxSize()
+                .pointerInput(Unit) {
+                    detectVerticalDragGestures(
+                        onDragStart = { dragY = 0f },
+                        onDragEnd = {
+                            val limit = with(density) { 60.dp.toPx() }
+                            if (dragY < -limit && !activity.fullscreen)
+                                activity.setFullscreenMode(true)
+                            if (dragY > limit && activity.fullscreen)
+                                activity.setFullscreenMode(false)
+                        },
+                    ) { _, dy ->
+                        dragY += dy
+                    }
+                }
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        awaitFirstDown()
+                        val up = waitForUpOrCancellation() ?: return@awaitEachGesture
+                        val w = size.width
+                        val x = up.position.x
+                        val side =
+                            when {
+                                x < w / 3f -> -1
+                                x > w * 2f / 3f -> 1
+                                else -> 0
+                            }
+                        val now = System.currentTimeMillis()
                         when {
-                            x < w / 3f -> -1
-                            x > w * 2f / 3f -> 1
-                            else -> 0
-                        }
-                    val now = System.currentTimeMillis()
-                    when {
-                        side != 0 && side == seekSide && now < seekUntil -> skip(side)
-                        side != 0 && side == lastSide && now - lastTap < 300 -> {
-                            lastTap = 0
-                            skip(side)
-                        }
-                        else -> {
-                            seekSide = 0
-                            lastTap = now
-                            lastSide = side
-                            pending?.cancel()
-                            val wasHidden = overlay && !controlsVisible
-                            pending = scope.launch {
-                                if (side != 0) delay(300)
-                                if (wasHidden) controlsVisible = true else toggle()
+                            side != 0 && side == seekSide && now < seekUntil -> skip(side)
+                            side != 0 && side == lastSide && now - lastTap < 300 -> {
+                                lastTap = 0
+                                skip(side)
+                            }
+                            else -> {
+                                seekSide = 0
+                                lastTap = now
+                                lastSide = side
+                                pending?.cancel()
+                                pending = scope.launch {
+                                    if (side != 0) delay(300)
+                                    controlsVisible = !controlsVisible
+                                    interaction++
+                                }
                             }
                         }
                     }
                 }
-            }
         )
-        // Big play button while paused (or before the first start).
-        if (!st.playing && !activity.inPip && st.loaded) {
-            Box(
-                Modifier.align(Alignment.Center)
-                    .size(76.dp)
-                    .clip(CircleShape)
-                    .background(Palette.Deep.copy(alpha = 0.72f))
-                    .clickable { toggle() },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painterResource(R.drawable.ic_ctl_play),
-                    stringResource(R.string.play),
-                    tint = Palette.Ink,
-                    modifier = Modifier.size(34.dp).offset(x = 3.dp),
-                )
-            }
-        }
-        // Play/pause sign on toggling.
-        if (flash.value > 0f) {
-            Box(
-                Modifier.align(Alignment.Center)
-                    .size(76.dp)
-                    .scale(0.85f + (1 - flash.value) * 0.45f)
-                    .alpha(flash.value)
-                    .clip(CircleShape)
-                    .background(Palette.Deep.copy(alpha = 0.72f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painterResource(
-                        if (flashPlay) R.drawable.ic_ctl_play else R.drawable.ic_ctl_pause
-                    ),
-                    null,
-                    tint = Palette.Ink,
-                    modifier = Modifier.size(34.dp),
-                )
-            }
-        }
-        // "+40 s" on the side of a double tap.
+        // Double tap: a half circle on that side with the seconds jumped.
         if (skipAlpha.value > 0f && skipSide != 0) {
-            Box(
-                Modifier.fillMaxHeight()
-                    .fillMaxWidth(0.38f)
-                    .align(if (skipSide < 0) Alignment.CenterStart else Alignment.CenterEnd)
-                    .alpha(skipAlpha.value)
-                    .background(
-                        Brush.horizontalGradient(
-                            if (skipSide < 0)
-                                listOf(Palette.Deep.copy(alpha = 0.65f), Color.Transparent)
-                            else listOf(Color.Transparent, Palette.Deep.copy(alpha = 0.65f))
+            BoxWithConstraints(Modifier.fillMaxSize()) {
+                val r = maxHeight * 1.1f
+                Box(
+                    Modifier.size(r)
+                        .offset(
+                            x = if (skipSide < 0) -r / 2 else maxWidth - r / 2,
+                            y = (maxHeight - r) / 2,
                         )
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    (if (skipSide < 0) "−" else "+") + "$skipTotal s",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = Palette.Ink,
+                        .alpha(skipAlpha.value)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.18f))
                 )
+                Column(
+                    Modifier.align(if (skipSide < 0) Alignment.CenterStart else Alignment.CenterEnd)
+                        .padding(horizontal = 28.dp)
+                        .alpha(skipAlpha.value),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(if (skipSide < 0) "◀◀◀" else "▶▶▶", color = Color.White, fontSize = 14.sp)
+                    Text(
+                        "$skipTotal Sekunden",
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp,
+                    )
+                }
             }
         }
-        if (overlay && !activity.inPip) {
+        if (!activity.inPip) {
             AnimatedVisibility(
                 controlsVisible,
                 enter = fadeIn(),
                 exit = fadeOut(),
-                modifier = Modifier.align(Alignment.BottomCenter),
+                modifier = Modifier.fillMaxSize(),
             ) {
-                Box(
-                    Modifier.fillMaxWidth()
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(
-                                    Color.Transparent,
-                                    Palette.Deep.copy(alpha = 0.7f),
-                                    Palette.Deep.copy(alpha = 0.92f),
-                                )
+                Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f))) {
+                    // Top right: the player settings (YouTube's gear), as a bottom sheet.
+                    Box(Modifier.align(Alignment.TopEnd).padding(4.dp)) {
+                        Ctl(R.drawable.ic_settings, R.string.player_settings) {
+                            interaction++
+                            activity.playerSettings = true
+                        }
+                    }
+                    // Centre: previous, play/pause, next.
+                    Row(
+                        Modifier.align(Alignment.Center),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(28.dp),
+                    ) {
+                        RoundCtl(R.drawable.ic_ctl_prev, R.string.newer, 48, 26, st.hasPrevious) {
+                            interaction++
+                            c?.seekToPreviousMediaItem()
+                        }
+                        RoundCtl(
+                            if (st.playing) R.drawable.ic_ctl_pause else R.drawable.ic_ctl_play,
+                            if (st.playing) R.string.pause else R.string.play,
+                            64,
+                            34,
+                        ) {
+                            interaction++
+                            c?.let { if (it.isPlaying) it.pause() else it.play() }
+                        }
+                        RoundCtl(R.drawable.ic_ctl_next, R.string.older, 48, 26, st.hasNext) {
+                            interaction++
+                            c?.seekToNextMediaItem()
+                        }
+                    }
+                    // Bottom: broadcast time, fullscreen, and the timeline along the edge.
+                    Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(start = 14.dp, end = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                buildString {
+                                    append(st.air?.hms() ?: "--:--:--")
+                                    if (!st.channel && st.span > 0) {
+                                        st.airAt(st.span)?.let { append(" / ").append(it.hm()) }
+                                    }
+                                },
+                                color = Color.White,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.weight(1f),
                             )
-                        )
-                        .padding(top = 36.dp)
-                ) {
-                    Transport(activity, st, onInteract = { interaction++ })
+                            Ctl(
+                                if (activity.fullscreen) R.drawable.ic_ctl_full_exit
+                                else R.drawable.ic_ctl_full,
+                                R.string.fullscreen,
+                            ) {
+                                interaction++
+                                activity.setFullscreenMode(!activity.fullscreen)
+                            }
+                        }
+                        Timeline(st, Modifier.fillMaxWidth().padding(horizontal = 6.dp)) { ms ->
+                            interaction++
+                            c?.seekTo(ms)
+                        }
+                    }
                 }
             }
+            // Controls hidden: only a thin progress line on the bottom edge (YouTube's red line).
+            if (!controlsVisible && st.span > 0) {
+                val frac = (st.position.toFloat() / st.span).coerceIn(0f, 1f)
+                Box(
+                    Modifier.align(Alignment.BottomStart)
+                        .fillMaxWidth(frac)
+                        .height(2.dp)
+                        .background(Palette.Signal)
+                )
+            }
         }
+    }
+}
+
+/** A round button on the picture (YouTube's centre controls). */
+@Composable
+private fun RoundCtl(
+    icon: Int,
+    label: Int,
+    size: Int,
+    iconSize: Int,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    Box(
+        Modifier.size(size.dp).clip(CircleShape).clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painterResource(icon),
+            stringResource(label),
+            tint = if (enabled) Color.White else Color.White.copy(alpha = 0.35f),
+            modifier = Modifier.size(iconSize.dp),
+        )
     }
 }
 
@@ -541,7 +597,7 @@ private fun Timeline(st: PlayState, modifier: Modifier, onSeek: (Long) -> Unit) 
                 }
         ) {
             val y = size.height / 2
-            val h = if (dragFrac >= 0) 6.dp.toPx() else 4.dp.toPx()
+            val h = if (dragFrac >= 0) 5.dp.toPx() else 3.dp.toPx()
             val r = CornerRadius(h / 2, h / 2)
             drawRoundRect(
                 Palette.Mist.copy(alpha = 0.22f),
@@ -556,8 +612,11 @@ private fun Timeline(st: PlayState, modifier: Modifier, onSeek: (Long) -> Unit) 
                 r,
             )
             drawRoundRect(Palette.Signal, Offset(0f, y - h / 2), Size(size.width * frac, h), r)
-            drawCircle(Palette.Deep, 10.dp.toPx(), Offset(size.width * frac, y))
-            drawCircle(Palette.Signal, 7.dp.toPx(), Offset(size.width * frac, y))
+            drawCircle(
+                Palette.Signal,
+                (if (dragFrac >= 0) 8.dp else 6.dp).toPx(),
+                Offset(size.width * frac, y),
+            )
         }
         if (dragFrac >= 0 && span > 0) {
             val ms = (dragFrac * span).toLong()
@@ -622,4 +681,157 @@ private fun ScrubThumb(url: String, ms: Long, modifier: Modifier) {
         },
         modifier = modifier,
     )
+}
+
+/**
+ * YouTube's player settings sheet: speed, stream quality, continue with the next edition, share
+ * this moment, download (or delete) the edition playing.
+ */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun PlayerSettingsSheet(activity: MainActivity, st: PlayState, onDismiss: () -> Unit) {
+    val c = activity.controller
+    val settings = remember { Settings(activity) }
+    var autoNext by remember { mutableStateOf(settings.autoNext) }
+    var quality by remember { mutableStateOf(settings.playbackQuality) }
+    val itemColors =
+        androidx.compose.material3.ListItemDefaults.colors(containerColor = Palette.Deep)
+    val editionId = st.mediaId?.takeIf { !st.live && !st.channel }
+    androidx.compose.material3.ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = Palette.Deep,
+    ) {
+        Column(Modifier.padding(bottom = 24.dp)) {
+            androidx.compose.material3.ListItem(
+                headlineContent = { Text(stringResource(R.string.speed)) },
+                supportingContent = {
+                    Row(
+                        Modifier.padding(top = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        listOf(0.75f, 1f, 1.25f, 1.5f, 2f).forEach { v ->
+                            androidx.compose.material3.FilterChip(
+                                selected = st.speed == v,
+                                onClick = { c?.setPlaybackSpeed(v) },
+                                label = {
+                                    Text(v.toString().removeSuffix(".0").replace('.', ',') + "×")
+                                },
+                            )
+                        }
+                    }
+                },
+                colors = itemColors,
+            )
+            if (editionId != null) {
+                androidx.compose.material3.ListItem(
+                    headlineContent = { Text(stringResource(R.string.quality)) },
+                    supportingContent = {
+                        androidx.compose.material3.SingleChoiceSegmentedButtonRow(
+                            Modifier.padding(top = 6.dp)
+                        ) {
+                            val qs =
+                                listOf("webxxl" to "1080p", "webxl" to "720p", "webm" to "540p")
+                            qs.forEachIndexed { i, (q, label) ->
+                                SegmentedButton(
+                                    selected = quality == q,
+                                    onClick = {
+                                        quality = q
+                                        settings.playbackQuality = q
+                                        switchQuality(activity, q)
+                                    },
+                                    shape =
+                                        androidx.compose.material3.SegmentedButtonDefaults
+                                            .itemShape(i, qs.size),
+                                ) {
+                                    Text(label)
+                                }
+                            }
+                        }
+                    },
+                    colors = itemColors,
+                )
+            }
+            androidx.compose.material3.ListItem(
+                headlineContent = { Text(stringResource(R.string.auto_next)) },
+                trailingContent = {
+                    androidx.compose.material3.Switch(
+                        autoNext,
+                        {
+                            autoNext = it
+                            settings.autoNext = it
+                        },
+                    )
+                },
+                colors = itemColors,
+            )
+            if (st.start != null) {
+                androidx.compose.material3.ListItem(
+                    headlineContent = { Text(stringResource(R.string.share)) },
+                    leadingContent = { Icon(painterResource(R.drawable.ic_share), null) },
+                    modifier =
+                        Modifier.clickable {
+                            onDismiss()
+                            activity.sharing = true
+                        },
+                    colors = itemColors,
+                )
+            }
+            if (editionId != null) {
+                val downloaded = Downloads.completedUri(activity, editionId) != null
+                androidx.compose.material3.ListItem(
+                    headlineContent = {
+                        Text(
+                            stringResource(
+                                if (downloaded) R.string.delete_download else R.string.download
+                            )
+                        )
+                    },
+                    leadingContent = {
+                        Icon(
+                            painterResource(
+                                if (downloaded) R.drawable.ic_delete else R.drawable.ic_download
+                            ),
+                            null,
+                        )
+                    },
+                    modifier =
+                        Modifier.clickable {
+                            if (downloaded) Downloads.remove(activity, editionId)
+                            else
+                                st.start?.let { date ->
+                                    st.url?.let { url ->
+                                        Downloads.start(activity, Edition(editionId, date, url))
+                                    }
+                                }
+                            onDismiss()
+                        },
+                    colors = itemColors,
+                )
+            }
+        }
+    }
+}
+
+/** Swaps the playing edition for another quality of the same file, keeping the position. */
+private fun switchQuality(activity: MainActivity, quality: String) {
+    val c = activity.controller ?: return
+    val item = c.currentMediaItem ?: return
+    val url = item.mediaMetadata.extras?.getString(Playlist.EXTRA_URL) ?: return
+    if (!url.startsWith("http")) return // a downloaded file stays as it is
+    val newUrl = url.replace(Regex("""\.web[a-z]+\.h264\.mp4$"""), ".$quality.h264.mp4")
+    if (newUrl == url) return
+    val extras =
+        android.os.Bundle(item.mediaMetadata.extras).apply { putString(Playlist.EXTRA_URL, newUrl) }
+    val newItem =
+        item
+            .buildUpon()
+            .setUri(newUrl)
+            .setMediaMetadata(item.mediaMetadata.buildUpon().setExtras(extras).build())
+            .build()
+    val pos = c.currentPosition
+    val playing = c.isPlaying
+    val index = c.currentMediaItemIndex
+    c.replaceMediaItem(index, newItem)
+    c.seekTo(index, pos)
+    if (playing) c.play()
 }

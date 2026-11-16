@@ -15,7 +15,14 @@ object Playlist {
 
     fun item(context: Context, e: Edition, streamUrl: String = e.url): MediaItem {
         // A downloaded edition plays its downloaded file (possibly another quality).
-        val url = if (e.live) streamUrl else Downloads.completedUri(context, e.id) ?: streamUrl
+        val url =
+            if (e.live) streamUrl
+            else
+                Downloads.completedUri(context, e.id)
+                    ?: streamUrl.replace(
+                        Regex("""\.web[a-z]+\.h264\.mp4$"""),
+                        ".${Settings(context).playbackQuality}.h264.mp4",
+                    )
         val server = Settings(context).serverUrl
         val metadata =
             MediaMetadata.Builder()

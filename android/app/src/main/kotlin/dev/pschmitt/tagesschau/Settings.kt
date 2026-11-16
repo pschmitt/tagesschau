@@ -49,6 +49,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean(KEY_AUTO_NEXT, false)
         set(value) = prefs.edit { putBoolean(KEY_AUTO_NEXT, value) }
 
+    /** ARD's file variant for streaming published editions (webxxl is 1080p). */
+    var playbackQuality: String
+        get() = prefs.getString(KEY_PLAY_QUALITY, null) ?: "webxxl"
+        set(value) = prefs.edit { putString(KEY_PLAY_QUALITY, value) }
+
     var autoDownload: AutoDownload
         get() =
             runCatching { AutoDownload.valueOf(prefs.getString(KEY_AUTO, null) ?: "") }
@@ -70,5 +75,6 @@ class Settings(context: Context) {
         private const val KEY_AUTO = "auto_download"
         const val KEY_AUTO_NEXT = "auto_next"
         private const val KEY_QUALITY = "download_quality"
+        private const val KEY_PLAY_QUALITY = "playback_quality"
     }
 }

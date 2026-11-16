@@ -48,6 +48,9 @@
     <string name="share">Diese Stelle teilen</string>
     <string name="fullscreen">Vollbild</string>
     <string name="watched">gesehen</string>
+    <string name="player_settings">Wiedergabe-Einstellungen</string>
+    <string name="speed">Geschwindigkeit</string>
+    <string name="quality">Qualität</string>
     <string name="channel_live">Fernsehprogramm in Echtzeit</string>
     <string name="copy">Kopieren</string>
     <string name="copied">Link kopiert</string>

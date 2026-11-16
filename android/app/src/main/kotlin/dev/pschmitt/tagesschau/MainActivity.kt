@@ -104,6 +104,7 @@ class MainActivity : ComponentActivity() {
         private set
 
     var sharing by mutableStateOf(false)
+    var playerSettings by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -274,6 +275,8 @@ private fun MainScreen(activity: MainActivity) {
         if (activity.fullscreen) BackHandler { activity.setFullscreenMode(false) }
         VideoPlayer(activity, st, overlay = true, modifier = Modifier.fillMaxSize())
         if (activity.sharing) ShareSheet(activity, st, st.url) { activity.sharing = false }
+        if (activity.playerSettings)
+            PlayerSettingsSheet(activity, st) { activity.playerSettings = false }
         return
     }
 
@@ -381,8 +384,9 @@ private fun MainScreen(activity: MainActivity) {
                 overlay = false,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
             )
-            Box(Modifier.background(Palette.Deep)) { Transport(activity, st) }
             if (activity.sharing) ShareSheet(activity, st, st.url) { activity.sharing = false }
+            if (activity.playerSettings)
+                PlayerSettingsSheet(activity, st) { activity.playerSettings = false }
             PullToRefreshBox(
                 isRefreshing = loading,
                 onRefresh = ::refresh,
