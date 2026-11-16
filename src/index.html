@@ -909,7 +909,15 @@
 
   /* Share a moment: a link to a broadcast time, picked with a preview */
   const sdlg = $("sharedlg"), pv = $("pv"), srange = $("srange");
-  let phls = null, sItem = null;
+  let phls = null, sItem = null, pvPending = null;
+  // One seek at a time: while one loads, only the latest position is kept.
+  function previewSeek(t) {
+    if (pv.seeking || pv.readyState < 1) { pvPending = t; return; }
+    pvPending = null;
+    pv.currentTime = t;
+  }
+  pv.addEventListener("seeked", () => { if (pvPending != null) previewSeek(pvPending); });
+  pv.addEventListener("loadedmetadata", () => { if (pvPending != null) previewSeek(pvPending); });
   function shareUrl() {
     const ms = $("sfrom").checked ? Number(srange.value) : sItem.date.getTime();
     return location.origin + "/?at=" + Math.floor(ms / 1000);
@@ -920,7 +928,7 @@
     $("surl").value = shareUrl();
     if (seekPreview && sItem) {
       const t = (ms - sItem.date.getTime()) / 1000;
-      if (isFinite(t)) pv.currentTime = Math.max(0, t);
+      if (isFinite(t)) previewSeek(Math.max(0, t));
     }
   }
   function openShare() {
@@ -942,8 +950,9 @@
       phls.loadSource(current.url);
       phls.attachMedia(pv);
     } else {
-      pv.src = current.url;
-      pv.addEventListener("loadedmetadata", () => { pv.currentTime = offset; }, { once: true });
+      // The 540p copy is plenty for the preview and seeks far faster than 1080p.
+      pv.src = current.url.replace(/\.web[a-z]+\.h264\.mp4$/, ".webm.h264.mp4");
+      pvPending = offset;
     }
     shareUpdate(false);
     sdlg.showModal();
