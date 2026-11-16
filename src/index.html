@@ -55,8 +55,32 @@
     color: var(--ink); font-size: 0.9rem; font-weight: 600; padding: 0.45rem 0.95rem;
   }
   .bar-actions { display: flex; align-items: center; gap: 0.4rem; }
-  #ccbtn { position: relative; }
-  #ccbtn[aria-pressed="true"]::after { content: ""; position: absolute; left: 25%; right: 25%; bottom: 6px; height: 2px; border-radius: 1px; background: var(--signal); }
+  /* Player settings (YouTube's gear): subtitles and speed */
+  #setbtn svg { transition: transform 0.2s ease; }
+  #setbtn[aria-expanded="true"] svg { transform: rotate(30deg); }
+  .menu {
+    position: absolute; right: 0.6rem; bottom: 3.4rem; z-index: 5; min-width: 15rem;
+    background: rgba(7, 29, 64, 0.96); color: var(--ink); border-radius: 8px; padding: 0.4rem 0;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45); font-size: 0.95rem;
+  }
+  .menu[hidden] { display: none; }
+  .menu button {
+    display: flex; align-items: center; gap: 0.75rem; width: 100%; border: 0; background: none; color: inherit;
+    font: inherit; padding: 0.65rem 1rem; cursor: pointer; text-align: left;
+  }
+  .menu button:hover, .menu button:focus-visible { background: var(--panel); outline: none; }
+  .menu button[hidden] { display: none; }
+  .menu svg { width: 1.25rem; height: 1.25rem; flex: none; }
+  .menu .label { flex: 1; }
+  .menu .val { color: var(--mist); font-variant-numeric: tabular-nums; }
+  .menu .head { font-weight: 700; border-bottom: 1px solid var(--panel); margin-bottom: 0.3rem; }
+  .menu .check { visibility: hidden; color: var(--signal); }
+  .menu [aria-checked="true"] .check { visibility: visible; }
+  .switch { width: 2.2rem; height: 1.25rem; border-radius: 1rem; background: var(--panel); position: relative; flex: none; transition: background 0.15s; }
+  .switch::after { content: ""; position: absolute; top: 0.15rem; left: 0.15rem; width: 0.95rem; height: 0.95rem; border-radius: 50%; background: var(--mist); transition: transform 0.15s, background 0.15s; }
+  [aria-checked="true"] > .switch { background: var(--signal); }
+  [aria-checked="true"] > .switch::after { transform: translateX(0.95rem); background: var(--ink); }
+  @media (prefers-reduced-motion: reduce) { #setbtn svg, .switch, .switch::after { transition: none; } }
   video::cue { background: rgba(0, 0, 0, .78); color: #fff; font-family: Archivo, sans-serif; line-height: 1.3; }
   video::cue(.textBlue), video::cue(.cyan) { color: #8fd8ff; }
   video::cue(.textYellow), video::cue(.yellow) { color: #ffe45c; }
@@ -299,6 +323,7 @@
     .vol input { display: none; }
     .time { font-size: 0.8rem; margin-left: 0.3rem; }
     .time .sep, .time #to { display: none; }
+    .menu { right: 0.4rem; bottom: 3.3rem; }
     .player.idle .transport { opacity: 1; pointer-events: auto; }
     .player.idle, .player.idle .well { cursor: auto; }
     .ctl.opt { display: none; }
@@ -316,6 +341,11 @@
   <symbol id="i-download" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></symbol>
   <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5.5" r="2.6" fill="currentColor"/><circle cx="6" cy="12" r="2.6" fill="currentColor"/><circle cx="18" cy="18.5" r="2.6" fill="currentColor"/><path fill="none" stroke="currentColor" stroke-width="1.8" d="M8.3 10.8 15.7 6.7M8.3 13.2l7.4 4.1"/></symbol>
   <symbol id="i-cc" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M10.4 10.3a2.2 2.2 0 1 0 0 3.4M16.4 10.3a2.2 2.2 0 1 0 0 3.4"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6a.5.5 0 0 0 .1-.6l-2-3.5a.5.5 0 0 0-.6-.2l-2.5 1a7.3 7.3 0 0 0-1.7-1l-.4-2.6a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 0-.5.4l-.4 2.7a7.3 7.3 0 0 0-1.7 1l-2.5-1a.5.5 0 0 0-.6.2l-2 3.5a.5.5 0 0 0 .1.6L4.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6a.5.5 0 0 0-.1.6l2 3.5c.1.2.4.3.6.2l2.5-1c.5.4 1.1.8 1.7 1l.4 2.6c0 .3.2.5.5.5h4c.3 0 .5-.2.5-.4l.4-2.7c.6-.3 1.2-.6 1.7-1l2.5 1c.2.1.5 0 .6-.2l2-3.5a.5.5 0 0 0-.1-.6zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></symbol>
+  <symbol id="i-speed" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4.9 17a8 8 0 1 1 14.2 0M12 13l3.5-4"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-chevback" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m15 6-6 6 6 6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
   <symbol id="i-full" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
 </svg>
 
@@ -351,6 +381,16 @@
         <div class="skip ahead" id="skipahead" aria-hidden="true"></div>
         <button class="unmute" id="unmute" hidden>Ton einschalten</button>
         <div class="castinfo" id="castinfo" hidden></div>
+      <div class="menu" id="setmenu" role="menu" aria-label="Einstellungen" hidden>
+        <div id="setmain">
+          <button role="menuitemcheckbox" id="ccitem" aria-checked="false" title="Untertitel (C)"><svg><use href="#i-cc"/></svg><span class="label">Untertitel</span><span class="switch"></span></button>
+          <button role="menuitem" id="speeditem" aria-haspopup="menu"><svg><use href="#i-speed"/></svg><span class="label">Geschwindigkeit</span><span class="val" id="speedval">Normal</span><svg><use href="#i-chev"/></svg></button>
+        </div>
+        <div id="setspeed" hidden>
+          <button class="head" id="speedback"><svg><use href="#i-chevback"/></svg><span class="label">Geschwindigkeit</span></button>
+          <div id="speedlist"></div>
+        </div>
+      </div>
       <div class="transport" id="transport">
         <div class="line">
           <div class="track" id="track" role="slider" tabindex="0" aria-label="Position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
@@ -374,8 +414,7 @@
             <a class="ctl opt" id="dlbtn" href="#" download aria-label="Diese Ausgabe herunterladen" title="Diese Ausgabe herunterladen"><svg><use href="#i-download"/></svg></a>
             <google-cast-launcher class="ctl" id="castbtn" title="Auf Fernseher abspielen" hidden></google-cast-launcher>
             <button class="ctl" id="sharebtn" aria-label="Diese Stelle teilen" title="Diese Stelle teilen (S)"><svg><use href="#i-share"/></svg></button>
-            <button class="ctl" id="ccbtn" aria-pressed="false" aria-label="Untertitel" title="Untertitel (C)" hidden><svg><use href="#i-cc"/></svg></button>
-            <button class="ctl text" id="speed" aria-label="Geschwindigkeit" title="Geschwindigkeit">1×</button>
+            <button class="ctl" id="setbtn" aria-haspopup="menu" aria-expanded="false" aria-controls="setmenu" aria-label="Einstellungen" title="Einstellungen"><svg><use href="#i-gear"/></svg></button>
             <button class="ctl" id="full" aria-label="Vollbild" title="Vollbild (F)"><svg><use href="#i-full"/></svg></button>
           </div>
         </div>
@@ -639,11 +678,9 @@
     } else {
       for (const t of video.textTracks) t.mode = on ? "showing" : "disabled";
     }
-    const btn = $("ccbtn");
-    btn.hidden = !hasSubs(current);
-    btn.setAttribute("aria-pressed", String(on));
-    btn.setAttribute("aria-label", on ? "Untertitel aus" : "Untertitel an");
-    btn.title = (on ? "Untertitel aus" : "Untertitel an") + " (C)";
+    const item = $("ccitem");
+    item.hidden = !hasSubs(current);
+    item.setAttribute("aria-checked", String(on));
     if (cast.on) castSubs();
   }
   function toggleSubs() {
@@ -713,7 +750,8 @@
     icon($("mute"), video.muted || video.volume === 0 ? "mute" : "vol");
     $("volume").value = video.muted ? 0 : video.volume;
     $("mute").setAttribute("aria-label", video.muted ? "Ton an" : "Ton aus");
-    $("speed").textContent = String(video.playbackRate).replace(".", ",") + "×";
+    $("speedval").textContent = speedLabel(video.playbackRate);
+    for (const b of $("speedlist").children) b.setAttribute("aria-checked", String(Number(b.dataset.rate) === video.playbackRate));
     if ("mediaSession" in navigator) navigator.mediaSession.playbackState = playing ? "playing" : "paused";
   }
 
@@ -795,13 +833,13 @@
     player.classList.remove("idle");
     clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
-      if (!video.paused && !player.contains(document.activeElement) && !dragging) player.classList.add("idle");
+      if (!video.paused && !player.contains(document.activeElement) && !dragging && !menuOpen()) player.classList.add("idle");
     }, 2500);
   }
   let idleAtTap = false;
   player.addEventListener("pointerdown", () => { idleAtTap = player.classList.contains("idle"); }, true);
   ["pointermove", "pointerdown", "keydown", "focusin"].forEach(e => player.addEventListener(e, wake));
-  player.addEventListener("pointerleave", () => { if (!video.paused && !dragging) { clearTimeout(idleTimer); player.classList.add("idle"); } });
+  player.addEventListener("pointerleave", () => { if (!video.paused && !dragging && !menuOpen()) { clearTimeout(idleTimer); player.classList.add("idle"); } });
   player.addEventListener("focusout", wake);
   video.addEventListener("pause", () => { clearTimeout(idleTimer); player.classList.remove("idle"); });
   video.addEventListener("play", wake);
@@ -869,9 +907,49 @@
   well.addEventListener("dblclick", ev => { if (ev.target === video && !isTouch()) fullscreen(); });
   $("back").addEventListener("click", () => seekBy(-10));
   $("fwd").addEventListener("click", () => seekBy(30));
-  $("ccbtn").addEventListener("click", toggleSubs);
-  $("speed").addEventListener("click", () => {
-    video.playbackRate = SPEEDS[(SPEEDS.indexOf(video.playbackRate) + 1) % SPEEDS.length];
+  /* Settings menu: subtitles toggle in place, speed opens a sub-list. */
+  const setbtn = $("setbtn"), setmenu = $("setmenu");
+  const menuOpen = () => !setmenu.hidden;
+  function openMenu(sub) {
+    setmenu.hidden = false;
+    setbtn.setAttribute("aria-expanded", "true");
+    $("setmain").hidden = sub === "speed";
+    $("setspeed").hidden = sub !== "speed";
+    const first = sub === "speed" ? $("speedlist").querySelector('[aria-checked="true"]') : setmenu.querySelector("#setmain button:not([hidden])");
+    if (first) first.focus({ preventScroll: true });
+  }
+  function closeMenu(refocus) {
+    if (!menuOpen()) return;
+    setmenu.hidden = true;
+    setbtn.setAttribute("aria-expanded", "false");
+    if (refocus) setbtn.focus({ preventScroll: true });
+  }
+  setbtn.addEventListener("click", ev => { ev.stopPropagation(); menuOpen() ? closeMenu() : openMenu(); });
+  setmenu.addEventListener("click", ev => ev.stopPropagation());
+  setmenu.addEventListener("pointerdown", ev => ev.stopPropagation());
+  $("ccitem").addEventListener("click", toggleSubs);
+  $("speeditem").addEventListener("click", () => openMenu("speed"));
+  $("speedback").addEventListener("click", () => openMenu());
+  const speedLabel = r => r === 1 ? "Normal" : String(r).replace(".", ",") + "×";
+  for (const r of [...SPEEDS].sort((a, b) => a - b)) {
+    const b = document.createElement("button");
+    b.setAttribute("role", "menuitemradio");
+    b.dataset.rate = r;
+    b.innerHTML = '<svg class="check"><use href="#i-check"/></svg><span class="label"></span>';
+    b.querySelector(".label").textContent = speedLabel(r);
+    b.addEventListener("click", () => { video.playbackRate = r; closeMenu(true); });
+    $("speedlist").append(b);
+  }
+  document.addEventListener("click", () => closeMenu());
+  setmenu.addEventListener("keydown", ev => {
+    const items = [...setmenu.querySelectorAll("button")].filter(b => b.offsetParent);
+    const i = items.indexOf(document.activeElement);
+    if (ev.key === "Escape") { ev.preventDefault(); ev.stopPropagation(); closeMenu(true); }
+    else if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+      ev.preventDefault(); ev.stopPropagation();
+      items[(i + (ev.key === "ArrowDown" ? 1 : -1) + items.length) % items.length].focus();
+    } else if (ev.key === "ArrowLeft" && !$("setspeed").hidden) { ev.stopPropagation(); openMenu(); }
+    else ev.stopPropagation();
   });
   $("mute").addEventListener("click", () => {
     video.muted = !video.muted;

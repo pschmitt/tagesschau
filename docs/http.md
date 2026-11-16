@@ -40,7 +40,7 @@ receivers can load the live sessions.
 
 - Controls as on YouTube: timeline above play/pause, volume
   (slider on hover, arrow keys) and the time; seeking, download, cast, share,
-  subtitles (C), speed and fullscreen on the right.
+  settings (subtitles, speed; C toggles subtitles) and fullscreen on the right.
 - Casting through Google Cast (Chrome): the cast button hands the edition and
   position to the TV.
 - The bell notifies while the page is open when an edition goes on air or a
