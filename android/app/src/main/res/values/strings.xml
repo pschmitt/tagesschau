@@ -103,6 +103,15 @@
     <string name="section_downloads">Downloads</string>
     <string name="section_server">Server</string>
     <string name="section_tasker">Tasker</string>
+    <string name="section_advanced">Erweitert</string>
+    <string name="section_about">Über</string>
+    <string name="web_player">Web-Player</string>
+    <string name="page_playback_help">Auto-Play, laufende Ausgabe, Bild-im-Bild</string>
+    <string name="page_downloads_help">Automatisch laden, Qualität, Aufbewahrung</string>
+    <string name="page_notifications_help">Neue und laufende Ausgaben</string>
+    <string name="page_server_help">Adresse des tagesschau-Servers</string>
+    <string name="page_advanced_help">Bluetooth-Auto-Play, Tasker</string>
+    <string name="page_about_help">Version, Updates, Shizuku</string>
     <string name="prefer_live_help">Läuft eine Ausgabe, spielt sie ab ihrem Beginn statt der neuesten fertigen.</string>
     <string name="leave_mode_help">Was passiert, wenn du während der Wiedergabe die App verlässt.</string>
     <string name="retention">Downloads behalten</string>
