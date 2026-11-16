@@ -338,6 +338,7 @@
       animation: sheet-up 0.2s ease-out;
     }
     .menu::before { content: ""; display: block; width: 2.5rem; height: 0.25rem; border-radius: 1rem; background: var(--mist); opacity: 0.5; margin: 0.2rem auto 0.5rem; }
+    .menu { touch-action: pan-y; }
     .menu .sheet-title { display: block; }
     .menu button { padding: 0.95rem 1.4rem; gap: 1rem; }
     .menu svg { width: 1.4rem; height: 1.4rem; }
@@ -938,10 +939,48 @@
   }
   function closeMenu(refocus) {
     if (!menuOpen()) return;
+    setmenu.style.transform = setmenu.style.transition = "";
     setmenu.hidden = true;
     setbtn.setAttribute("aria-expanded", "false");
     if (refocus) setbtn.focus({ preventScroll: true });
   }
+  // Phones: drag the sheet down to dismiss it, as on Android.
+  const isSheet = () => getComputedStyle(setmenu).position === "fixed";
+  let drag = null;
+  setmenu.addEventListener("touchstart", ev => {
+    if (!isSheet() || ev.touches.length !== 1) return;
+    drag = { y: ev.touches[0].clientY, t: performance.now(), dy: 0, active: false };
+  }, { passive: true });
+  setmenu.addEventListener("touchmove", ev => {
+    if (!drag) return;
+    const dy = ev.touches[0].clientY - drag.y;
+    // Only a downward pull from the top of the sheet's scroll drags it.
+    if (!drag.active && (dy < 8 || setmenu.scrollTop > 0)) { if (dy < -8) drag = null; return; }
+    drag.active = true;
+    drag.dy = Math.max(0, dy);
+    setmenu.style.transition = "none";
+    setmenu.style.transform = "translateY(" + drag.dy + "px)";
+    ev.preventDefault();
+  }, { passive: false });
+  setmenu.addEventListener("touchend", ev => {
+    if (!drag) return;
+    const d = drag;
+    drag = null;
+    if (!d.active) return;
+    ev.preventDefault(); // no click on the row the drag ended on
+    const fast = d.dy / Math.max(1, performance.now() - d.t) > 0.5;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (d.dy > setmenu.offsetHeight / 3 || fast) {
+      if (reduce) { closeMenu(); return; }
+      setmenu.style.transition = "transform 0.18s ease-in";
+      setmenu.style.transform = "translateY(100%)";
+      setTimeout(() => closeMenu(), 180);
+    } else {
+      setmenu.style.transition = reduce ? "none" : "transform 0.18s ease-out";
+      setmenu.style.transform = "";
+    }
+  });
+  setmenu.addEventListener("touchcancel", () => { drag = null; setmenu.style.transform = ""; });
   setbtn.addEventListener("click", ev => { ev.stopPropagation(); menuOpen() ? closeMenu() : openMenu(); });
   setmenu.addEventListener("click", ev => ev.stopPropagation());
   setmenu.addEventListener("pointerdown", ev => ev.stopPropagation());
