@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -746,6 +747,8 @@ private fun Timeline(st: PlayState, modifier: Modifier, onSeek: (Long) -> Unit) 
                             -(if (thumbUrl != null) thumbH + 28.dp else 26.dp).roundToPx(),
                         )
                     }
+                    // The timeline is 36 dp tall; the box takes its own height above it.
+                    .wrapContentSize(Alignment.TopStart, unbounded = true)
                     .width(boxW)
                     .clip(RoundedCornerShape(5.dp))
                     .background(Palette.Deep)
@@ -783,16 +786,26 @@ private fun ScrubThumb(url: String, ms: Long, modifier: Modifier) {
             }
         }
     androidx.compose.runtime.DisposableEffect(player) { onDispose { player.release() } }
-    LaunchedEffect(ms) { player.seekTo(ms) }
-    AndroidView(
-        factory = {
-            androidx.media3.ui.PlayerView(it).apply {
-                useController = false
-                this.player = player
-                setShutterBackgroundColor(android.graphics.Color.BLACK)
+    // Seek to the latest position only once the previous seek is done (a new seek on every move
+    // never lets one finish, and the thumbnail stays black).
+    val target by androidx.compose.runtime.rememberUpdatedState(ms)
+    LaunchedEffect(player) {
+        var last = -1L
+        while (true) {
+            val t = target
+            if (
+                t != last && player.playbackState != androidx.media3.common.Player.STATE_BUFFERING
+            ) {
+                player.seekTo(t)
+                last = t
             }
-        },
-        modifier = modifier,
+            delay(80)
+        }
+    }
+    // A TextureView: a second SurfaceView would sit behind the main player's and stay black.
+    AndroidView(
+        factory = { android.view.TextureView(it).also { v -> player.setVideoTextureView(v) } },
+        modifier = modifier.background(Color.Black),
     )
 }
 
