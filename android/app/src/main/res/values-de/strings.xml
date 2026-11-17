@@ -163,4 +163,6 @@
     <string name="page_appearance_help">Sprache, Uhr, Schrift</string>
     <string name="section_clock">Uhr</string>
     <string name="until">bis %1$s</string>
+    <string name="delete">Löschen</string>
+    <string name="delete_download_text">%1$s von diesem Telefon löschen? Solange sie verfügbar ist, lässt sie sich wieder herunterladen.</string>
 </resources>

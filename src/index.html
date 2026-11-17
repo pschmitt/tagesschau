@@ -51,7 +51,7 @@
     display: flex; align-items: center; justify-content: space-between; gap: 1rem;
   }
   .brand { display: flex; align-items: center; gap: 0.7rem; font-size: 1.25rem; font-weight: 400; letter-spacing: -0.01em; margin: 0; }
-  .brand img { width: 2.25rem; height: 2.25rem; border-radius: 7px; display: block; }
+  .brand img { width: 2.25rem; height: 2.25rem; display: block; }
   .brand b { font-weight: 800; }
   .brand span { color: var(--mist); font-stretch: 85%; margin-left: -0.3rem; }
   .subscribe {
@@ -425,7 +425,7 @@
 
 <div class="shell">
   <header class="bar">
-    <p class="brand"><img src="/logo.jpg" alt="" onerror="this.remove()"><b>tagesschau</b><span data-i18n="brand_sub">alle Ausgaben</span></p>
+    <p class="brand"><img src="/icon-192.png" alt="" onerror="this.remove()"><b>tagesschau</b><span data-i18n="brand_sub">alle Ausgaben</span></p>
     <div class="bar-actions">
     <button class="ctl" id="notifybtn" aria-pressed="false" data-i18n-title="notify" data-i18n-aria="notify" title="Bei neuen Ausgaben benachrichtigen" aria-label="Bei neuen Ausgaben benachrichtigen"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg></button>
     <button class="subscribe" id="subscribe"><span data-i18n="subscribe_short">Abonnieren</span></button>

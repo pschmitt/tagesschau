@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://images.tagesschau.de/image/eb0b0d74-03ac-45ec-9300-0851fd6823d3/AAABlqrTsSI/AAABnSStX0g/1x1-big/sendungslogo-tagesschau-100.jpg?width=256" width="128" height="128" alt="tagesschau logo">
+  <img src="assets/icon.png" width="128" height="128" alt="tagesschau icon: a globe with a play button">
 </p>
 
 <p align="center">

@@ -163,4 +163,6 @@
     <string name="page_appearance_help">Langue, horloge, police</string>
     <string name="section_clock">Horloge</string>
     <string name="until">jusqu\'à %1$s</string>
+    <string name="delete">Supprimer</string>
+    <string name="delete_download_text">Supprimer %1$s de ce téléphone ? Elle peut être retéléchargée tant qu\'elle est disponible.</string>
 </resources>

@@ -163,4 +163,6 @@
     <string name="page_appearance_help">Language, clock, font</string>
     <string name="section_clock">Clock</string>
     <string name="until">until %1$s</string>
+    <string name="delete">Delete</string>
+    <string name="delete_download_text">Remove %1$s from this phone? It can be downloaded again while it is available.</string>
 </resources>

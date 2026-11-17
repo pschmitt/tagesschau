@@ -65,6 +65,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -497,6 +498,35 @@ private fun MainScreen(activity: MainActivity) {
         manager.addListener(listener)
         onDispose { manager.removeListener(listener) }
     }
+    // Media3 reports state changes, not progress: while downloads run, read their progress twice a
+    // second so the circles fill smoothly.
+    val running = downloads.values.any { it.state == Download.STATE_DOWNLOADING }
+    LaunchedEffect(running) {
+        val manager = Downloads.manager(activity)
+        while (running) {
+            // A fresh copy each time: Media3 updates the same object in place, which Compose
+            // would not notice.
+            for (d in manager.currentDownloads) {
+                val progress =
+                    androidx.media3.exoplayer.offline.DownloadProgress().apply {
+                        bytesDownloaded = d.bytesDownloaded
+                        percentDownloaded = d.percentDownloaded
+                    }
+                downloads[d.request.id] =
+                    Download(
+                        d.request,
+                        d.state,
+                        d.startTimeMs,
+                        d.updateTimeMs,
+                        d.contentLength,
+                        d.stopReason,
+                        d.failureReason,
+                        progress,
+                    )
+            }
+            kotlinx.coroutines.delay(500)
+        }
+    }
 
     // Online: the server's list. Offline: whatever is downloaded.
     val editions: List<Edition> =
@@ -511,14 +541,11 @@ private fun MainScreen(activity: MainActivity) {
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painterResource(R.drawable.ic_tagesschau),
+                        // The app icon (rounded, with its own corners).
+                        androidx.compose.foundation.Image(
+                            painterResource(R.drawable.ic_header),
                             null,
-                            tint = Color.White,
-                            modifier =
-                                Modifier.size(34.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFF185596)),
+                            modifier = Modifier.size(34.dp),
                         )
                         Spacer(Modifier.width(10.dp))
                         Text("tagesschau", fontWeight = FontWeight.ExtraBold)
@@ -779,14 +806,6 @@ private fun EditionRow(
                 // No status words (the bar, the seen-line and the button say it): an offline mark
                 // when downloaded, and a word only when a download failed.
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (download?.state == Download.STATE_COMPLETED) {
-                        Icon(
-                            painterResource(R.drawable.ic_offline),
-                            stringResource(R.string.downloaded),
-                            tint = Palette.Signal,
-                            modifier = Modifier.size(17.dp),
-                        )
-                    }
                     if (download?.state == Download.STATE_FAILED) {
                         Text(
                             stringResource(R.string.download_failed),
@@ -810,14 +829,48 @@ private fun EditionRow(
                             strokeWidth = 2.dp,
                         )
                     }
-                Download.STATE_COMPLETED ->
-                    IconButton(onClick = onRemove) {
+                Download.STATE_COMPLETED -> {
+                    // Downloaded: the orange offline mark; a tap asks before deleting it.
+                    var confirm by remember { mutableStateOf(false) }
+                    IconButton(onClick = { confirm = true }) {
                         Icon(
-                            painterResource(R.drawable.ic_delete),
+                            painterResource(R.drawable.ic_offline),
                             stringResource(R.string.delete_download),
-                            tint = Palette.Mist,
+                            tint = Palette.Signal,
                         )
                     }
+                    if (confirm) {
+                        androidx.compose.material3.AlertDialog(
+                            onDismissRequest = { confirm = false },
+                            title = { Text(stringResource(R.string.delete_download)) },
+                            text = {
+                                Text(
+                                    stringResource(
+                                        R.string.delete_download_text,
+                                        e.title(LocalContext.current),
+                                    )
+                                )
+                            },
+                            confirmButton = {
+                                androidx.compose.material3.TextButton(
+                                    onClick = {
+                                        confirm = false
+                                        onRemove()
+                                    }
+                                ) {
+                                    Text(stringResource(R.string.delete))
+                                }
+                            },
+                            dismissButton = {
+                                androidx.compose.material3.TextButton(
+                                    onClick = { confirm = false }
+                                ) {
+                                    Text(stringResource(R.string.cancel))
+                                }
+                            },
+                        )
+                    }
+                }
                 else ->
                     IconButton(onClick = onDownload) {
                         Icon(
