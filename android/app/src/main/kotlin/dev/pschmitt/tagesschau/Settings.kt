@@ -26,6 +26,13 @@ enum class BluetoothMode {
     PIP,
 }
 
+/** The font of the times: Barlow Condensed (default), IBM Plex Mono or the text font. */
+enum class TimeFont {
+    BARLOW,
+    PLEX,
+    TEXT,
+}
+
 /** The big clock under the player: off, 20:00, 20:00:06 or 20:00:06,123. */
 enum class ClockFormat {
     OFF,
@@ -82,6 +89,12 @@ class Settings(context: Context) {
             runCatching { ClockFormat.valueOf(prefs.getString(KEY_CLOCK, null) ?: "") }
                 .getOrDefault(ClockFormat.SECONDS)
         set(value) = prefs.edit { putString(KEY_CLOCK, value.name) }
+
+    var timeFont: TimeFont
+        get() =
+            runCatching { TimeFont.valueOf(prefs.getString(KEY_TIME_FONT, null) ?: "") }
+                .getOrDefault(TimeFont.BARLOW)
+        set(value) = prefs.edit { putString(KEY_TIME_FONT, value.name) }
 
     var subtitles: Boolean
         get() = prefs.getBoolean(KEY_SUBTITLES, false)
@@ -192,6 +205,7 @@ class Settings(context: Context) {
         const val KEY_AUTO_NEXT = "auto_next"
         const val KEY_SUBTITLES = "subtitles"
         const val KEY_CLOCK = "clock_format"
+        const val KEY_TIME_FONT = "time_font"
         private const val KEY_PLAY_TARGET = "play_target"
         private const val KEY_BT_TARGET = "bluetooth_play_target"
         private const val KEY_AUTO_CHARGING = "auto_download_charging"

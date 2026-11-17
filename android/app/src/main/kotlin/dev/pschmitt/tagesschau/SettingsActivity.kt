@@ -100,6 +100,7 @@ private fun SettingsScreen(activity: SettingsActivity) {
     var autoNext by remember { mutableStateOf(settings.autoNext) }
     var subtitles by remember { mutableStateOf(settings.subtitles) }
     var clockFormat by remember { mutableStateOf(settings.clockFormat) }
+    var timeFont by remember { mutableStateOf(settings.timeFont) }
     var autoPlay by remember { mutableStateOf(settings.autoPlay) }
     var playTarget by remember { mutableStateOf(settings.playTarget) }
     var btTarget by remember { mutableStateOf(settings.bluetoothTarget) }
@@ -311,7 +312,7 @@ private fun SettingsScreen(activity: SettingsActivity) {
                     ) {
                         val formats =
                             listOf(
-                                ClockFormat.OFF to "Aus",
+                                ClockFormat.OFF to stringResource(R.string.clock_off),
                                 ClockFormat.MINUTES to "20:00",
                                 ClockFormat.SECONDS to "20:00:06",
                                 ClockFormat.MILLIS to ",123",
@@ -326,6 +327,39 @@ private fun SettingsScreen(activity: SettingsActivity) {
                                 shape = SegmentedButtonDefaults.itemShape(i, formats.size),
                             ) {
                                 Text(label, fontSize = 13.sp)
+                            }
+                        }
+                    }
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.time_font)) },
+                        colors = itemColors,
+                        modifier = Modifier.padding(start = 40.dp),
+                    )
+                    SingleChoiceSegmentedButtonRow(
+                        Modifier.fillMaxWidth().padding(start = 56.dp, end = 16.dp, bottom = 8.dp)
+                    ) {
+                        val fonts = TimeFont.entries
+                        fonts.forEachIndexed { i, f ->
+                            SegmentedButton(
+                                selected = timeFont == f,
+                                onClick = {
+                                    timeFont = f
+                                    settings.timeFont = f
+                                },
+                                shape = SegmentedButtonDefaults.itemShape(i, fonts.size),
+                            ) {
+                                // Each choice in its own font.
+                                Text(
+                                    when (f) {
+                                        TimeFont.BARLOW -> "Barlow"
+                                        TimeFont.PLEX -> "Plex Mono"
+                                        TimeFont.TEXT -> stringResource(R.string.time_font_text)
+                                    },
+                                    fontFamily = Fonts.of(f),
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 13.sp,
+                                    maxLines = 1,
+                                )
                             }
                         }
                     }

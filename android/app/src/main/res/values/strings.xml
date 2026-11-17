@@ -156,4 +156,7 @@
     <string name="seconds_count">%1$d seconds</string>
     <string name="language">Language</string>
     <string name="language_system">System</string>
+    <string name="time_font">Clock font</string>
+    <string name="time_font_text">Same as text</string>
+    <string name="clock_off">Off</string>
 </resources>

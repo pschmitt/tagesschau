@@ -156,4 +156,7 @@
     <string name="seconds_count">%1$d secondes</string>
     <string name="language">Langue</string>
     <string name="language_system">Système</string>
+    <string name="time_font">Police de l\'horloge</string>
+    <string name="time_font_text">Comme le texte</string>
+    <string name="clock_off">Désactivée</string>
 </resources>

@@ -479,6 +479,7 @@ fun VideoPlayer(
                                 color = Color.White,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
+                                fontFamily = LocalTimeFont.current,
                             )
                             if (st.showLive) {
                                 LiveChip(st.behindLive) {
@@ -549,7 +550,10 @@ fun Transport(activity: MainActivity, st: PlayState, onInteract: () -> Unit = {}
     val c = activity.controller
     Column(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(st.start?.hm() ?: "--:--", style = EdgeStyle)
+            Text(
+                st.start?.hm() ?: "--:--",
+                style = EdgeStyle.copy(fontFamily = LocalTimeFont.current),
+            )
             Timeline(st, Modifier.weight(1f).padding(horizontal = 10.dp)) { ms ->
                 onInteract()
                 c?.seekTo(ms)
@@ -557,7 +561,7 @@ fun Transport(activity: MainActivity, st: PlayState, onInteract: () -> Unit = {}
             Text(
                 st.start?.let { s -> if (st.span > 0) st.airAt(st.span)?.hm() else null }
                     ?: "--:--",
-                style = EdgeStyle,
+                style = EdgeStyle.copy(fontFamily = LocalTimeFont.current),
             )
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -760,6 +764,7 @@ private fun Timeline(st: PlayState, modifier: Modifier, onSeek: (Long) -> Unit) 
                     t,
                     color = Palette.Deep,
                     fontWeight = FontWeight.Bold,
+                    fontFamily = LocalTimeFont.current,
                     fontSize = 12.sp,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier =

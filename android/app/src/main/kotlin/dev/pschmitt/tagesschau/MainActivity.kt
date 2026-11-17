@@ -667,8 +667,9 @@ private fun Clock(activity: MainActivity, st: PlayState, edition: Edition?) {
                     }
                 },
                 fontSize = 64.sp,
-                fontWeight = FontWeight.Black,
-                letterSpacing = (-2).sp,
+                fontWeight = FontWeight.ExtraBold,
+                fontFamily = LocalTimeFont.current,
+                letterSpacing = (-1).sp,
                 lineHeight = 64.sp,
             )
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -743,6 +744,7 @@ private fun EditionRow(
             e.time,
             fontSize = 30.sp,
             fontWeight = FontWeight.Bold,
+            fontFamily = LocalTimeFont.current,
             modifier = Modifier.padding(start = 12.dp).width(100.dp),
         )
         Column(Modifier.weight(1f)) {
