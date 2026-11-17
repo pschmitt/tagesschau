@@ -74,7 +74,8 @@
     <string name="autoplay_connected">Verbunden mit %1$s</string>
     <string name="autoplay_now">Jetzt abspielen</string>
     <string name="bt_mode_audio">Nur Ton</string>
-    <string name="bt_mode_video">Vollbild</string>
+    <string name="bt_mode_video">Video</string>
+    <string name="bt_fullscreen">Vollbild</string>
     <string name="bt_mode_pip">Bild-im-Bild</string>
     <string name="bt_no_devices">Keine gekoppelten Geräte gefunden.</string>
     <string name="bt_hint">Spielt die neueste Ausgabe, sobald eines dieser Geräte verbunden wird: nur als Ton, als Video in der App oder als Bild-im-Bild. Braucht „Über anderen Apps einblenden“.</string>

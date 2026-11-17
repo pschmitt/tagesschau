@@ -18,7 +18,7 @@ enum class AutoDownload {
 }
 
 /**
- * How a Bluetooth connection plays: sound only, fullscreen video, or video in picture-in-picture.
+ * How a Bluetooth connection plays: sound only, video (optionally fullscreen) or picture-in-picture.
  */
 enum class BluetoothMode {
     AUDIO,
@@ -137,6 +137,11 @@ class Settings(context: Context) {
                 .getOrDefault(BluetoothMode.AUDIO)
         set(value) = prefs.edit { putString(KEY_BT_MODE, value.name) }
 
+    /** Video mode only: start in fullscreen (else in the normal player view). */
+    var bluetoothFullscreen: Boolean
+        get() = prefs.getBoolean(KEY_BT_FULLSCREEN, true)
+        set(value) = prefs.edit { putBoolean(KEY_BT_FULLSCREEN, value) }
+
     /** Media volume (percent) for Bluetooth auto-play, or -1 to leave the volume alone. */
     var bluetoothVolume: Int
         get() = prefs.getInt(KEY_BT_VOLUME, -1)
@@ -196,6 +201,7 @@ class Settings(context: Context) {
         private const val KEY_NOTIFY = "notify_new"
         private const val KEY_BT = "bluetooth_devices"
         private const val KEY_BT_MODE = "bluetooth_mode"
+        private const val KEY_BT_FULLSCREEN = "bluetooth_fullscreen"
         private const val KEY_BT_DELAY = "bluetooth_delay"
         private const val KEY_BT_RESUME = "bluetooth_resume"
         const val KEY_CONTINUE_ON_DISCONNECT = "continue_on_disconnect"

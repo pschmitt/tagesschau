@@ -74,7 +74,8 @@
     <string name="autoplay_connected">Connecté à %1$s</string>
     <string name="autoplay_now">Lire maintenant</string>
     <string name="bt_mode_audio">Son uniquement</string>
-    <string name="bt_mode_video">Plein écran</string>
+    <string name="bt_mode_video">Vidéo</string>
+    <string name="bt_fullscreen">Plein écran</string>
     <string name="bt_mode_pip">Incrustation</string>
     <string name="bt_no_devices">Aucun appareil associé trouvé.</string>
     <string name="bt_hint">Lit la dernière édition dès qu\'un de ces appareils se connecte : avec le son uniquement, en vidéo dans l\'application ou en image dans l\'image. Nécessite « Affichage par-dessus les autres applications ».</string>

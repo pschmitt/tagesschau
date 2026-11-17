@@ -74,7 +74,8 @@
     <string name="autoplay_connected">Connected to %1$s</string>
     <string name="autoplay_now">Play now</string>
     <string name="bt_mode_audio">Audio only</string>
-    <string name="bt_mode_video">Fullscreen</string>
+    <string name="bt_mode_video">Video</string>
+    <string name="bt_fullscreen">Fullscreen</string>
     <string name="bt_mode_pip">PiP</string>
     <string name="bt_no_devices">No paired devices found.</string>
     <string name="bt_hint">Plays the latest edition as soon as one of these devices connects: as audio only, as video in the app or as picture-in-picture. Requires “Display over other apps”.</string>

@@ -109,6 +109,7 @@ private fun SettingsScreen(activity: SettingsActivity) {
     var btDevices by remember { mutableStateOf(settings.bluetoothDevices) }
     var btMode by remember { mutableStateOf(settings.bluetoothMode) }
     var btDelay by remember { mutableStateOf(settings.bluetoothDelaySeconds) }
+    var btFullscreen by remember { mutableStateOf(settings.bluetoothFullscreen) }
     var btResume by remember { mutableStateOf(settings.bluetoothResume) }
     var continueOnDisconnect by remember { mutableStateOf(settings.continueOnDisconnect) }
     var btVolumeOn by remember { mutableStateOf(settings.bluetoothVolume >= 0) }
@@ -642,6 +643,22 @@ private fun SettingsScreen(activity: SettingsActivity) {
                                 Text(stringResource(label), fontSize = 13.sp)
                             }
                         }
+                    }
+                    if (btMode == BluetoothMode.VIDEO) {
+                        ListItem(
+                            headlineContent = { Text(stringResource(R.string.bt_fullscreen)) },
+                            trailingContent = {
+                                Switch(
+                                    btFullscreen,
+                                    {
+                                        btFullscreen = it
+                                        settings.bluetoothFullscreen = it
+                                    },
+                                )
+                            },
+                            colors = itemColors,
+                            modifier = Modifier.padding(start = 40.dp),
+                        )
                     }
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.bt_volume)) },

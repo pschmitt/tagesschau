@@ -13,6 +13,8 @@ object AutoStart {
         /** The edition on air from its start (else the newest finished one). */
         val preferLive: Boolean = true,
         val mode: BluetoothMode = BluetoothMode.AUDIO,
+        /** Video mode: start in fullscreen. */
+        val fullscreen: Boolean = false,
         /** Continue the latest edition where it was left. */
         val resume: Boolean = true,
         /** Media volume in percent, or -1 to leave it alone. */
@@ -30,7 +32,7 @@ object AutoStart {
                         .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                         .putExtra(MainActivity.EXTRA_PLAY_LATEST, true)
                         .putExtra(MainActivity.EXTRA_PIP, o.mode == BluetoothMode.PIP)
-                        .putExtra(MainActivity.EXTRA_FULLSCREEN, o.mode == BluetoothMode.VIDEO)
+                        .putExtra(MainActivity.EXTRA_FULLSCREEN, o.mode == BluetoothMode.VIDEO && o.fullscreen)
             }
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
             .putExtra(PlaybackService.EXTRA_PREFER_LIVE, o.preferLive)
