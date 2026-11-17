@@ -45,6 +45,9 @@
     max-width: 92rem;
     margin: 0 auto;
     padding: 1.5rem 2rem 3rem;
+    /* At least the window's height, the spare room in the middle row: the footer sits at the bottom. */
+    box-sizing: border-box; min-height: 100vh; min-height: 100dvh;
+    grid-template-rows: auto 1fr auto;
   }
   header.bar {
     grid-column: 1 / -1;
@@ -361,7 +364,7 @@
   @media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
 
   @media (max-width: 900px) {
-    .shell { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; padding: 1rem 16px 2.5rem; }
+    .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; gap: 1.75rem; padding: 1rem 16px 2.5rem; }
     .player { border-radius: 0; margin: 0 -16px; }
   }
   @media (max-width: 640px) {
