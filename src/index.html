@@ -9,11 +9,13 @@
 <link rel="alternate" type="application/rss+xml" title="tagesschau (alle Ausgaben)" href="/feed.xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
 <style>
   :root {
     --studio: #0B2A5B;   /* page */
+    --font: "Fira Sans", system-ui, sans-serif;
+    --time: "Barlow Condensed", var(--font);  /* the times; a setting (see timeFont) */
     --deep: #071D40;     /* player well, transport, list hover */
     --panel: #10356F;    /* selected row */
     --ink: #F2F6FC;      /* text */
@@ -26,7 +28,7 @@
   body {
     background: var(--studio);
     color: var(--ink);
-    font-family: "Archivo", system-ui, sans-serif;
+    font-family: var(--font);
     font-size: 16px;
     line-height: 1.45;
     min-height: 100vh;
@@ -87,7 +89,7 @@
   .menu .sheet-title { display: none; padding: 0.2rem 1.4rem 0.6rem; font-weight: 700; color: var(--mist); font-size: 0.9rem; }
   @keyframes sheet-up { from { transform: translateY(100%); } }
   @media (prefers-reduced-motion: reduce) { #setbtn svg, .switch, .switch::after { transition: none; } .menu { animation: none; } }
-  video::cue { background: rgba(0, 0, 0, .78); color: #fff; font-family: Archivo, sans-serif; line-height: 1.3; }
+  video::cue { background: rgba(0, 0, 0, .78); color: #fff; font-family: var(--font); line-height: 1.3; }
   video::cue(.textBlue), video::cue(.cyan) { color: #8fd8ff; }
   video::cue(.textYellow), video::cue(.yellow) { color: #ffe45c; }
   video::cue(.textGreen), video::cue(.green) { color: #8ff0a4; }
@@ -307,6 +309,10 @@
     padding: 0.55rem 0.75rem; border-radius: 4px; border-left: 3px solid transparent; overflow: hidden;
   }
   .item:hover { background: var(--deep); }
+  /* Times in their own face (clock font setting): big clock, list, control bar, share dialog. */
+  .clock, .item .t, .time, .stime { font-family: var(--time); }
+  :root[data-timefont="text"] { --time: var(--font); }
+  :root[data-timefont="plex"] { --time: "IBM Plex Mono", ui-monospace, monospace; }
   .item .t { font-size: 1.6rem; font-weight: 700; font-stretch: 112%; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1; }
   .item .d { color: var(--mist); font-size: 0.9rem; }
   .item .seen { position: absolute; left: 0; bottom: 0; height: 2px; background: var(--mist); opacity: 0.6; }
@@ -396,8 +402,8 @@
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" d="M7 4.5v15a1 1 0 0 0 1.5.86l12.4-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></symbol>
   <symbol id="i-pause" viewBox="0 0 24 24"><path fill="currentColor" d="M6 4h4v16H6zM14 4h4v16h-4z"/></symbol>
-  <symbol id="i-back" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/><text x="12" y="15.5" font-size="7.5" font-weight="700" text-anchor="middle" fill="currentColor" font-family="Archivo, sans-serif">10</text></symbol>
-  <symbol id="i-fwd" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M20 12a8 8 0 1 1-2.4-5.7M20 4v4h-4"/><text x="12" y="15.5" font-size="7.5" font-weight="700" text-anchor="middle" fill="currentColor" font-family="Archivo, sans-serif">30</text></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/><text x="12" y="15.5" font-size="7.5" font-weight="700" text-anchor="middle" fill="currentColor" font-family="Fira Sans, sans-serif">10</text></symbol>
+  <symbol id="i-fwd" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M20 12a8 8 0 1 1-2.4-5.7M20 4v4h-4"/><text x="12" y="15.5" font-size="7.5" font-weight="700" text-anchor="middle" fill="currentColor" font-family="Fira Sans, sans-serif">30</text></symbol>
   <symbol id="i-vol" viewBox="0 0 24 24"><path fill="currentColor" d="M4 9h4l5-4v14l-5-4H4z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
   <symbol id="i-mute" viewBox="0 0 24 24"><path fill="currentColor" d="M4 9h4l5-4v14l-5-4H4z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16 9l5 6M21 9l-5 6"/></symbol>
   <symbol id="i-download" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></symbol>
@@ -406,6 +412,7 @@
   <symbol id="i-gear" viewBox="0 0 24 24"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6a.5.5 0 0 0 .1-.6l-2-3.5a.5.5 0 0 0-.6-.2l-2.5 1a7.3 7.3 0 0 0-1.7-1l-.4-2.6a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 0-.5.4l-.4 2.7a7.3 7.3 0 0 0-1.7 1l-2.5-1a.5.5 0 0 0-.6.2l-2 3.5a.5.5 0 0 0 .1.6L4.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6a.5.5 0 0 0-.1.6l2 3.5c.1.2.4.3.6.2l2.5-1c.5.4 1.1.8 1.7 1l.4 2.6c0 .3.2.5.5.5h4c.3 0 .5-.2.5-.4l.4-2.7c.6-.3 1.2-.6 1.7-1l2.5 1c.2.1.5 0 .6-.2l2-3.5a.5.5 0 0 0-.1-.6zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></symbol>
   <symbol id="i-speed" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4.9 17a8 8 0 1 1 14.2 0M12 13l3.5-4"/></symbol>
   <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-font" viewBox="0 0 24 24"><text x="12" y="17" font-size="14" font-weight="700" text-anchor="middle" fill="currentColor" font-family="Fira Sans, sans-serif">Aa</text></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m9 6 6 6-6 6"/></symbol>
   <symbol id="i-chevback" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m15 6-6 6 6 6"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
@@ -449,11 +456,16 @@
           <div class="sheet-title" data-i18n="settings">Einstellungen</div>
           <button role="menuitemcheckbox" id="ccitem" aria-checked="false" data-i18n-title="subtitles" data-hint="C" title="Untertitel (C)"><svg><use href="#i-cc"/></svg><span class="label"><span data-i18n="subtitles">Untertitel</span><small id="ccnote" data-i18n="no_subs" hidden>Für diese Ausgabe keine</small></span><span class="switch"></span></button>
           <button role="menuitem" id="speeditem" aria-haspopup="menu"><svg><use href="#i-speed"/></svg><span class="label" data-i18n="speed">Geschwindigkeit</span><span class="val" id="speedval">Normal</span><svg><use href="#i-chev"/></svg></button>
+          <button role="menuitem" id="tfitem" aria-haspopup="menu"><svg><use href="#i-font"/></svg><span class="label" data-i18n="time_font">Schrift der Uhr</span><span class="val" id="tfval"></span><svg><use href="#i-chev"/></svg></button>
           <button role="menuitem" id="clockitem" aria-haspopup="menu"><svg><use href="#i-clock"/></svg><span class="label" data-i18n="clock">Uhrzeit</span><span class="val" id="clockval"></span><svg><use href="#i-chev"/></svg></button>
         </div>
         <div id="setspeed" hidden>
           <button class="head" id="speedback"><svg><use href="#i-chevback"/></svg><span class="label" data-i18n="speed">Geschwindigkeit</span></button>
           <div id="speedlist"></div>
+        </div>
+        <div id="settf" hidden>
+          <button class="head" id="tfback"><svg><use href="#i-chevback"/></svg><span class="label" data-i18n="time_font">Schrift der Uhr</span></button>
+          <div id="tflist"></div>
         </div>
         <div id="setclock" hidden>
           <button class="head" id="clockback"><svg><use href="#i-chevback"/></svg><span class="label" data-i18n="clock">Uhrzeit</span></button>
@@ -569,7 +581,7 @@
       android_app: "Android-App", feed_browser: "Feed im Browser", notify_live: "{title} läuft gerade",
       watch_start: "Ab Beginn ansehen", notify_new: "Neue Ausgabe: {title}", tv: "Fernseher",
       playing_on: "Läuft auf {device}", cast_failed: "Übertragen fehlgeschlagen ({err}).", space: "Leertaste",
-      skip: "{n} Sekunden",
+      skip: "{n} Sekunden", time_font: "Schrift der Uhr", time_font_text: "Wie der Text",
     },
     en: {
       title: "tagesschau, all editions", brand_sub: "all editions", notify: "Notify me about new editions",
@@ -596,7 +608,7 @@
       android_app: "Android app", feed_browser: "Feed in the browser", notify_live: "{title} is on air",
       watch_start: "Watch from the start", notify_new: "New edition: {title}", tv: "TV",
       playing_on: "Playing on {device}", cast_failed: "Casting failed ({err}).", space: "Space",
-      skip: "{n} seconds",
+      skip: "{n} seconds", time_font: "Clock font", time_font_text: "Same as text",
     },
     fr: {
       title: "tagesschau, toutes les éditions", brand_sub: "toutes les éditions", notify: "M'avertir des nouvelles éditions",
@@ -623,7 +635,7 @@
       android_app: "Application Android", feed_browser: "Flux dans le navigateur", notify_live: "{title} est en direct",
       watch_start: "Regarder depuis le début", notify_new: "Nouvelle édition : {title}", tv: "télé",
       playing_on: "Lecture sur {device}", cast_failed: "Échec de la diffusion ({err}).", space: "Espace",
-      skip: "{n} secondes",
+      skip: "{n} secondes", time_font: "Police de l'horloge", time_font_text: "Comme le texte",
     },
   };
   // `tr`, not `t`: many functions here have a local `t` (a time).
@@ -1257,6 +1269,7 @@
     $("setmain").hidden = !!sub;
     $("setspeed").hidden = sub !== "speed";
     $("setclock").hidden = sub !== "clock";
+    $("settf").hidden = sub !== "tf";
     const first = sub ? $(sub + "list").querySelector('[aria-checked="true"]') : setmenu.querySelector("#setmain button:not([hidden])");
     if (first) first.focus({ preventScroll: true });
   }
@@ -1328,6 +1341,29 @@
     for (const b of $("clocklist").children) b.setAttribute("aria-checked", String(b.dataset.fmt === f));
   }
   syncClockMenu();
+  // Font of the times: Barlow Condensed (default), IBM Plex Mono, or the text font.
+  const TIME_FONTS = [["barlow", "Barlow Condensed"], ["plex", "IBM Plex Mono"], ["text", tr("time_font_text")]];
+  const timeFont = () => (TIME_FONTS.some(([k]) => k === store.get("timefont")) ? store.get("timefont") : "barlow");
+  function syncTimeFont() {
+    const f = timeFont();
+    document.documentElement.dataset.timefont = f;
+    $("tfval").textContent = TIME_FONTS.find(([k]) => k === f)[1];
+    for (const b of $("tflist").children) b.setAttribute("aria-checked", String(b.dataset.tf === f));
+  }
+  for (const [k, label] of TIME_FONTS) {
+    const b = document.createElement("button");
+    b.setAttribute("role", "menuitemradio");
+    b.dataset.tf = k;
+    b.innerHTML = '<svg class="check"><use href="#i-check"/></svg><span class="label"></span>';
+    b.querySelector(".label").textContent = label;
+    if (k === "barlow") b.querySelector(".label").style.fontFamily = '"Barlow Condensed", sans-serif';
+    if (k === "plex") b.querySelector(".label").style.fontFamily = '"IBM Plex Mono", monospace';
+    b.addEventListener("click", () => { store.set("timefont", k); syncTimeFont(); closeMenu(true); });
+    $("tflist").append(b);
+  }
+  $("tfitem").addEventListener("click", () => openMenu("tf"));
+  $("tfback").addEventListener("click", () => openMenu());
+  syncTimeFont();
   const speedLabel = r => r === 1 ? tr("normal") : String(r).replace(".", DECIMAL) + "×";
   for (const r of [...SPEEDS].sort((a, b) => a - b)) {
     const b = document.createElement("button");
