@@ -236,10 +236,10 @@ private val SPEEDS = listOf(1f, 1.25f, 1.5f, 1.75f, 2f, 0.75f)
 /**
  * The picture with YouTube's mobile player behaviour, in the web player's colours: controls on the
  * picture (hidden until a tap, hidden again 3 s into playback), previous / play-pause / next in the
- * middle, share and speed top right, broadcast time bottom left, fullscreen bottom right, the
- * timeline along the bottom edge (a thin progress line while the controls are hidden). Double taps
- * on the sides jump 20 s and every further tap adds 20 s; swipe up for fullscreen, down to leave
- * it.
+ * middle, the date top left, share and speed top right, broadcast time bottom left, fullscreen
+ * bottom right, the timeline along the bottom edge (a thin progress line while the controls are
+ * hidden). Double taps on the sides jump 20 s and every further tap adds 20 s; swipe up for
+ * fullscreen, down to leave it.
  */
 @Composable
 fun VideoPlayer(
@@ -415,6 +415,29 @@ fun VideoPlayer(
                 modifier = Modifier.fillMaxSize(),
             ) {
                 Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f))) {
+                    // Top left: the date of the edition.
+                    st.start?.let { start ->
+                        val date =
+                            remember(start) {
+                                val locale = java.util.Locale.getDefault()
+                                val pattern =
+                                    android.text.format.DateFormat.getBestDateTimePattern(
+                                        locale,
+                                        "EEEdMMMyyyy",
+                                    )
+                                java.time.format.DateTimeFormatter.ofPattern(pattern, locale)
+                                    .format(
+                                        start.atZoneSameInstant(java.time.ZoneId.systemDefault())
+                                    )
+                            }
+                        Text(
+                            date,
+                            color = Color.White,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            modifier = Modifier.align(Alignment.TopStart).padding(14.dp),
+                        )
+                    }
                     // Top right: the player settings (YouTube's gear), as a bottom sheet.
                     Row(Modifier.align(Alignment.TopEnd).padding(4.dp)) {
                         // Google Cast (Media3's button, chooser and controller dialogs).
