@@ -13,6 +13,7 @@ overlay and defines `services.tagesschau`.
 | `quality` | `"webxxl"` | Preferred MP4 quality (`webxxl` is 1080p), with lower ones as fallback. |
 | `maxAgeHours` | `48` | Editions older than this are left out. |
 | `liveMinutes` | `90` | How long after an edition starts `/live` returns it. |
+| `thumbnails.enable` | `true` | Make scrubbing thumbnail sheets with ffmpeg (see [HTTP interface](http.md#scrubbing-thumbnails)). |
 | `coverImage` | `null` | Square feed artwork, served at `/cover.jpg`. |
 | `logoImage` | `null` | Small square logo for the player header, served at `/logo.jpg`. |
 | `openFirewall` | `false` | Open the port in the firewall. |

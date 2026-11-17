@@ -9,6 +9,7 @@
 | `/live` | Browsers: the player, starting the edition on air at its live edge (else Das Erste live). Others: URL of a time-shifted HLS stream (video and audio), or 404. |
 | `/live/audio` | The same as an audio-only stream, for phones with the screen off. |
 | `/subtitles/<id>.vtt` | The edition's WebVTT subtitles from the ARD Mediathek, or 404. |
+| `/thumbs/<id>/<n>.jpg` | Sheet `n` of the edition's scrubbing thumbnails, or 404. |
 | `/download/<id>` | The edition's MP4 as a file download (`?q=webxxl\|webxl\|webm\|webs`). |
 | `/sw.js` | The web player's service worker (notifications). |
 | `/cover.jpg`, `/logo.jpg` | The configured artwork, or 404. |
@@ -32,6 +33,24 @@ plus a suffix, so the server finds it from the edition's `externalId`.
 `episodes.json` lists `subtitles` for each edition that has them. The live
 session playlists offer Das Erste's subtitle rendition, not selected by
 default.
+
+## Scrubbing thumbnails
+
+Unless `thumbnails.enable` is off, the server runs ffmpeg once per edition on
+its lowest-quality MP4, decoding key frames only (a couple of seconds), and
+keeps the result in the service's cache directory until the edition leaves
+the list. `episodes.json` lists `thumbs` for each edition whose sheets are
+ready:
+
+```json
+{"interval": 4, "width": 240, "height": 135, "columns": 5, "rows": 5,
+ "sheets": [".../thumbs/ts-12345/1.jpg", "..."]}
+```
+
+Frame `i` shows second `i * interval`; it is tile `i % (columns * rows)` of
+sheet `i / (columns * rows)`, row by row. Players without `thumbs` (live
+editions, sheets not made yet, the option off) seek a hidden low-quality
+video instead.
 
 Playlists and JSON answers carry `Access-Control-Allow-Origin: *`, so Cast
 receivers can load the live sessions.

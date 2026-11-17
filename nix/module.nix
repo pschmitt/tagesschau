@@ -62,6 +62,16 @@ in
       '';
     };
 
+    thumbnails.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Make scrubbing thumbnails: for every edition, ffmpeg turns the lowest-quality MP4 into a
+        few JPEG sheets of small frames (kept under the service's cache directory and deleted
+        with the edition). Without them the players seek a second, hidden video instead.
+      '';
+    };
+
     coverImage = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
       default = null;
@@ -95,6 +105,7 @@ in
         TAGESSCHAU_QUALITY = cfg.quality;
         TAGESSCHAU_MAX_AGE_HOURS = toString cfg.maxAgeHours;
         TAGESSCHAU_LIVE_MINUTES = toString cfg.liveMinutes;
+        TAGESSCHAU_THUMBNAILS = if cfg.thumbnails.enable then "1" else "0";
       }
       // lib.optionalAttrs (cfg.coverImage != null) { TAGESSCHAU_COVER = "${cfg.coverImage}"; }
       // lib.optionalAttrs (cfg.logoImage != null) { TAGESSCHAU_LOGO = "${cfg.logoImage}"; };
@@ -104,6 +115,7 @@ in
         Restart = "always";
         RestartSec = 5;
         DynamicUser = true;
+        CacheDirectory = "tagesschau";
 
         CapabilityBoundingSet = "";
         LockPersonality = true;

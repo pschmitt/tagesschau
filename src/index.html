@@ -252,7 +252,9 @@
     border-radius: 5px; overflow: hidden; background: var(--deep); box-shadow: 0 0 0 2px var(--ink);
   }
   .thumb[hidden] { display: none; }
-  .thumb video { display: block; width: 100%; aspect-ratio: 16 / 9; background: var(--deep); }
+  .thumb video, .thumb .sprite { display: block; width: 100%; aspect-ratio: 16 / 9; background-color: var(--deep); }
+  .thumb .sprite { background-repeat: no-repeat; }
+  .thumb video[hidden], .thumb .sprite[hidden] { display: none; }
   .thumb span {
     display: block; text-align: center; font-weight: 700; font-size: 0.85rem; padding: 0.15rem 0;
     font-variant-numeric: tabular-nums; background: var(--ink); color: var(--deep);
@@ -489,7 +491,7 @@
           <div class="track" id="track" role="slider" tabindex="0" data-i18n-aria="position" aria-label="Position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
             <div class="rail"></div><div class="buf" id="buf"></div><div class="fill" id="fill"></div>
             <div class="knob" id="knob"></div><div class="tip" id="tip" hidden></div>
-            <div class="thumb" id="thumb" hidden><video id="tv" muted playsinline preload="none"></video><span id="ttime"></span></div>
+            <div class="thumb" id="thumb" hidden><div class="sprite" hidden></div><video id="tv" muted playsinline preload="none"></video><span id="ttime"></span></div>
           </div>
         </div>
         <div class="row">
@@ -528,7 +530,7 @@
       <span class="stime" id="stime">--:--:--</span>
       <div class="srange-wrap" id="swrap">
         <input type="range" id="srange" step="1" data-i18n-aria="moment" aria-label="Zeitpunkt">
-        <div class="thumb" id="sthumb" hidden><video id="stv" muted playsinline preload="none"></video><span id="sttime"></span></div>
+        <div class="thumb" id="sthumb" hidden><div class="sprite" hidden></div><video id="stv" muted playsinline preload="none"></video><span id="sttime"></span></div>
       </div>
       <div class="nudge">
         <button class="pill quiet" data-n="-5">−5 s</button>
@@ -1148,11 +1150,25 @@
     track.setPointerCapture(ev.pointerId);
     seekTo(mediaAt(ms));
   });
-  // Thumbnails while scrubbing: a hidden low-quality copy of the published MP4
-  // (ARD's "webs" file) seeks along. Live editions only get the time label.
-  // One thumbnail box: a hidden low-quality video that seeks along, kept inside `host`.
+  // Thumbnails while scrubbing: a tile of the server's thumbnail sheets when the edition has
+  // them; else a hidden low-quality copy of the video (ARD's "webs" file, or the live stream's
+  // lowest rendition) seeks along.
+  // One thumbnail box, kept inside `host`.
   function scrubThumb(box, vid, label, host) {
-    let src = null, pending = null, thls = null, anchor = null;
+    let src = null, pending = null, thls = null, anchor = null, sheetsOf = null;
+    const sprite = box.querySelector(".sprite");
+    function tile(th, t) {
+      if (sheetsOf !== th) {  // fetch all sheets of the edition once (a few hundred KB)
+        sheetsOf = th;
+        th.sheets.forEach(u => { new Image().src = u; });
+        sprite.style.backgroundSize = th.columns * 100 + "% " + th.rows * 100 + "%";
+      }
+      const per = th.columns * th.rows;
+      const i = Math.min(Math.floor(Math.max(0, t) / th.interval), th.sheets.length * per - 1);
+      const n = i % per, col = n % th.columns, row = Math.floor(n / th.columns);
+      sprite.style.backgroundImage = 'url("' + th.sheets[Math.floor(i / per)] + '")';
+      sprite.style.backgroundPosition = (th.columns > 1 ? col / (th.columns - 1) * 100 : 0) + "% " + (th.rows > 1 ? row / (th.rows - 1) * 100 : 0) + "%";
+    }
     function seek(t) {
       if (vid.seeking || vid.readyState < 1) { pending = t; return; }
       pending = null;
@@ -1182,15 +1198,19 @@
     }
     return {
       show(it, p, ms) {
-        const url = thumbUrl(it);
-        if (!url) { box.hidden = true; return false; }
-        if (src !== url) { src = url; load(url); }
+        const th = it && !it.live && it.thumbs;
+        const url = th ? null : thumbUrl(it);
+        if (!th && !url) { box.hidden = true; return false; }
+        if (url && src !== url) { src = url; load(url); }
+        sprite.hidden = !th;
+        vid.hidden = !!th;
         label.textContent = hms(new Date(ms));
         box.hidden = false;
         const tw = box.offsetWidth, w = host.offsetWidth;
         box.style.left = Math.max(-tw / 2 + 8, Math.min(w - tw / 2 - 8, p * w - tw / 2)) + "px";
-        const t = mediaTime(it, ms);
-        if (t != null) seek(t);
+        const t = th ? (ms - it.date.getTime()) / 1000 : mediaTime(it, ms);
+        if (th) tile(th, t);
+        else if (t != null) seek(t);
         return true;
       },
       hide() { box.hidden = true; },
@@ -1524,7 +1544,7 @@
     if (!r.ok) throw new Error("HTTP " + r.status);
     const data = await r.json();
     channelInfo = data.channel || null;
-    const list = data.editions.map(e => ({ id: e.id, url: e.url, date: new Date(e.date), subtitles: e.subtitles }));
+    const list = data.editions.map(e => ({ id: e.id, url: e.url, date: new Date(e.date), subtitles: e.subtitles, thumbs: e.thumbs }));
     if (data.live) list.unshift({ id: "live-" + data.live.date, url: data.live.url, date: new Date(data.live.date), end: new Date(data.live.end), live: true });
     return list;
   }

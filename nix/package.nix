@@ -3,6 +3,7 @@
   stdenvNoCC,
   makeWrapper,
   python3,
+  ffmpeg-headless,
 }:
 # Standard library only: nothing to build, the server runs from the store.
 stdenvNoCC.mkDerivation {
@@ -27,7 +28,8 @@ stdenvNoCC.mkDerivation {
     runHook preInstall
     install -Dm644 server.py index.html *.png -t $out/share/tagesschau
     makeWrapper ${lib.getExe python3} $out/bin/tagesschau \
-      --add-flags "-I $out/share/tagesschau/server.py"
+      --add-flags "-I $out/share/tagesschau/server.py" \
+      --set-default TAGESSCHAU_FFMPEG ${lib.getExe ffmpeg-headless}
     runHook postInstall
   '';
 

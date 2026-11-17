@@ -19,6 +19,8 @@ import json
 import mimetypes
 import os
 import re
+import shutil
+import subprocess
 import threading
 import time
 import urllib.parse
@@ -64,6 +66,106 @@ _lengths = {}  # url -> content length
 _external = {}  # ts id -> externalId (the ARD Mediathek item is named after it)
 _subs = {}  # ts id -> (checked at, WebVTT URL or None)
 _feed = {"at": 0.0, "xml": b""}
+
+
+# --- Scrubbing thumbnails --------------------------------------------------------
+# For every edition, ffmpeg turns ARD's lowest-quality MP4 (480x270, a key frame every 2 s) into
+# a few JPEG sheets of small frames, decoding key frames only (about 2 s per edition). Players
+# show the tile for the scrub position instead of seeking a second video. Sheets of editions
+# that left the list are deleted.
+
+THUMBS = os.environ.get("TAGESSCHAU_THUMBNAILS", "1") not in ("0", "false", "no", "")
+THUMBS_DIR = os.environ.get("TAGESSCHAU_THUMBNAILS_DIR") or (
+    os.path.join(os.environ["CACHE_DIRECTORY"].split(":")[0], "thumbs") if os.environ.get("CACHE_DIRECTORY") else None
+)
+FFMPEG = os.environ.get("TAGESSCHAU_FFMPEG", "ffmpeg")
+THUMB = {"interval": 4, "width": 240, "height": 135, "columns": 5, "rows": 5}
+THUMBS_RE = re.compile(r"^/thumbs/(ts-\d+)/(\d+)\.jpg$")
+THUMBS_RETRY = 600  # seconds before trying a failed edition again
+_thumbs = {}  # ts id -> number of sheets (ready)
+_thumbs_failed = {}  # ts id -> time of the last failure
+_thumbs_wake = threading.Event()
+
+
+def thumbs_enabled():
+    return THUMBS and THUMBS_DIR is not None and shutil.which(FFMPEG) is not None
+
+
+def thumbs_info(ts_id):
+    """The sheets of an edition for /episodes.json, or None while they are not ready."""
+    n = _thumbs.get(ts_id)
+    if not n:
+        return None
+    return dict(THUMB, sheets=["%s/thumbs/%s/%d.jpg" % (BASE, ts_id, i) for i in range(1, n + 1)])
+
+
+def make_thumbs(ts_id, url):
+    low = re.sub(r"\.web[a-z]+\.h264\.mp4$", ".webs.h264.mp4", url)
+    final = os.path.join(THUMBS_DIR, ts_id)
+    tmp = os.path.join(THUMBS_DIR, ".tmp-" + ts_id)
+    shutil.rmtree(tmp, ignore_errors=True)
+    os.makedirs(tmp)
+    t = THUMB
+    vf = "fps=1/%d,scale=%d:%d,tile=%dx%d" % (t["interval"], t["width"], t["height"], t["columns"], t["rows"])
+    try:
+        subprocess.run(
+            [
+                FFMPEG,
+                "-nostdin",
+                "-loglevel",
+                "error",
+                "-skip_frame",
+                "nokey",
+                "-i",
+                low,
+                "-an",
+                "-sn",
+                "-vf",
+                vf,
+                "-q:v",
+                "7",
+                os.path.join(tmp, "%d.jpg"),
+            ],
+            check=True,
+            timeout=300,
+            capture_output=True,
+        )
+        n = len([f for f in os.listdir(tmp) if f.endswith(".jpg")])
+        if not n:
+            raise RuntimeError("no sheets")
+        shutil.rmtree(final, ignore_errors=True)
+        os.rename(tmp, final)
+        _thumbs[ts_id] = n
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def thumbs_worker():
+    os.makedirs(THUMBS_DIR, exist_ok=True)
+    for name in os.listdir(THUMBS_DIR):  # sheets made before a restart
+        path = os.path.join(THUMBS_DIR, name)
+        if name.startswith(".tmp-"):
+            shutil.rmtree(path, ignore_errors=True)
+        elif os.path.isdir(path):
+            n = len([f for f in os.listdir(path) if f.endswith(".jpg")])
+            if n:
+                _thumbs[name] = n
+    while True:
+        _thumbs_wake.wait(300)
+        _thumbs_wake.clear()
+        current = list(_episodes["list"])
+        for _, ts_id, url in current:
+            if ts_id in _thumbs or time.time() - _thumbs_failed.get(ts_id, 0) < THUMBS_RETRY:
+                continue
+            try:
+                make_thumbs(ts_id, url)
+            except Exception:
+                _thumbs_failed[ts_id] = time.time()
+        if current:
+            keep = {ts_id for _, ts_id, _ in current}
+            for ts_id in [k for k in _thumbs if k not in keep]:
+                _thumbs.pop(ts_id, None)
+                shutil.rmtree(os.path.join(THUMBS_DIR, ts_id), ignore_errors=True)
 
 
 def get(url, method="GET"):
@@ -442,11 +544,13 @@ def episodes_json(now):
     with _lock:
         if time.time() - _episodes["at"] > CACHE_TTL or not _episodes["list"]:
             _episodes.update(at=time.time(), list=editions())
+            _thumbs_wake.set()
         found = _episodes["list"]
     data = {
         "editions": [
             {"id": ts_id, "date": ts.isoformat(), "url": url}
             | ({"subtitles": "%s/subtitles/%s.vtt" % (BASE, ts_id)} if subtitles(ts_id) else {})
+            | ({"thumbs": thumbs_info(ts_id)} if thumbs_info(ts_id) else {})
             for ts, ts_id, url in found
         ],
         "live": None,
@@ -573,8 +677,31 @@ class Handler(BaseHTTPRequestHandler):
             return
         self.send_text(body, "text/vtt; charset=utf-8", "public, max-age=3600")
 
+    def do_thumbs(self, ts_id, sheet):
+        if ts_id not in _thumbs:
+            self.send_error(404)
+            return
+        try:
+            with open(os.path.join(THUMBS_DIR, ts_id, "%d.jpg" % int(sheet)), "rb") as f:
+                body = f.read()
+        except OSError:
+            self.send_error(404)
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "image/jpeg")
+        self.send_header("Cache-Control", "public, max-age=604800, immutable")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(body)
+
     def do_GET(self):
         path = self.path.split("?")[0]
+        m = THUMBS_RE.match(path)
+        if m:
+            self.do_thumbs(*m.groups())
+            return
         m = SUBS_RE.match(path)
         if m:
             self.do_subtitles(m.group(1))
@@ -632,6 +759,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
+    if thumbs_enabled():
+        threading.Thread(target=thumbs_worker, daemon=True).start()
     ThreadingHTTPServer((BIND, PORT), Handler).serve_forever()
 
 

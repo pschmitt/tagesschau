@@ -24,6 +24,8 @@ data class Edition(
     val channel: Boolean = false,
     /** WebVTT URL when the edition has subtitles (live streams carry their own). */
     val subtitles: String? = null,
+    /** The server's scrubbing thumbnail sheets, once it made them. */
+    val thumbs: Thumbs? = null,
 ) {
     val time: String
         get() = date.atZoneSameInstant(BERLIN).format(TIME)
@@ -88,6 +90,19 @@ data class Listing(
         get() = listOfNotNull(live) + editions
 }
 
+private fun thumbs(t: JSONObject): Thumbs? =
+    runCatching {
+            val sheets = t.getJSONArray("sheets")
+            Thumbs(
+                interval = t.getInt("interval"),
+                columns = t.getInt("columns"),
+                rows = t.getInt("rows"),
+                sheets = (0 until sheets.length()).map { sheets.getString(it) },
+            )
+        }
+        .getOrNull()
+        ?.takeIf { it.interval > 0 && it.columns > 0 && it.rows > 0 && it.sheets.isNotEmpty() }
+
 class Api(private val baseUrl: String) {
     suspend fun listing(): Listing =
         withContext(Dispatchers.IO) {
@@ -101,8 +116,10 @@ class Api(private val baseUrl: String) {
                         date = OffsetDateTime.parse(e.getString("date")),
                         url = e.getString("url"),
                         subtitles = e.optString("subtitles").takeIf { it.isNotEmpty() },
+                        thumbs = e.optJSONObject("thumbs")?.let(::thumbs),
                     )
                 }
+            ThumbSheets.register(editions)
             val live =
                 json.optJSONObject("live")?.let { l ->
                     Edition(

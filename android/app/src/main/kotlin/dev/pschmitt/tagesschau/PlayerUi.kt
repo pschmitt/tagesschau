@@ -683,6 +683,7 @@ private fun SeekCtl(icon: Int, seconds: String, label: Int, onClick: () -> Unit)
 @Composable
 private fun Timeline(st: PlayState, modifier: Modifier, onSeek: (Long) -> Unit) {
     var dragFrac by remember { mutableFloatStateOf(-1f) }
+    var sheetsFailed by remember(st.mediaId) { mutableStateOf(false) }
     val span = st.span
     val frac =
         if (dragFrac >= 0) dragFrac
@@ -757,9 +758,19 @@ private fun Timeline(st: PlayState, modifier: Modifier, onSeek: (Long) -> Unit) 
                     .clip(RoundedCornerShape(5.dp))
                     .background(Palette.Deep)
             ) {
-                // Scrubbing thumbnail (as on the web): the low-quality file, seeking along.
-                if (thumbUrl != null)
-                    ScrubThumb(thumbUrl, ms, Modifier.fillMaxWidth().height(thumbH))
+                // Scrubbing thumbnail (as on the web): a tile of the server's sheets, else the
+                // low-quality file seeking along.
+                if (thumbUrl != null) {
+                    val sheets = ThumbSheets.of(st.mediaId).takeIf { !sheetsFailed }
+                    if (sheets != null)
+                        SheetThumb(
+                            sheets,
+                            ms,
+                            { sheetsFailed = true },
+                            Modifier.fillMaxWidth().height(thumbH).background(Color.Black),
+                        )
+                    else ScrubThumb(thumbUrl, ms, Modifier.fillMaxWidth().height(thumbH))
+                }
                 Text(
                     t,
                     color = Palette.Deep,
