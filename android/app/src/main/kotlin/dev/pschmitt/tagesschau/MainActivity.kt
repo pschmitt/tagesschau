@@ -755,40 +755,46 @@ private fun EditionRow(
                     Text(stringResource(R.string.live_from_start), fontSize = 15.sp)
                 }
             } else {
-                Text(
-                    when {
-                        playing -> stringResource(R.string.playing)
-                        download?.state == Download.STATE_COMPLETED ->
-                            stringResource(R.string.downloaded)
-                        download?.state == Download.STATE_DOWNLOADING ->
-                            stringResource(
-                                R.string.downloading,
-                                download.percentDownloaded.toInt().coerceAtLeast(0),
-                            )
-                        download?.state == Download.STATE_QUEUED -> stringResource(R.string.queued)
-                        download?.state == Download.STATE_FAILED ->
-                            stringResource(R.string.download_failed)
-                        watched -> stringResource(R.string.watched)
-                        seen > 0f && saved != null ->
-                            stringResource(
-                                R.string.resume_at,
-                                e.date
-                                    .plusNanos(saved.first * 1_000_000)
-                                    .atZoneSameInstant(Edition.BERLIN)
-                                    .format(DateTimeFormatter.ofPattern("HH:mm")),
-                            )
-                        else -> "tagesschau"
-                    },
-                    color =
+                // Downloaded: an orange "offline" mark in front instead of the word.
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (download?.state == Download.STATE_COMPLETED) {
+                        Icon(
+                            painterResource(R.drawable.ic_offline),
+                            stringResource(R.string.downloaded),
+                            tint = Palette.Signal,
+                            modifier = Modifier.size(17.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                    }
+                    Text(
                         when {
-                            playing -> Palette.Ink
-                            download?.state == Download.STATE_COMPLETED -> Palette.Signal
-                            else -> Palette.Mist
+                            playing -> stringResource(R.string.playing)
+                            download?.state == Download.STATE_DOWNLOADING ->
+                                stringResource(
+                                    R.string.downloading,
+                                    download.percentDownloaded.toInt().coerceAtLeast(0),
+                                )
+                            download?.state == Download.STATE_QUEUED ->
+                                stringResource(R.string.queued)
+                            download?.state == Download.STATE_FAILED ->
+                                stringResource(R.string.download_failed)
+                            watched -> stringResource(R.string.watched)
+                            seen > 0f && saved != null ->
+                                stringResource(
+                                    R.string.resume_at,
+                                    e.date
+                                        .plusNanos(saved.first * 1_000_000)
+                                        .atZoneSameInstant(Edition.BERLIN)
+                                        .format(DateTimeFormatter.ofPattern("HH:mm")),
+                                )
+                            else -> "tagesschau"
                         },
-                    fontSize = 15.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                        color = if (playing) Palette.Ink else Palette.Mist,
+                        fontSize = 15.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
         if (!e.live) {
