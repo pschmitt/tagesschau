@@ -448,9 +448,12 @@ private fun MainScreen(activity: MainActivity) {
     }
     // Bluetooth auto-play with video: the latest edition, then picture-in-picture if asked.
     LaunchedEffect(controller, listing, activity.pendingLatest) {
-        if (!activity.pendingLatest) return@LaunchedEffect
-        val l = listing ?: return@LaunchedEffect
-        if (controller == null || l.all.isEmpty()) return@LaunchedEffect
+        if (!activity.pendingLatest || controller == null) return@LaunchedEffect
+        // Refresh first: an app that was already open still holds an old list. Offline, the list
+        // we have is better than none.
+        val fresh = runCatching { Api(settings.serverUrl).listing() }.getOrNull()
+        val l = fresh ?: listing ?: return@LaunchedEffect
+        if (l.all.isEmpty()) return@LaunchedEffect
         activity.pendingLatest = false
         if (activity.pendingChannel) {
             activity.play(listOf(Edition.channel()), 0)
@@ -462,6 +465,7 @@ private fun MainScreen(activity: MainActivity) {
                 resumeLatest = activity.pendingResume,
             )
         }
+        if (fresh != null) listing = fresh
         // No delay here: resetting pendingLatest restarts (cancels) this effect. The activity
         // enters picture-in-picture as soon as playback runs (see onIsPlayingChanged).
         if (activity.pendingPip) activity.pipWhenPlaying = true
