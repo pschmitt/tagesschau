@@ -31,9 +31,9 @@ plays from ARD's servers.
 - **Web player**: starts the newest edition, shows the playhead in broadcast
   time, remembers positions, seeks with thumbnails and double taps, shows
   subtitles, and shares links to a moment; in German, English and French.
-- **Time-shifted live stream**: `/live` returns an HLS stream of the edition
+- **Time-shifted live stream**: `/live/edition` returns an HLS stream of the edition
   on air (or aired in the last 90 minutes) that starts at its first second, cut
-  from Das Erste's two-hour live window.
+  from Das Erste's two-hour live window; `/live` opens Das Erste live.
 - **NixOS module**: `services.tagesschau`, with a hardened systemd unit.
 - **Android app**: a native player with picture-in-picture, downloads, a Tasker
   plugin and self-updates; see [docs/android.md](docs/android.md).

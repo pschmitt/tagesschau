@@ -6,7 +6,8 @@
 | `/feed.xml`, `/feed` | RSS feed of the editions, newest first. |
 | `/player` | The web player. |
 | `/episodes.json` | Editions and the edition on air, for the player. |
-| `/live` | Browsers: the player, starting the edition on air at its live edge (else Das Erste live). Others: URL of a time-shifted HLS stream (video and audio), or 404. |
+| `/live` | Browsers: the player on Das Erste live. Others: the URL of Das Erste's live HLS stream. |
+| `/live/edition` | URL of a time-shifted HLS stream (video and audio) of the edition on air or aired within `liveMinutes`, or 404. |
 | `/live/audio` | The same as an audio-only stream, for phones with the screen off. |
 | `/subtitles/<id>.vtt` | The edition's WebVTT subtitles from the ARD Mediathek, or 404. |
 | `/thumbs/<id>/<n>.jpg` | Sheet `n` of the edition's scrubbing thumbnails, or 404. |
@@ -18,12 +19,13 @@
 
 Das Erste's live HLS keeps two hours, every segment dated with
 `EXT-X-PROGRAM-DATE-TIME`. `/live` looks up the edition from the ARD programme
-guide and returns a session URL. The session's playlists replay the live
+guide and `/live/edition` returns a session URL. The session's playlists replay the live
 stream from the edition's start, delayed by however late the session began,
 so any player that starts at the live edge starts at the edition's first
 second. The playlist ends a minute after the scheduled end.
 
-`/live` answers 404 when no edition started within `liveMinutes`.
+`/live/edition` answers 404 when no edition started within `liveMinutes`.
+After the edition's scheduled end the players label the session a replay.
 
 ## Subtitles
 

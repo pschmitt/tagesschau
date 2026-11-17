@@ -584,7 +584,11 @@ class Handler(BaseHTTPRequestHandler):
     def do_live(self, path):
         now = datetime.now(UTC)
         try:
-            if path in ("/live", "/live/audio"):
+            if path in ("/live", "/live/"):
+                # Das Erste live, whether a tagesschau is on air or not.
+                self.send_text(LIVE_MASTER, "text/plain; charset=utf-8")
+                return
+            if path in ("/live/edition", "/live/audio"):
                 url = live_session(now)
                 if not url:
                     self.send_error(404, "no tagesschau edition on air")

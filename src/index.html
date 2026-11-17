@@ -591,7 +591,7 @@
       footer2: "Alle Sendungen, Bilder und Marken gehören ihren Rechteinhabern. Die Videos kommen unverändert von den Servern der ARD; diese Seite speichert keine Sendungen.",
       footer3: "Freie Software unter der GPL-3.0, samt Android-App:", source: "Quelltext auf GitHub",
       today: "Heute", yesterday: "Gestern", edition: "tagesschau {time} Uhr", channel: "Das Erste live",
-      realtime: "Fernsehprogramm in Echtzeit", playing: "spielt", on_air_start: "läuft gerade, ab Beginn",
+      realtime: "Fernsehprogramm in Echtzeit", playing: "spielt", on_air_start: "läuft gerade, ab Beginn", replay: "Wiederholung ab Beginn", replay_short: "Wiederholung",
       on_air: "läuft gerade", in_realtime: "in Echtzeit", seen: "gesehen", resume_at: "weiter ab {time}",
       plain: "tagesschau", load_failed: "Die Ausgaben konnten nicht geladen werden ({err}). Die Seite versucht es in einer Minute erneut.",
       none_48h: "In den letzten 48 Stunden ist keine Ausgabe erschienen.",
@@ -618,7 +618,7 @@
       footer2: "All programmes, images and trademarks belong to their owners. The videos come unchanged from ARD's servers; this site stores no programmes.",
       footer3: "Free software under the GPL-3.0, Android app included:", source: "Source code on GitHub",
       today: "Today", yesterday: "Yesterday", edition: "tagesschau {time}", channel: "Das Erste live",
-      realtime: "The channel in real time", playing: "playing", on_air_start: "on air, from the start",
+      realtime: "The channel in real time", playing: "playing", on_air_start: "on air, from the start", replay: "replay from the start", replay_short: "replay",
       on_air: "on air", in_realtime: "in real time", seen: "watched", resume_at: "continue at {time}",
       plain: "tagesschau", load_failed: "Couldn't load the editions ({err}). The page tries again in a minute.",
       none_48h: "No edition was published in the last 48 hours.",
@@ -645,7 +645,7 @@
       footer2: "Toutes les émissions, images et marques appartiennent à leurs ayants droit. Les vidéos proviennent telles quelles des serveurs de l'ARD ; ce site ne stocke aucune émission.",
       footer3: "Logiciel libre sous GPL-3.0, application Android comprise :", source: "Code source sur GitHub",
       today: "Aujourd'hui", yesterday: "Hier", edition: "tagesschau de {time}", channel: "Das Erste live",
-      realtime: "La chaîne en temps réel", playing: "en cours", on_air_start: "en direct, depuis le début",
+      realtime: "La chaîne en temps réel", playing: "en cours", on_air_start: "en direct, depuis le début", replay: "rediffusion depuis le début", replay_short: "rediffusion",
       on_air: "en direct", in_realtime: "en temps réel", seen: "vue", resume_at: "reprendre à {time}",
       plain: "tagesschau", load_failed: "Impossible de charger les éditions ({err}). Nouvel essai dans une minute.",
       none_48h: "Aucune édition n'a été publiée ces dernières 48 heures.",
@@ -768,6 +768,8 @@
     }
     return null;
   }
+  // An edition's time-shifted stream is "on air" until its scheduled end, a replay after it.
+  const airing = it => !!it && !!it.live && (it.channel || !it.end || Date.now() < it.end.getTime());
   const title = it => it.channel ? tr("channel") : tr("edition", { time: hm(it.date) });
 
   function render() {
@@ -831,7 +833,8 @@
       if (it.live) {
         const dot = document.createElement("span");
         dot.className = "dot";
-        d.append(dot, tr("on_air_start"));
+        if (airing(it)) d.append(dot, tr("on_air_start"));
+        else d.textContent = tr("replay");
       } else if (current && it.id === current.id) {
         d.textContent = tr("playing");
       } else if (mem && mem.dur && mem.pos / mem.dur > 0.95) {
@@ -877,7 +880,7 @@
     if (it.live) {
       const o = document.createElement("span");
       o.className = "onair";
-      o.textContent = " " + (it.channel ? tr("in_realtime") : tr("on_air"));
+      o.textContent = " " + (it.channel ? tr("in_realtime") : airing(it) ? tr("on_air") : tr("replay_short"));
       w.append(o);
     }
     now.append(clockEl, w);
@@ -903,8 +906,8 @@
   function play(it, userGesture, startAt) {
     save();
     current = it;
-    // A live stream lives at /live, so a reload lands on it again; an edition at /.
-    const path = it.live ? "/live" : "/";
+    // Das Erste live lives at /live, so a reload lands on it again; editions at /.
+    const path = it.channel ? "/live" : "/";
     if (location.pathname !== path && /^\/(live\/?|player)?$/.test(location.pathname)) {
       const q = new URLSearchParams(location.search);
       q.delete("at");
@@ -1524,7 +1527,7 @@
     if (!("mediaSession" in navigator)) return;
     navigator.mediaSession.metadata = new MediaMetadata({
       title: title(it),
-      artist: it.channel ? tr("realtime") : longDay(it.date) + (it.live ? ", " + tr("on_air") : ""),
+      artist: it.channel ? tr("realtime") : longDay(it.date) + (it.live ? ", " + tr(airing(it) ? "on_air" : "replay_short") : ""),
       album: "tagesschau, alle Ausgaben",
       artwork: [{ src: "/cover.jpg", sizes: "1400x1400", type: "image/jpeg" }],
     });
@@ -1568,16 +1571,8 @@
     // A shared link (?at=<unix seconds>) opens the edition with that moment.
     const at = Number(new URLSearchParams(location.search).get("at")) * 1000;
     const hit = at ? items.filter(it => it.date.getTime() <= at + 1000).sort((a, b) => b.date - a.date)[0] : null;
-    const onAir = items.find(it => it.live);
     if (/^\/live\/?$/.test(location.pathname)) {
-      // /live: the edition on air at its live edge, else Das Erste live.
-      if (onAir) {
-        const [start, end, began] = sessionOf(onAir.url);
-        if (start) onAir.url = onAir.url.replace(`/${start}-${end}-${began}/`, `/${start}-${end}-${start}/`);
-        play(onAir, false, "live");
-      } else {
-        play(CHANNEL, false);
-      }
+      play(CHANNEL, false);  // /live: always Das Erste live, tagesschau on air or not
     } else if (hit && at - hit.date.getTime() < 3 * 3600e3) {
       play(hit, false, Math.max(0, (at - hit.date.getTime()) / 1000));
     } else {

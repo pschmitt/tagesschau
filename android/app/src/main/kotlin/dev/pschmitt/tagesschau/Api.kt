@@ -30,6 +30,10 @@ data class Edition(
     val time: String
         get() = date.atZoneSameInstant(BERLIN).format(TIME)
 
+    /** A time-shifted edition is on air until its scheduled end, a replay after it. */
+    val airing: Boolean
+        get() = live && (channel || end == null || OffsetDateTime.now().isBefore(end))
+
     /** The day in the app's current locale, e.g. "Montag, 16. November". */
     val day: String
         get() = formatDay(date.atZoneSameInstant(BERLIN))

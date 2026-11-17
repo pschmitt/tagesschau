@@ -57,7 +57,7 @@ in
       type = lib.types.ints.positive;
       default = 90;
       description = ''
-        How long after an edition starts /live hands out a time-shifted stream
+        How long after an edition starts /live/edition hands out a time-shifted stream
         of it. Das Erste keeps two hours of its live stream.
       '';
     };

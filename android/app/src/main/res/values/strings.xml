@@ -153,6 +153,9 @@
     <string name="edition_title">tagesschau %1$s:%2$s</string>
     <string name="share_title">%1$s, %2$s</string>
     <string name="day_on_air">%1$s, on air now</string>
+    <string name="day_replay">%1$s, replay</string>
+    <string name="replay">replay</string>
+    <string name="replay_from_start">replay from the start</string>
     <string name="seconds_count">%1$d seconds</string>
     <string name="language">Language</string>
     <string name="language_system">System</string>

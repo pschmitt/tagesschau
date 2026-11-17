@@ -47,7 +47,8 @@ object Playlist {
                 .setArtist(
                     when {
                         e.channel -> context.getString(R.string.channel_live)
-                        e.live -> context.getString(R.string.day_on_air, e.day)
+                        e.live && e.airing -> context.getString(R.string.day_on_air, e.day)
+                        e.live -> context.getString(R.string.day_replay, e.day)
                         else -> e.day
                     }
                 )

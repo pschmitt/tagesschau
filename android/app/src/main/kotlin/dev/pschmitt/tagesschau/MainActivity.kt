@@ -726,7 +726,7 @@ private fun Clock(activity: MainActivity, st: PlayState, edition: Edition?) {
             if (edition?.live == true) {
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    stringResource(R.string.on_air),
+                    stringResource(if (edition.airing) R.string.on_air else R.string.replay),
                     color = Palette.Signal,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
@@ -798,9 +798,16 @@ private fun EditionRow(
         Column(Modifier.weight(1f)) {
             if (e.live) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(9.dp).clip(CircleShape).background(Palette.Signal))
-                    Spacer(Modifier.width(6.dp))
-                    Text(stringResource(R.string.live_from_start), fontSize = 15.sp)
+                    if (e.airing) {
+                        Box(Modifier.size(9.dp).clip(CircleShape).background(Palette.Signal))
+                        Spacer(Modifier.width(6.dp))
+                    }
+                    Text(
+                        stringResource(
+                            if (e.airing) R.string.live_from_start else R.string.replay_from_start
+                        ),
+                        fontSize = 15.sp,
+                    )
                 }
             } else {
                 // No status words (the bar, the seen-line and the button say it): an offline mark
