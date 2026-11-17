@@ -36,6 +36,24 @@ import org.json.JSONObject
 /** A newer build of the rolling `latest` prerelease. */
 data class Update(val commit: String, val apkUrl: String, val sha256: String?)
 
+/** What the update entry on the About page shows. */
+sealed interface UpdateState {
+    data object Idle : UpdateState
+
+    data object Checking : UpdateState
+
+    data object UpToDate : UpdateState
+
+    data class Available(val update: Update) : UpdateState
+
+    /** [progress] in 0..1, or negative when the size is unknown. */
+    data class Downloading(val update: Update, val progress: Float) : UpdateState
+
+    data class Installing(val update: Update) : UpdateState
+
+    data object Failed : UpdateState
+}
+
 /**
  * Self-update from the rolling `latest` prerelease of github.com/pschmitt/tagesschau (published by
  * the release workflow on every Android change on main). Same approach as stricknani: the commit
@@ -95,11 +113,18 @@ object Updater {
             Update(tagSha, apkUrl, sha)
         }
 
-    /** Downloads, verifies and installs [update]. Returns false when the APK was refused. */
-    suspend fun install(context: Context, update: Update): Boolean =
+    /**
+     * Downloads, verifies and installs [update]. Returns false when the APK was refused.
+     * [onProgress] gets the download's progress (0..1, or -1 when the size is unknown).
+     */
+    suspend fun install(
+        context: Context,
+        update: Update,
+        onProgress: (Float) -> Unit = {},
+    ): Boolean =
         withContext(Dispatchers.IO) {
             val file = File(context.cacheDir, "update.apk")
-            download(update.apkUrl, file)
+            download(update.apkUrl, file, onProgress)
             val sha = sha256(file)
             if (update.sha256 == null || sha != update.sha256) {
                 Log.w(TAG, "checksum mismatch or missing: $sha vs ${update.sha256}")
@@ -197,7 +222,7 @@ object Updater {
     }
 
     /** Follows redirects by hand, so every hop stays on HTTPS and on GitHub's hosts. */
-    private fun download(url: String, dest: File) {
+    private fun download(url: String, dest: File, onProgress: (Float) -> Unit) {
         var current = URL(url)
         repeat(5) {
             require(
@@ -217,8 +242,25 @@ object Updater {
                         return@repeat
                     }
                     200 -> {
+                        val total = conn.contentLengthLong
                         conn.inputStream.use { input ->
-                            dest.outputStream().use { input.copyTo(it) }
+                            dest.outputStream().use { out ->
+                                val buf = ByteArray(64 * 1024)
+                                var done = 0L
+                                var lastPercent = -2
+                                while (true) {
+                                    val n = input.read(buf)
+                                    if (n < 0) break
+                                    out.write(buf, 0, n)
+                                    done += n
+                                    val percent =
+                                        if (total > 0) (done * 100 / total).toInt() else -1
+                                    if (percent != lastPercent) {
+                                        lastPercent = percent
+                                        onProgress(if (total > 0) done.toFloat() / total else -1f)
+                                    }
+                                }
+                            }
                         }
                         return
                     }

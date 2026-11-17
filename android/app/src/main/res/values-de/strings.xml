@@ -25,6 +25,11 @@
     <string name="update_none">Die App ist aktuell.</string>
     <string name="update_installing">Update wird installiert …</string>
     <string name="update_failed">Update fehlgeschlagen</string>
+    <string name="update_checking">Suche nach Updates …</string>
+    <string name="update_found_text">Version %1$s steht bereit.</string>
+    <string name="update_install">Installieren</string>
+    <string name="update_downloading">Wird geladen … %1$d %%</string>
+    <string name="update_pull_hint">Zum erneuten Prüfen nach unten ziehen.</string>
     <string name="update_available">Update verfügbar</string>
     <string name="update_available_text">Neue Version (%1$s). Tippen zum Installieren.</string>
     <string name="update_installed">tagesschau aktualisiert</string>

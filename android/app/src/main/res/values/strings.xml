@@ -25,6 +25,11 @@
     <string name="update_none">The app is up to date.</string>
     <string name="update_installing">Installing update …</string>
     <string name="update_failed">Update failed</string>
+    <string name="update_checking">Checking for updates …</string>
+    <string name="update_found_text">Version %1$s is ready.</string>
+    <string name="update_install">Install</string>
+    <string name="update_downloading">Downloading … %1$d %%</string>
+    <string name="update_pull_hint">Pull down to check again.</string>
     <string name="update_available">Update available</string>
     <string name="update_available_text">New version (%1$s). Tap to install.</string>
     <string name="update_installed">tagesschau updated</string>

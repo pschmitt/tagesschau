@@ -25,6 +25,11 @@
     <string name="update_none">L\'application est à jour.</string>
     <string name="update_installing">Installation de la mise à jour …</string>
     <string name="update_failed">Échec de la mise à jour</string>
+    <string name="update_checking">Recherche de mises à jour …</string>
+    <string name="update_found_text">La version %1$s est prête.</string>
+    <string name="update_install">Installer</string>
+    <string name="update_downloading">Téléchargement … %1$d %%</string>
+    <string name="update_pull_hint">Tirez vers le bas pour vérifier à nouveau.</string>
     <string name="update_available">Mise à jour disponible</string>
     <string name="update_available_text">Nouvelle version (%1$s). Touchez pour installer.</string>
     <string name="update_installed">tagesschau mise à jour</string>
