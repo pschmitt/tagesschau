@@ -60,6 +60,11 @@ receivers can load the live sessions.
 
 ## Web player
 
+`?embed=1` shows only the video, filling the window, with no controls; it
+always starts from the beginning. With `?subs=1` it shows subtitles. Use it as
+an OBS browser source, for example `/?embed=1&subs=1` (newest edition) or
+`/live?embed=1&subs=1` (Das Erste live).
+
 - Controls as on YouTube: timeline above play/pause, volume
   (slider on hover, arrow keys) and the time; seeking, download, cast, share,
   settings (subtitles, speed, clock format and font; C toggles subtitles) and

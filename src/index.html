@@ -158,6 +158,16 @@
   @keyframes skip { 0%, 40% { opacity: 1; } 100% { opacity: 0; } }
   .player.idle, .player.idle .well { cursor: none; }
   video { display: block; width: 100%; height: 100%; background: var(--deep); }
+
+  /* ?embed=1: only the picture (and subtitles), filling the window: for OBS browser sources. */
+  html.embed, html.embed body { background: #000; overflow: hidden; }
+  html.embed .shell { display: block; padding: 0; max-width: none; min-height: 0; }
+  html.embed .shell > :not(.stage), html.embed .stage > :not(.player),
+  html.embed .player > :not(.well), html.embed .well > :not(video) { display: none !important; }
+  html.embed .player { position: fixed; inset: 0; margin: 0; border-radius: 0; box-shadow: none; background: #000; }
+  html.embed .well { aspect-ratio: auto; height: 100%; cursor: none; }
+  html.embed video { object-fit: contain; background: #000; }
+  html.embed video::cue { font-size: 4.5vh; }
   .big-play {
     position: absolute; inset: 0; margin: auto; width: 5.5rem; height: 5.5rem;
     border-radius: 50%; border: 0; background: rgba(7, 29, 64, 0.72); cursor: pointer;
@@ -563,6 +573,8 @@
 
 <script>
 (() => {
+  const EMBED = (q => q.has("embed") && q.get("embed") !== "0")(new URLSearchParams(location.search));
+  if (EMBED) document.documentElement.classList.add("embed");
   /* Languages: ?lang=de|en|fr (remembered), else the remembered one, else the first of the
      browser's preferred languages we have, else English. */
   const LANGS = { de: "Deutsch", en: "English", fr: "Français" };
@@ -938,7 +950,7 @@
       video.appendChild(t);
     }
     applySubs();
-    const mem = !it.live && store.get(it.id);
+    const mem = !it.live && !EMBED && store.get(it.id);  // an embed always starts from the start
     const resume = startAt != null ? (hls || startAt === "live" ? null : startAt)
       : (mem && mem.pos > 5 && (!mem.dur || mem.pos / mem.dur < 0.95)) ? mem.pos : null;
     if (resume != null) {
