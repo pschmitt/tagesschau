@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/player-desktop.jpg" width="640" alt="The web player on a desktop: the 15:00 edition with its controls, a thumbnail while scrubbing, the broadcast-time clock and the list of editions by day">
+  <img src="assets/player-desktop.jpg" width="640" alt="The web player on a desktop: the edition on air, played from its start, with its controls, a thumbnail while scrubbing, the broadcast-time clock and the list of editions by day">
   <img src="assets/player-phone.jpg" width="182" alt="The web player on a phone: the picture with controls below, the clock and the list of editions">
 </p>
 
