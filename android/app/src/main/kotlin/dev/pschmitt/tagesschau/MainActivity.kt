@@ -124,6 +124,7 @@ class MainActivity : ComponentActivity() {
      */
     var pendingLatest by mutableStateOf(false)
     var pendingPip = false
+    var pendingFullscreen = false
     var pendingVolume = -1
     // What a play-latest request asks for (Bluetooth or Tasker); defaults: the Bluetooth settings.
     var pendingChannel = false
@@ -135,6 +136,7 @@ class MainActivity : ComponentActivity() {
         intent.getStringExtra(EXTRA_PLAY_ID)?.let { pendingPlayId = it }
         if (intent.getBooleanExtra(EXTRA_PLAY_LATEST, false)) {
             pendingPip = intent.getBooleanExtra(EXTRA_PIP, false)
+            pendingFullscreen = intent.getBooleanExtra(EXTRA_FULLSCREEN, false)
             pendingVolume = intent.getIntExtra(MediaVolume.EXTRA, -1)
             val settings = Settings(this)
             pendingChannel =
@@ -372,6 +374,7 @@ class MainActivity : ComponentActivity() {
         const val EXTRA_PLAY_ID = "play_id"
         const val EXTRA_PLAY_LATEST = "play_latest"
         const val EXTRA_PIP = "pip"
+        const val EXTRA_FULLSCREEN = "fullscreen"
     }
 }
 
@@ -462,6 +465,10 @@ private fun MainScreen(activity: MainActivity) {
         // No delay here: resetting pendingLatest restarts (cancels) this effect. The activity
         // enters picture-in-picture as soon as playback runs (see onIsPlayingChanged).
         if (activity.pendingPip) activity.pipWhenPlaying = true
+        if (activity.pendingFullscreen) {
+            activity.pendingFullscreen = false
+            activity.setFullscreenMode(true)
+        }
         // Fixed start volume, set again after the device's audio route has taken over.
         val volume = activity.pendingVolume
         if (volume >= 0) {

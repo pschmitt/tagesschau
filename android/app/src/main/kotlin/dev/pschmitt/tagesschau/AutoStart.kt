@@ -30,6 +30,7 @@ object AutoStart {
                         .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                         .putExtra(MainActivity.EXTRA_PLAY_LATEST, true)
                         .putExtra(MainActivity.EXTRA_PIP, o.mode == BluetoothMode.PIP)
+                        .putExtra(MainActivity.EXTRA_FULLSCREEN, o.mode == BluetoothMode.VIDEO)
             }
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
             .putExtra(PlaybackService.EXTRA_PREFER_LIVE, o.preferLive)

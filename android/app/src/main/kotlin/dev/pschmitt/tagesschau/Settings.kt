@@ -18,7 +18,7 @@ enum class AutoDownload {
 }
 
 /**
- * How a Bluetooth connection plays: sound only, video in the app, or video in picture-in-picture.
+ * How a Bluetooth connection plays: sound only, fullscreen video, or video in picture-in-picture.
  */
 enum class BluetoothMode {
     AUDIO,
