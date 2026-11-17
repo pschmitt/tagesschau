@@ -14,6 +14,10 @@ stdenvNoCC.mkDerivation {
     fileset = lib.fileset.unions [
       ../src/server.py
       ../src/index.html
+      ../src/favicon.png
+      ../src/icon-192.png
+      ../src/icon-512.png
+      ../src/apple-touch-icon.png
     ];
   };
 
@@ -21,7 +25,7 @@ stdenvNoCC.mkDerivation {
 
   installPhase = ''
     runHook preInstall
-    install -Dm644 server.py index.html -t $out/share/tagesschau
+    install -Dm644 server.py index.html *.png -t $out/share/tagesschau
     makeWrapper ${lib.getExe python3} $out/bin/tagesschau \
       --add-flags "-I $out/share/tagesschau/server.py"
     runHook postInstall

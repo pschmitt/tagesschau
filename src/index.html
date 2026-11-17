@@ -5,7 +5,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>tagesschau, alle Ausgaben</title>
-<link rel="icon" href="/logo.jpg">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="alternate" type="application/rss+xml" title="tagesschau (alle Ausgaben)" href="/feed.xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1690,9 +1692,9 @@
   async function notifyShow(title, body, url) {
     try {
       const reg = await navigator.serviceWorker.ready;
-      await reg.showNotification(title, { body, icon: "/logo.jpg", badge: "/logo.jpg", data: { url } });
+      await reg.showNotification(title, { body, icon: "/icon-192.png", badge: "/favicon.png", data: { url } });
     } catch (_) {
-      try { new Notification(title, { body, icon: "/logo.jpg" }); } catch (_) {}
+      try { new Notification(title, { body, icon: "/icon-192.png" }); } catch (_) {}
     }
   }
   function notifyCheck(list) {

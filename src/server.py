@@ -46,6 +46,15 @@ IMAGES = {
     "/logo.jpg": os.environ.get("TAGESSCHAU_LOGO") or None,
 }
 COVER = escape(BASE + "/cover.jpg") if IMAGES["/cover.jpg"] else None
+# The site's own icons, shipped next to this file (favicon, home screen icons).
+HERE = os.path.dirname(os.path.abspath(__file__))
+ICONS = {
+    "/favicon.png": "favicon.png",
+    "/favicon.ico": "favicon.png",
+    "/icon-192.png": "icon-192.png",
+    "/icon-512.png": "icon-512.png",
+    "/apple-touch-icon.png": "apple-touch-icon.png",
+}
 REMEMBER = 100  # editions kept in memory between polls
 
 _lock = threading.Lock()
@@ -445,13 +454,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def send_image(self, path):
         try:
-            with open(IMAGES[path], "rb") as f:
+            with open(IMAGES.get(path) or os.path.join(HERE, ICONS[path]), "rb") as f:
                 body = f.read()
         except OSError:
             self.send_error(404)
             return
         self.send_response(200)
-        self.send_header("Content-Type", mimetypes.guess_type(IMAGES[path])[0] or "application/octet-stream")
+        self.send_header("Content-Type", mimetypes.guess_type(IMAGES.get(path) or ICONS[path])[0] or "image/png")
         self.send_header("Cache-Control", "public, max-age=86400")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
@@ -525,7 +534,7 @@ class Handler(BaseHTTPRequestHandler):
         if m:
             self.do_download(m.group(1))
             return
-        if IMAGES.get(path):
+        if IMAGES.get(path) or path in ICONS:
             self.send_image(path)
             return
         if path == "/sw.js":
