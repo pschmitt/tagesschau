@@ -11,6 +11,7 @@
 | `/live/audio` | The same as an audio-only stream, for phones with the screen off. |
 | `/subtitles/<id>.vtt` | The edition's WebVTT subtitles from the ARD Mediathek, or 404. |
 | `/thumbs/<id>/<n>.jpg` | Sheet `n` of the edition's scrubbing thumbnails, or 404. |
+| `/latest`, `/latest.mp4` | Redirect to the newest edition's MP4 (`?q=webxxl\|webxl\|webm\|webs`), for OBS or scripts. |
 | `/download/<id>` | The edition's MP4 as a file download (`?q=webxxl\|webxl\|webm\|webs`). |
 | `/sw.js` | The web player's service worker (notifications). |
 | `/cover.jpg`, `/logo.jpg` | The configured artwork, or 404. |

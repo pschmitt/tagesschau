@@ -700,8 +700,40 @@ class Handler(BaseHTTPRequestHandler):
         if self.command != "HEAD":
             self.wfile.write(body)
 
+    def do_latest(self):
+        """Redirects to the newest edition's MP4 (?q= picks the quality), for OBS and scripts."""
+        query = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+        quality = (query.get("q") or [None])[0]
+        if quality is not None and quality not in QUALITIES:
+            self.send_error(400, "unknown quality")
+            return
+        try:
+            with _lock:
+                if time.time() - _episodes["at"] > CACHE_TTL or not _episodes["list"]:
+                    _episodes.update(at=time.time(), list=editions())
+                    _thumbs_wake.set()
+                found = _episodes["list"]
+        except Exception as exc:
+            self.send_error(502, str(exc)[:100])
+            return
+        if not found:
+            self.send_error(404, "no edition")
+            return
+        url = found[0][2]
+        if quality:
+            url = re.sub(r"\.web[a-z]+\.h264\.mp4$", ".%s.h264.mp4" % quality, url)
+        self.send_response(302)
+        self.send_header("Location", url)
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
     def do_GET(self):
         path = self.path.split("?")[0]
+        if path in ("/latest", "/latest.mp4"):
+            self.do_latest()
+            return
         m = THUMBS_RE.match(path)
         if m:
             self.do_thumbs(*m.groups())
