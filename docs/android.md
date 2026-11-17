@@ -35,7 +35,8 @@ The controls work like YouTube's mobile player:
 | Cast button | Play on a Chromecast or Google TV |
 | CC button | Subtitles on / off (shown when the edition or stream has them) |
 
-Leaving the app while a video plays shows it picture-in-picture by default;
+Back pauses playback and leaves the app. Leaving with Home while a video plays
+shows it picture-in-picture by default;
 Settings, Beim Verlassen switches to audio only or to stopping. Playback runs
 in a media session, so it continues in the background with lock-screen and
 headset controls.

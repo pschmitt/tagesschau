@@ -198,6 +198,23 @@ class MainActivity : ComponentActivity() {
                 useController = false
             }
         setContent { TagesschauTheme { MainScreen(this) } }
+        // Back leaves the player and stops playback (Home keeps playing, in picture-in-picture).
+        // Registered first, so Compose's handlers (fullscreen, sheets) still come before it.
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : androidx.activity.OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    controller?.pause()
+                    pipWhenPlaying = false
+                    // No auto-enter on the way out.
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+                        setPictureInPictureParams(
+                            PictureInPictureParams.Builder().setAutoEnterEnabled(false).build()
+                        )
+                    moveTaskToBack(true)
+                }
+            },
+        )
         if (intent?.getBooleanExtra(EXTRA_INSTALL_UPDATE, false) == true) installUpdate()
         handleIntent(intent)
     }
@@ -717,7 +734,6 @@ private fun EditionRow(
     val seen =
         saved?.let { (pos, dur) -> if (dur > 0) (pos.toFloat() / dur).coerceIn(0f, 1f) else 0f }
             ?: 0f
-    val watched = seen >= 0.95f
     Row(
         Modifier.fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 1.dp)
@@ -755,7 +771,8 @@ private fun EditionRow(
                     Text(stringResource(R.string.live_from_start), fontSize = 15.sp)
                 }
             } else {
-                // Downloaded: an orange "offline" mark in front instead of the word.
+                // No status words (the bar, the seen-line and the button say it): an offline mark
+                // when downloaded, and a word only when a download failed.
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (download?.state == Download.STATE_COMPLETED) {
                         Icon(
@@ -764,36 +781,16 @@ private fun EditionRow(
                             tint = Palette.Signal,
                             modifier = Modifier.size(17.dp),
                         )
-                        Spacer(Modifier.width(6.dp))
                     }
-                    Text(
-                        when {
-                            playing -> stringResource(R.string.playing)
-                            download?.state == Download.STATE_DOWNLOADING ->
-                                stringResource(
-                                    R.string.downloading,
-                                    download.percentDownloaded.toInt().coerceAtLeast(0),
-                                )
-                            download?.state == Download.STATE_QUEUED ->
-                                stringResource(R.string.queued)
-                            download?.state == Download.STATE_FAILED ->
-                                stringResource(R.string.download_failed)
-                            watched -> stringResource(R.string.watched)
-                            seen > 0f && saved != null ->
-                                stringResource(
-                                    R.string.resume_at,
-                                    e.date
-                                        .plusNanos(saved.first * 1_000_000)
-                                        .atZoneSameInstant(Edition.BERLIN)
-                                        .format(DateTimeFormatter.ofPattern("HH:mm")),
-                                )
-                            else -> "tagesschau"
-                        },
-                        color = if (playing) Palette.Ink else Palette.Mist,
-                        fontSize = 15.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    if (download?.state == Download.STATE_FAILED) {
+                        Text(
+                            stringResource(R.string.download_failed),
+                            color = Palette.Mist,
+                            fontSize = 15.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
         }
