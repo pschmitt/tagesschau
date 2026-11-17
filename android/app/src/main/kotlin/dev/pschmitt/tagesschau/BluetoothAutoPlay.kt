@@ -18,9 +18,10 @@ import androidx.core.content.edit
 
 /**
  * Starts the latest tagesschau when one of the chosen paired Bluetooth devices connects (car,
- * headphones): sound only, video (optionally fullscreen), or video in picture-in-picture. With a delay, a
- * notification counts down and offers "cancel" and "play now"; either way a notification says that
- * playback started. Starting an activity from the background needs "display over other apps".
+ * headphones): sound only, video (optionally fullscreen), or video in picture-in-picture. With a
+ * delay, a notification counts down and offers "cancel" and "play now"; either way a notification
+ * says that playback started. Starting an activity from the background needs "display over other
+ * apps".
  */
 object BluetoothAutoPlay {
     const val CHANNEL = "autoplay"
