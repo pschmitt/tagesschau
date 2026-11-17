@@ -304,7 +304,8 @@
     text-decoration-thickness: 1px; text-underline-offset: 0.2em; white-space: nowrap;
   }
   footer.fine a:hover, footer.fine a:focus-visible { color: var(--signal); text-decoration-color: currentColor; }
-  footer.fine .langs { display: flex; flex-wrap: wrap; gap: 0.9rem; margin: 0.2rem 0 0; }
+  footer.fine .langs { display: flex; flex-wrap: wrap; gap: 0.9rem; margin: 0; }
+  footer.fine .src { margin: 0.5rem 0 0; }
   footer.fine .langs a[aria-current="true"] { color: var(--mist); text-decoration: none; cursor: default; }
   footer.fine a svg { width: 1em; height: 1em; vertical-align: -0.15em; margin-right: 0.3em; }
 
@@ -565,8 +566,8 @@
     <p data-i18n="footer2">Alle Sendungen, Bilder und Marken gehören ihren Rechteinhabern. Die Videos kommen unverändert von den Servern der ARD; diese Seite speichert keine Sendungen.</p>
     </div>
     <div class="meta">
-    <p><span data-i18n="footer3">Freie Software unter der GPL-3.0, samt Android-App:</span> <a href="https://github.com/pschmitt/tagesschau" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span data-i18n="source">Quelltext auf GitHub</span></a></p>
     <p class="langs" id="langs"></p>
+    <p class="src"><a href="https://github.com/pschmitt/tagesschau" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span data-i18n="source">Quelltext</span></a></p>
     </div>
   </footer>
 </div>
@@ -601,7 +602,7 @@
       moment: "Zeitpunkt", start_here: "Ab dieser Stelle starten", link: "Link", editions: "Ausgaben",
       footer1: "Diese Seite ist kein Angebot der ARD, von ARD-aktuell oder tagesschau.de und steht mit ihnen in keiner Verbindung.",
       footer2: "Alle Sendungen, Bilder und Marken gehören ihren Rechteinhabern. Die Videos kommen unverändert von den Servern der ARD; diese Seite speichert keine Sendungen.",
-      footer3: "Freie Software unter der GPL-3.0, samt Android-App:", source: "Quelltext auf GitHub",
+      source: "Quelltext",
       today: "Heute", yesterday: "Gestern", edition: "tagesschau {time} Uhr", channel: "Das Erste live",
       realtime: "Fernsehprogramm in Echtzeit", playing: "spielt", on_air_start: "läuft gerade, ab Beginn", replay: "Wiederholung ab Beginn", replay_short: "Wiederholung",
       on_air: "läuft gerade", in_realtime: "in Echtzeit", seen: "gesehen", resume_at: "weiter ab {time}",
@@ -628,7 +629,7 @@
       moment: "Moment", start_here: "Start at this moment", link: "Link", editions: "Editions",
       footer1: "This site is not a service of ARD, ARD-aktuell or tagesschau.de and is not affiliated with them.",
       footer2: "All programmes, images and trademarks belong to their owners. The videos come unchanged from ARD's servers; this site stores no programmes.",
-      footer3: "Free software under the GPL-3.0, Android app included:", source: "Source code on GitHub",
+      source: "Source code",
       today: "Today", yesterday: "Yesterday", edition: "tagesschau {time}", channel: "Das Erste live",
       realtime: "The channel in real time", playing: "playing", on_air_start: "on air, from the start", replay: "replay from the start", replay_short: "replay",
       on_air: "on air", in_realtime: "in real time", seen: "watched", resume_at: "continue at {time}",
@@ -655,7 +656,7 @@
       moment: "Instant", start_here: "Commencer à ce moment", link: "Lien", editions: "Éditions",
       footer1: "Ce site n'est pas un service de l'ARD, d'ARD-aktuell ni de tagesschau.de et n'a aucun lien avec eux.",
       footer2: "Toutes les émissions, images et marques appartiennent à leurs ayants droit. Les vidéos proviennent telles quelles des serveurs de l'ARD ; ce site ne stocke aucune émission.",
-      footer3: "Logiciel libre sous GPL-3.0, application Android comprise :", source: "Code source sur GitHub",
+      source: "Code source",
       today: "Aujourd'hui", yesterday: "Hier", edition: "tagesschau de {time}", channel: "Das Erste live",
       realtime: "La chaîne en temps réel", playing: "en cours", on_air_start: "en direct, depuis le début", replay: "rediffusion depuis le début", replay_short: "rediffusion",
       on_air: "en direct", in_realtime: "en temps réel", seen: "vue", resume_at: "reprendre à {time}",
