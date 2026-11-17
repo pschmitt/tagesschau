@@ -159,4 +159,7 @@
     <string name="time_font">Schrift der Uhr</string>
     <string name="time_font_text">Wie der Text</string>
     <string name="clock_off">Aus</string>
+    <string name="section_appearance">Darstellung</string>
+    <string name="page_appearance_help">Sprache, Uhr, Schrift</string>
+    <string name="section_clock">Uhr</string>
 </resources>

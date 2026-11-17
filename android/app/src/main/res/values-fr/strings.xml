@@ -159,4 +159,7 @@
     <string name="time_font">Police de l\'horloge</string>
     <string name="time_font_text">Comme le texte</string>
     <string name="clock_off">Désactivée</string>
+    <string name="section_appearance">Apparence</string>
+    <string name="page_appearance_help">Langue, horloge, police</string>
+    <string name="section_clock">Horloge</string>
 </resources>

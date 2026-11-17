@@ -76,6 +76,7 @@ private enum class Page(val title: Int) {
     DOWNLOADS(R.string.section_downloads),
     NOTIFICATIONS(R.string.section_notifications),
     SERVER(R.string.section_server),
+    APPEARANCE(R.string.section_appearance),
     ADVANCED(R.string.section_advanced),
     ABOUT(R.string.section_about),
 }
@@ -207,6 +208,13 @@ private fun SettingsScreen(activity: SettingsActivity) {
                         page = Page.SERVER
                     }
                     PageLink(
+                        R.string.section_appearance,
+                        R.string.page_appearance_help,
+                        R.drawable.ic_palette,
+                    ) {
+                        page = Page.APPEARANCE
+                    }
+                    PageLink(
                         R.string.section_advanced,
                         R.string.page_advanced_help,
                         R.drawable.ic_bolt,
@@ -301,68 +309,6 @@ private fun SettingsScreen(activity: SettingsActivity) {
                         },
                         colors = itemColors,
                     )
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.clock_format)) },
-                        supportingContent = { Text(stringResource(R.string.clock_format_help)) },
-                        leadingContent = { Icon(painterResource(R.drawable.ic_clock), null) },
-                        colors = itemColors,
-                    )
-                    SingleChoiceSegmentedButtonRow(
-                        Modifier.fillMaxWidth().padding(start = 56.dp, end = 16.dp, bottom = 8.dp)
-                    ) {
-                        val formats =
-                            listOf(
-                                ClockFormat.OFF to stringResource(R.string.clock_off),
-                                ClockFormat.MINUTES to "20:00",
-                                ClockFormat.SECONDS to "20:00:06",
-                                ClockFormat.MILLIS to ",123",
-                            )
-                        formats.forEachIndexed { i, (f, label) ->
-                            SegmentedButton(
-                                selected = clockFormat == f,
-                                onClick = {
-                                    clockFormat = f
-                                    settings.clockFormat = f
-                                },
-                                shape = SegmentedButtonDefaults.itemShape(i, formats.size),
-                            ) {
-                                Text(label, fontSize = 13.sp)
-                            }
-                        }
-                    }
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.time_font)) },
-                        colors = itemColors,
-                        modifier = Modifier.padding(start = 40.dp),
-                    )
-                    SingleChoiceSegmentedButtonRow(
-                        Modifier.fillMaxWidth().padding(start = 56.dp, end = 16.dp, bottom = 8.dp)
-                    ) {
-                        val fonts = TimeFont.entries
-                        fonts.forEachIndexed { i, f ->
-                            SegmentedButton(
-                                selected = timeFont == f,
-                                onClick = {
-                                    timeFont = f
-                                    settings.timeFont = f
-                                },
-                                shape = SegmentedButtonDefaults.itemShape(i, fonts.size),
-                            ) {
-                                // Each choice in its own font.
-                                Text(
-                                    when (f) {
-                                        TimeFont.BARLOW -> "Barlow"
-                                        TimeFont.PLEX -> "Plex Mono"
-                                        TimeFont.TEXT -> stringResource(R.string.time_font_text)
-                                    },
-                                    fontFamily = Fonts.of(f),
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 13.sp,
-                                    maxLines = 1,
-                                )
-                            }
-                        }
-                    }
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.subtitles)) },
                         supportingContent = { Text(stringResource(R.string.subtitles_help)) },
@@ -548,7 +494,7 @@ private fun SettingsScreen(activity: SettingsActivity) {
                         colors = itemColors,
                     )
                 }
-                Page.ADVANCED -> {
+                Page.APPEARANCE -> {
                     Section(R.string.language)
                     var lang by remember { mutableStateOf(Lang.current(activity)) }
                     SingleChoiceSegmentedButtonRow(
@@ -576,6 +522,71 @@ private fun SettingsScreen(activity: SettingsActivity) {
                             }
                         }
                     }
+                    Section(R.string.section_clock)
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.clock_format)) },
+                        supportingContent = { Text(stringResource(R.string.clock_format_help)) },
+                        leadingContent = { Icon(painterResource(R.drawable.ic_clock), null) },
+                        colors = itemColors,
+                    )
+                    SingleChoiceSegmentedButtonRow(
+                        Modifier.fillMaxWidth().padding(start = 56.dp, end = 16.dp, bottom = 8.dp)
+                    ) {
+                        val formats =
+                            listOf(
+                                ClockFormat.OFF to stringResource(R.string.clock_off),
+                                ClockFormat.MINUTES to "20:00",
+                                ClockFormat.SECONDS to "20:00:06",
+                                ClockFormat.MILLIS to ",123",
+                            )
+                        formats.forEachIndexed { i, (f, label) ->
+                            SegmentedButton(
+                                selected = clockFormat == f,
+                                onClick = {
+                                    clockFormat = f
+                                    settings.clockFormat = f
+                                },
+                                shape = SegmentedButtonDefaults.itemShape(i, formats.size),
+                            ) {
+                                Text(label, fontSize = 13.sp)
+                            }
+                        }
+                    }
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.time_font)) },
+                        colors = itemColors,
+                        modifier = Modifier.padding(start = 40.dp),
+                    )
+                    SingleChoiceSegmentedButtonRow(
+                        Modifier.fillMaxWidth().padding(start = 56.dp, end = 16.dp, bottom = 8.dp)
+                    ) {
+                        val fonts = TimeFont.entries
+                        fonts.forEachIndexed { i, f ->
+                            SegmentedButton(
+                                selected = timeFont == f,
+                                onClick = {
+                                    timeFont = f
+                                    settings.timeFont = f
+                                },
+                                shape = SegmentedButtonDefaults.itemShape(i, fonts.size),
+                            ) {
+                                // Each choice in its own font.
+                                Text(
+                                    when (f) {
+                                        TimeFont.BARLOW -> "Barlow"
+                                        TimeFont.PLEX -> "Plex Mono"
+                                        TimeFont.TEXT -> stringResource(R.string.time_font_text)
+                                    },
+                                    fontFamily = Fonts.of(f),
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 13.sp,
+                                    maxLines = 1,
+                                )
+                            }
+                        }
+                    }
+                }
+                Page.ADVANCED -> {
                     Section(R.string.section_bluetooth)
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.bt_autoplay)) },
