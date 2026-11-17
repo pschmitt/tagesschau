@@ -98,7 +98,6 @@
   #notifybtn { color: var(--mist); }
   #notifybtn[aria-pressed="true"] { color: var(--signal); }
   .subscribe:hover { background: var(--deep); }
-  .subscribe .short { display: none; }
 
   /* Subscribe dialog */
   dialog.sub {
@@ -341,6 +340,11 @@
   .channel:hover { background: var(--panel); }
   .channel[aria-current="true"] { background: var(--panel); border-left-color: var(--signal); }
   .channel .dot { background: #e53935; margin: 0; flex: none; width: 0.7rem; height: 0.7rem; }
+  .channel .thumbwrap { position: relative; flex: none; width: 6.5rem; aspect-ratio: 16 / 9; border-radius: 4px; overflow: hidden; background: var(--panel); }
+  .channel .thumbwrap img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .channel .thumbwrap .dot { position: absolute; left: 0.35rem; top: 0.35rem; box-shadow: 0 0 0 2px rgba(7, 29, 64, 0.6); }
+  .channel .now-title { display: block; color: var(--ink); font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .channel > span:last-child { min-width: 0; }
   .channel strong { display: block; font-size: 1.15rem; }
   .channel .sub { color: var(--mist); font-size: 0.9rem; }
   .dot {
@@ -360,8 +364,6 @@
     .brand img { width: 2rem; height: 2rem; }
     .brand span { font-size: 0.95rem; }
     .subscribe { padding: 0.4rem 0.8rem; white-space: nowrap; }
-    .subscribe .long { display: none; }
-    .subscribe .short { display: inline; }
     /* Touch screens have no hover: controls sit below the picture and stay. */
     .well { aspect-ratio: auto; }
     .well video { aspect-ratio: 16 / 9; height: auto; }
@@ -426,7 +428,7 @@
     <p class="brand"><img src="/logo.jpg" alt="" onerror="this.remove()"><b>tagesschau</b><span data-i18n="brand_sub">alle Ausgaben</span></p>
     <div class="bar-actions">
     <button class="ctl" id="notifybtn" aria-pressed="false" data-i18n-title="notify" data-i18n-aria="notify" title="Bei neuen Ausgaben benachrichtigen" aria-label="Bei neuen Ausgaben benachrichtigen"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg></button>
-    <button class="subscribe" id="subscribe"><span class="long" data-i18n="subscribe_long">Als Podcast abonnieren</span><span class="short" data-i18n="subscribe_short">Abonnieren</span></button>
+    <button class="subscribe" id="subscribe"><span data-i18n="subscribe_short">Abonnieren</span></button>
     </div>
   </header>
 
@@ -583,7 +585,7 @@
       android_app: "Android-App", feed_browser: "Feed im Browser", notify_live: "{title} läuft gerade",
       watch_start: "Ab Beginn ansehen", notify_new: "Neue Ausgabe: {title}", tv: "Fernseher",
       playing_on: "Läuft auf {device}", cast_failed: "Übertragen fehlgeschlagen ({err}).", space: "Leertaste",
-      skip: "{n} Sekunden", time_font: "Schrift der Uhr", time_font_text: "Wie der Text",
+      skip: "{n} Sekunden", time_font: "Schrift der Uhr", time_font_text: "Wie der Text", until: "bis {time}",
     },
     en: {
       title: "tagesschau, all editions", brand_sub: "all editions", notify: "Notify me about new editions",
@@ -610,7 +612,7 @@
       android_app: "Android app", feed_browser: "Feed in the browser", notify_live: "{title} is on air",
       watch_start: "Watch from the start", notify_new: "New edition: {title}", tv: "TV",
       playing_on: "Playing on {device}", cast_failed: "Casting failed ({err}).", space: "Space",
-      skip: "{n} seconds", time_font: "Clock font", time_font_text: "Same as text",
+      skip: "{n} seconds", time_font: "Clock font", time_font_text: "Same as text", until: "until {time}",
     },
     fr: {
       title: "tagesschau, toutes les éditions", brand_sub: "toutes les éditions", notify: "M'avertir des nouvelles éditions",
@@ -637,7 +639,7 @@
       android_app: "Application Android", feed_browser: "Flux dans le navigateur", notify_live: "{title} est en direct",
       watch_start: "Regarder depuis le début", notify_new: "Nouvelle édition : {title}", tv: "télé",
       playing_on: "Lecture sur {device}", cast_failed: "Échec de la diffusion ({err}).", space: "Espace",
-      skip: "{n} secondes", time_font: "Police de l'horloge", time_font_text: "Comme le texte",
+      skip: "{n} secondes", time_font: "Police de l'horloge", time_font_text: "Comme le texte", until: "jusqu'à {time}",
     },
   };
   // `tr`, not `t`: many functions here have a local `t` (a time).
@@ -742,6 +744,16 @@
   /* Rundown */
   // Das Erste's live stream itself (2 h window; hls.js starts at the live edge).
   const CHANNEL = { id: "daserste-live", url: "https://daserste-live.ard-mcdn.de/daserste/live/hls/de/master.m3u8", live: true, channel: true, get date() { return new Date(); } };
+  let channelInfo = null;  // what Das Erste shows now and next (server: episodes.json "channel")
+  // The programme running now (the "next" one once "now" has ended between two refreshes).
+  function onAirNow() {
+    if (!channelInfo) return null;
+    const t = Date.now();
+    for (const e of [channelInfo.now, channelInfo.next]) {
+      if (e && Date.parse(e.start) <= t && t < Date.parse(e.end)) return e;
+    }
+    return null;
+  }
   const title = it => it.channel ? tr("channel") : tr("edition", { time: hm(it.date) });
 
   function render() {
@@ -750,12 +762,32 @@
     ch.className = "channel";
     ch.setAttribute("aria-current", String(!!(current && current.channel)));
     const chText = document.createElement("span");
-    chText.innerHTML = "<strong></strong><span class=sub></span>";
+    chText.innerHTML = "<strong></strong><span class=now-title></span><span class=sub></span>";
     chText.querySelector("strong").textContent = tr("channel");
-    chText.querySelector(".sub").textContent = current && current.channel ? tr("playing") : tr("realtime");
+    const prog = onAirNow();
     const dot = document.createElement("span");
     dot.className = "dot";
-    ch.append(dot, chText);
+    if (prog) {
+      // Thumbnail and title of what runs now, "until 21:45".
+      chText.querySelector(".now-title").textContent = prog.title;
+      chText.querySelector(".sub").textContent = tr("until", { time: hm(new Date(prog.end)) });
+      const wrap = document.createElement("span");
+      wrap.className = "thumbwrap";
+      if (prog.image) {
+        const img = document.createElement("img");
+        img.src = prog.image;
+        img.alt = "";
+        img.loading = "lazy";
+        img.addEventListener("error", () => img.remove());
+        wrap.append(img);
+      }
+      wrap.append(dot);
+      ch.append(wrap, chText);
+    } else {
+      chText.querySelector(".now-title").remove();
+      chText.querySelector(".sub").textContent = current && current.channel ? tr("playing") : tr("realtime");
+      ch.append(dot, chText);
+    }
     ch.addEventListener("click", () => play(CHANNEL, true));
     rundown.append(ch);
     let group = null, list = null;
@@ -1479,6 +1511,7 @@
     const r = await fetch("/episodes.json", { cache: "no-store" });
     if (!r.ok) throw new Error("HTTP " + r.status);
     const data = await r.json();
+    channelInfo = data.channel || null;
     const list = data.editions.map(e => ({ id: e.id, url: e.url, date: new Date(e.date), subtitles: e.subtitles }));
     if (data.live) list.unshift({ id: "live-" + data.live.date, url: data.live.url, date: new Date(data.live.date), end: new Date(data.live.end), live: true });
     return list;
@@ -1523,6 +1556,8 @@
       play(items[0], false);
     }
     syncButtons();
+    // The programme in the Das Erste row changes on the minute, between list refreshes.
+    setInterval(render, 60e3);
     // Pick up new editions without interrupting playback.
     setInterval(async () => {
       try {

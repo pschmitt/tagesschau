@@ -257,27 +257,72 @@ SERVICE_WORKER = """self.addEventListener("notificationclick", e => {
 DOWNLOAD_RE = re.compile(r"^/download/(ts-\d+)$")
 SESSION_RE = re.compile(r"^/live/(\d+)-(\d+)-(\d+)/(index|video|audio|subs)\.m3u8$")
 
-_epg = {}  # day -> (fetched at, [(start, end)])
+_epg = {}  # day -> (fetched at, [programme entries])
 _upstream = {}  # url -> (fetched at, text)
 
 
-def schedule(day):
+def programme(day):
+    """Das Erste's programme for one (ARD) day: title, subline, start, end, image URL."""
     cached = _epg.get(day)
     if cached and time.time() - cached[0] < 600:
         return cached[1]
     data = json.load(get(EPG.format(day)))
-    slots = []
+    entries = []
     for ch in data.get("channels", []):
         for slot in ch.get("timeSlots", []):
             for e in slot:
-                if (e.get("title") or "").strip().lower() != "tagesschau":
+                try:
+                    start = datetime.fromisoformat(e["broadcastedOn"])
+                    end = datetime.fromisoformat(e["broadcastEnd"])
+                except (KeyError, ValueError):
                     continue
-                start = datetime.fromisoformat(e["broadcastedOn"])
-                end = datetime.fromisoformat(e["broadcastEnd"])
-                if end - start >= MIN_EDITION:
-                    slots.append((start, end))
-    _epg[day] = (time.time(), slots)
-    return slots
+                image = ((e.get("images") or {}).get("aspect16x9") or {}).get("src") or ""
+                entries.append(
+                    {
+                        "title": (e.get("title") or "").strip(),
+                        "subline": (e.get("subline") or "").strip(),
+                        "start": start,
+                        "end": end,
+                        "image": image.replace("{width}", "480") if image else None,
+                    }
+                )
+    _epg[day] = (time.time(), entries)
+    return entries
+
+
+def schedule(day):
+    """The tagesschau editions of one day, as (start, end)."""
+    return [
+        (e["start"], e["end"])
+        for e in programme(day)
+        if e["title"].lower() == "tagesschau" and e["end"] - e["start"] >= MIN_EDITION
+    ]
+
+
+def on_air(now):
+    """What Das Erste shows now and next, for the players' "Das Erste live" row."""
+    entries = []
+    for d in (-1, 0, 1):
+        try:
+            entries += programme((now + timedelta(days=d)).strftime("%Y-%m-%d"))
+        except Exception:
+            pass
+    entries.sort(key=lambda e: e["start"])
+    current = next((e for e in entries if e["start"] <= now < e["end"]), None)
+    if not current:
+        return None
+    following = next((e for e in entries if e["start"] >= current["end"]), None)
+
+    def out(e):
+        return {
+            "title": e["title"],
+            "subline": e["subline"],
+            "start": e["start"].isoformat(),
+            "end": e["end"].isoformat(),
+            "image": e["image"],
+        }
+
+    return {"now": out(current), "next": out(following) if following else None}
 
 
 def current_edition(now):
@@ -413,6 +458,10 @@ def episodes_json(now):
             "end": edition[1].isoformat(),
             "url": live_session(now) + "index.m3u8",
         }
+    try:
+        data["channel"] = on_air(now)
+    except Exception:
+        data["channel"] = None
     return json.dumps(data)
 
 
