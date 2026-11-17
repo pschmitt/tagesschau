@@ -65,7 +65,25 @@ data class Edition(
 }
 
 /** Editions as the server lists them: the edition on air (if any) first, then newest first. */
-data class Listing(val live: Edition?, val editions: List<Edition>) {
+/** One programme on Das Erste (from the ARD programme guide, via the server). */
+data class Programme(
+    val title: String,
+    val start: OffsetDateTime,
+    val end: OffsetDateTime,
+    val image: String?,
+)
+
+data class Listing(
+    val live: Edition?,
+    val editions: List<Edition>,
+    /** What Das Erste shows now and next, if the server knows. */
+    val onAir: List<Programme> = emptyList(),
+) {
+    /** The programme running at [at] (now by default). */
+    fun programmeAt(at: OffsetDateTime = OffsetDateTime.now()): Programme? = onAir.firstOrNull {
+        !it.start.isAfter(at) && it.end.isAfter(at)
+    }
+
     val all: List<Edition>
         get() = listOfNotNull(live) + editions
 }
@@ -98,7 +116,23 @@ class Api(private val baseUrl: String) {
                                 ?.let(OffsetDateTime::parse),
                     )
                 }
-            Listing(live, editions)
+            val onAir =
+                json.optJSONObject("channel")?.let { c ->
+                    listOf("now", "next").mapNotNull { k ->
+                        c.optJSONObject(k)?.let { p ->
+                            runCatching {
+                                    Programme(
+                                        title = p.getString("title"),
+                                        start = OffsetDateTime.parse(p.getString("start")),
+                                        end = OffsetDateTime.parse(p.getString("end")),
+                                        image = p.optString("image").takeIf { it.isNotEmpty() },
+                                    )
+                                }
+                                .getOrNull()
+                        }
+                    }
+                } ?: emptyList()
+            Listing(live, editions, onAir)
         }
 
     /** URL of the audio-only time-shifted stream of the edition on air, or null. */

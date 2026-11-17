@@ -162,4 +162,5 @@
     <string name="section_appearance">Appearance</string>
     <string name="page_appearance_help">Language, clock, font</string>
     <string name="section_clock">Clock</string>
+    <string name="until">until %1$s</string>
 </resources>

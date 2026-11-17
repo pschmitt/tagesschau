@@ -51,6 +51,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -86,6 +87,7 @@ import androidx.media3.session.SessionToken
 import androidx.media3.ui.PlayerView
 import com.google.common.util.concurrent.ListenableFuture
 import dev.pschmitt.tagesschau.update.Updater
+import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -570,7 +572,10 @@ private fun MainScreen(activity: MainActivity) {
                         )
                     }
                     item(key = Edition.CHANNEL_ID) {
-                        ChannelRow(playing = currentId == Edition.CHANNEL_ID) {
+                        ChannelRow(
+                            playing = currentId == Edition.CHANNEL_ID,
+                            listing = listing,
+                        ) {
                             val ch = Edition.channel()
                             activity.play(listOf(ch), 0)
                         }
@@ -828,7 +833,17 @@ private fun EditionRow(
 
 /** Das Erste live, above the editions. */
 @Composable
-private fun ChannelRow(playing: Boolean, onPlay: () -> Unit) {
+private fun ChannelRow(playing: Boolean, listing: Listing?, onPlay: () -> Unit) {
+    // What runs now; checked every half minute, so the row follows the programme.
+    val now by
+        produceState(OffsetDateTime.now()) {
+            while (true) {
+                kotlinx.coroutines.delay(30_000)
+                value = OffsetDateTime.now()
+            }
+        }
+    val prog = listing?.programmeAt(now)
+    val thumb = prog?.image?.let { rememberRemoteImage(it) }
     Row(
         Modifier.fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 6.dp)
@@ -838,19 +853,63 @@ private fun ChannelRow(playing: Boolean, onPlay: () -> Unit) {
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFE53935)))
-        Spacer(Modifier.width(10.dp))
+        if (prog != null) {
+            // Thumbnail of the programme, the live dot on it.
+            Box(
+                Modifier.width(96.dp)
+                    .aspectRatio(16f / 9f)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Palette.Panel)
+            ) {
+                thumb?.let {
+                    androidx.compose.foundation.Image(
+                        it,
+                        null,
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+                Box(
+                    Modifier.padding(5.dp)
+                        .size(9.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFE53935))
+                )
+            }
+        } else {
+            Box(Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFE53935)))
+        }
+        Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
                 stringResource(R.string.channel_title),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
             )
-            Text(
-                stringResource(if (playing) R.string.playing else R.string.channel_live),
-                color = Palette.Mist,
-                fontSize = 14.sp,
-            )
+            if (prog != null) {
+                Text(
+                    prog.title,
+                    fontSize = 15.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    stringResource(
+                        R.string.until,
+                        prog.end
+                            .atZoneSameInstant(Edition.BERLIN)
+                            .format(DateTimeFormatter.ofPattern("HH:mm")),
+                    ),
+                    color = Palette.Mist,
+                    fontSize = 14.sp,
+                )
+            } else {
+                Text(
+                    stringResource(if (playing) R.string.playing else R.string.channel_live),
+                    color = Palette.Mist,
+                    fontSize = 14.sp,
+                )
+            }
         }
     }
 }
