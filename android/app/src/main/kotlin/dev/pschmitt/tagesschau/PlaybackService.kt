@@ -3,8 +3,14 @@
 package dev.pschmitt.tagesschau
 
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.ServiceInfo
+import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
+import androidx.core.content.ContextCompat
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.exoplayer.ExoPlayer
@@ -44,6 +50,8 @@ class PlaybackService : MediaSessionService() {
                 .setHandleAudioBecomingNoisy(!Settings(this).continueOnDisconnect)
                 .setSeekBackIncrementMs(SEEK_MS)
                 .setSeekForwardIncrementMs(SEEK_MS)
+                // Keep streaming with the screen off (CPU and Wi-Fi stay awake while playing).
+                .setWakeMode(C.WAKE_MODE_NETWORK)
                 .build()
         val open =
             PendingIntent.getActivity(
@@ -100,8 +108,25 @@ class PlaybackService : MediaSessionService() {
             val resume = intent.getBooleanExtra(EXTRA_RESUME, true)
             val channel = intent.getBooleanExtra(EXTRA_CHANNEL, false)
             val volume = intent.getIntExtra(MediaVolume.EXTRA, -1)
+            // Started as a foreground service (Bluetooth auto-play with the screen off): be in the
+            // foreground at once, the edition list comes from the network first. The session's
+            // own notification takes over the same id once playback runs.
+            val foreground = intent.getBooleanExtra(EXTRA_FOREGROUND, false)
+            if (foreground) startForegroundPlaceholder()
+            if (intent.getBooleanExtra(EXTRA_VIDEO_ON_UNLOCK, false)) {
+                watchUnlock(
+                    pip = intent.getBooleanExtra(MainActivity.EXTRA_PIP, false),
+                    fullscreen = intent.getBooleanExtra(MainActivity.EXTRA_FULLSCREEN, false),
+                )
+            }
             scope.launch {
-                playLatest(preferLive, audioOnly, resume, channel)
+                val playing = playLatest(preferLive, audioOnly, resume, channel)
+                if (foreground && !playing) {
+                    ServiceCompat.stopForeground(
+                        this@PlaybackService,
+                        ServiceCompat.STOP_FOREGROUND_REMOVE,
+                    )
+                }
                 // Android restores the device's own volume once its audio route is active, which
                 // can come a moment after the connection: set it at the start and again a bit
                 // later.
@@ -113,15 +138,81 @@ class PlaybackService : MediaSessionService() {
         return super.onStartCommand(intent, flags, startId)
     }
 
+    private fun startForegroundPlaceholder() {
+        BluetoothAutoPlay.createChannel(this)
+        val n =
+            NotificationCompat.Builder(this, BluetoothAutoPlay.CHANNEL)
+                .setSmallIcon(R.drawable.ic_tagesschau)
+                .setContentTitle(getString(R.string.autoplay_started))
+                .setSilent(true)
+                .build()
+        runCatching {
+                ServiceCompat.startForeground(
+                    this,
+                    NOTIFICATION_ID,
+                    n,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK,
+                )
+            }
+            .onFailure { android.util.Log.w("PlaybackService", "no foreground start", it) }
+    }
+
+    private var unlockReceiver: BroadcastReceiver? = null
+
+    /**
+     * Video auto-play that started while the phone was locked (video stream, no picture yet): open
+     * the player (fullscreen or picture-in-picture, as set) once the phone is unlocked and still
+     * playing. The player view takes over the running stream, so the sound does not stop.
+     */
+    private fun watchUnlock(pip: Boolean, fullscreen: Boolean) {
+        unwatchUnlock()
+        val receiver =
+            object : BroadcastReceiver() {
+                override fun onReceive(context: Context, intent: Intent) {
+                    unwatchUnlock()
+                    val player = session?.player ?: return
+                    if (!player.playWhenReady || player.mediaItemCount == 0) return
+                    runCatching {
+                            startActivity(
+                                Intent(context, MainActivity::class.java)
+                                    .addFlags(
+                                        Intent.FLAG_ACTIVITY_NEW_TASK or
+                                            Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                                            Intent.FLAG_ACTIVITY_NO_ANIMATION
+                                    )
+                                    .putExtra(MainActivity.EXTRA_SHOW_VIDEO, true)
+                                    .putExtra(MainActivity.EXTRA_PIP, pip)
+                                    .putExtra(MainActivity.EXTRA_FULLSCREEN, fullscreen)
+                            )
+                        }
+                        .onFailure {
+                            android.util.Log.w("PlaybackService", "could not show the video", it)
+                        }
+                }
+            }
+        unlockReceiver = receiver
+        ContextCompat.registerReceiver(
+            this,
+            receiver,
+            IntentFilter(Intent.ACTION_USER_PRESENT),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+    }
+
+    private fun unwatchUnlock() {
+        unlockReceiver?.let { runCatching { unregisterReceiver(it) } }
+        unlockReceiver = null
+    }
+
     private suspend fun playLatest(
         preferLive: Boolean,
         audioOnly: Boolean,
         resumeLatest: Boolean,
         channel: Boolean = false,
-    ) {
+    ): Boolean {
         val items = Playlist.latest(this, preferLive, audioOnly, channel)
-        val player = session?.player ?: return
-        if (items.isEmpty()) return
+        val player = session?.player ?: return false
+        if (items.isEmpty()) return false
         // Whatever an earlier auto-play muted or switched off: sound on, picture as asked.
         player.volume = 1f
         player.trackSelectionParameters =
@@ -137,6 +228,7 @@ class PlaybackService : MediaSessionService() {
         player.setMediaItems(items, 0, if (channel) androidx.media3.common.C.TIME_UNSET else resume)
         player.prepare()
         player.play()
+        return true
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -145,6 +237,7 @@ class PlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        unwatchUnlock()
         scope.cancel()
         session?.run {
             player.release()
@@ -162,6 +255,13 @@ class PlaybackService : MediaSessionService() {
         const val EXTRA_RESUME = "resume"
         /** Play Das Erste live instead of the latest tagesschau. */
         const val EXTRA_CHANNEL = "channel"
+        /** Started with startForegroundService: go into the foreground right away. */
+        const val EXTRA_FOREGROUND = "foreground"
+        /** Locked for now; open the video player (MainActivity extras) once unlocked. */
+        const val EXTRA_VIDEO_ON_UNLOCK = "video_on_unlock"
+        /** Media3's default notification id, so its notification replaces the placeholder. */
+        private const val NOTIFICATION_ID =
+            androidx.media3.session.DefaultMediaNotificationProvider.DEFAULT_NOTIFICATION_ID
         const val SEEK_MS = 20_000L
 
         fun playLatestIntent(

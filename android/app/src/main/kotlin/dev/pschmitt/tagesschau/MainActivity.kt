@@ -131,9 +131,17 @@ class MainActivity : ComponentActivity() {
     var pendingPreferLive = true
     var pendingResume = true
 
+    /** Auto-play started while locked: show its picture (fullscreen or picture-in-picture). */
+    var pendingShowVideo by mutableStateOf(false)
+
     private fun handleIntent(intent: Intent?) {
         intent ?: return
         intent.getStringExtra(EXTRA_PLAY_ID)?.let { pendingPlayId = it }
+        if (intent.getBooleanExtra(EXTRA_SHOW_VIDEO, false)) {
+            pendingPip = intent.getBooleanExtra(EXTRA_PIP, false)
+            pendingFullscreen = intent.getBooleanExtra(EXTRA_FULLSCREEN, false)
+            pendingShowVideo = true
+        }
         if (intent.getBooleanExtra(EXTRA_PLAY_LATEST, false)) {
             pendingPip = intent.getBooleanExtra(EXTRA_PIP, false)
             pendingFullscreen = intent.getBooleanExtra(EXTRA_FULLSCREEN, false)
@@ -174,7 +182,7 @@ class MainActivity : ComponentActivity() {
         if (!ok && attempt < 6) window.decorView.postDelayed({ enterPipNow(attempt + 1) }, 500)
     }
 
-    private fun maybeEnterPip() {
+    fun maybeEnterPip() {
         if (!pipWhenPlaying || controller?.isPlaying != true) return
         if (!lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) return
         pipWhenPlaying = false
@@ -375,6 +383,7 @@ class MainActivity : ComponentActivity() {
         const val EXTRA_PLAY_LATEST = "play_latest"
         const val EXTRA_PIP = "pip"
         const val EXTRA_FULLSCREEN = "fullscreen"
+        const val EXTRA_SHOW_VIDEO = "show_video"
     }
 }
 
@@ -481,6 +490,20 @@ private fun MainScreen(activity: MainActivity) {
                 delay(2500)
                 MediaVolume.apply(activity, volume)
             }
+        }
+    }
+    // Unlocked during auto-play that started locked: the running stream gets its picture. No
+    // track change (the video track was never off), so the sound goes on without a break.
+    LaunchedEffect(controller, activity.pendingShowVideo) {
+        if (!activity.pendingShowVideo || controller == null) return@LaunchedEffect
+        activity.pendingShowVideo = false
+        if (activity.pendingPip) {
+            activity.pipWhenPlaying = true
+            activity.maybeEnterPip()
+        }
+        if (activity.pendingFullscreen) {
+            activity.pendingFullscreen = false
+            activity.setFullscreenMode(true)
         }
     }
     // A notification asked for an edition: play it once the list is there.

@@ -1,6 +1,7 @@
 package dev.pschmitt.tagesschau
 
 import android.app.AlarmManager
+import android.app.KeyguardManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -10,10 +11,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.PowerManager
 import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 
 /**
@@ -21,7 +24,8 @@ import androidx.core.content.edit
  * headphones): sound only, video (optionally fullscreen), or video in picture-in-picture. With a
  * delay, a notification counts down and offers "cancel" and "play now"; either way a notification
  * says that playback started. Starting an activity from the background needs "display over other
- * apps".
+ * apps"; with the screen off or locked the playback service starts it, and the picture follows on
+ * unlock.
  */
 object BluetoothAutoPlay {
     const val CHANNEL = "autoplay"
@@ -101,8 +105,14 @@ object BluetoothAutoPlay {
                     volume = settings.bluetoothVolume,
                 ),
             )
-        runCatching { context.startActivity(intent) }
-            .onFailure { Log.w("BluetoothAutoPlay", "could not start playback", it) }
+        // Screen off or locked: an activity would only come up after unlocking, so start playback
+        // straight from the playback service (the Bluetooth broadcast, the exact alarm and the
+        // notification action may start a foreground service from the background).
+        val started = !screenUsable(context) && startService(context, intent)
+        if (!started) {
+            runCatching { context.startActivity(intent) }
+                .onFailure { Log.w("BluetoothAutoPlay", "could not start playback", it) }
+        }
         notify(
             context,
             NotificationCompat.Builder(context, CHANNEL)
@@ -113,6 +123,54 @@ object BluetoothAutoPlay {
                 .setTimeoutAfter(15_000)
                 .build(),
         )
+    }
+
+    private fun screenUsable(context: Context): Boolean =
+        context.getSystemService(PowerManager::class.java).isInteractive &&
+            !context.getSystemService(KeyguardManager::class.java).isKeyguardLocked
+
+    /**
+     * Starts playback as a foreground service; false if Android does not allow it right now. Video
+     * modes play the video stream without a picture, so the player view can take it over on unlock
+     * without a break in the sound.
+     */
+    private fun startService(context: Context, activityIntent: Intent): Boolean {
+        val video = activityIntent.getBooleanExtra(MainActivity.EXTRA_PLAY_LATEST, false)
+        return runCatching {
+                ContextCompat.startForegroundService(
+                    context,
+                    PlaybackService.playLatestIntent(
+                            context,
+                            activityIntent.getBooleanExtra(PlaybackService.EXTRA_PREFER_LIVE, true),
+                            audioOnly = !video,
+                            resume =
+                                activityIntent.getBooleanExtra(PlaybackService.EXTRA_RESUME, true),
+                        )
+                        .putExtra(
+                            PlaybackService.EXTRA_CHANNEL,
+                            activityIntent.getBooleanExtra(PlaybackService.EXTRA_CHANNEL, false),
+                        )
+                        .putExtra(
+                            MediaVolume.EXTRA,
+                            activityIntent.getIntExtra(MediaVolume.EXTRA, -1),
+                        )
+                        .putExtra(PlaybackService.EXTRA_FOREGROUND, true)
+                        // Video or picture-in-picture mode: show the picture once unlocked.
+                        .putExtra(PlaybackService.EXTRA_VIDEO_ON_UNLOCK, video)
+                        .putExtra(
+                            MainActivity.EXTRA_PIP,
+                            activityIntent.getBooleanExtra(MainActivity.EXTRA_PIP, false),
+                        )
+                        .putExtra(
+                            MainActivity.EXTRA_FULLSCREEN,
+                            activityIntent.getBooleanExtra(MainActivity.EXTRA_FULLSCREEN, false),
+                        ),
+                )
+            }
+            .onFailure {
+                Log.w("BluetoothAutoPlay", "no foreground start, trying the activity", it)
+            }
+            .isSuccess
     }
 
     fun cancel(context: Context, deviceName: String) {

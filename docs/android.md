@@ -69,6 +69,12 @@ notification says that playback started. With a delay (0 s by default, up to
 30 s) the notification counts down first and offers "Abbrechen" and "Jetzt
 abspielen".
 
+With the screen off or the phone locked, playback starts from the background
+service instead, so the sound plays without unlocking. In the video modes the
+video stream already runs without a picture; when the phone is unlocked the
+player opens (fullscreen or picture-in-picture, as set) and takes over the
+running stream, without a break in the sound.
+
 "Lautstärke beim Start festlegen" (off by default) sets the media volume to a
 chosen level when Bluetooth auto-play starts, and again a moment later, after
 Android has restored the device's own volume.

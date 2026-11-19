@@ -14,3 +14,15 @@
 - [ ] Resume position per edition (as in the web player)
 
 Status: in progress (2026-11-16)
+
+## TSA-2: Bluetooth auto-play with the screen off
+
+- [x] Screen off or locked: start playback from `PlaybackService` as a foreground service
+      (Bluetooth broadcast, exact alarm and notification action allow it), the activity only as
+      a fallback
+- [x] Video modes: play the video stream without a picture, open the player on unlock
+      (`ACTION_USER_PRESENT`) without a track change, so the sound does not stop
+- [x] `WAKE_MODE_NETWORK` so streaming goes on with the screen off
+- [ ] Verified on a device: car connect with the screen off, sound, then unlock to fullscreen
+
+Status: in progress (2026-11-20)
