@@ -119,9 +119,32 @@ object BluetoothAutoPlay {
                 .setSmallIcon(R.drawable.ic_tagesschau)
                 .setContentTitle(context.getString(R.string.autoplay_started))
                 .setContentText(context.getString(R.string.autoplay_connected, deviceName))
+                .setContentIntent(openPlayer(context))
                 .setAutoCancel(true)
                 .setTimeoutAfter(15_000)
                 .build(),
+        )
+    }
+
+    /**
+     * Tapping a "starting" notification: the player as the Bluetooth mode wants it (fullscreen or
+     * picture-in-picture); the running playback goes on.
+     */
+    fun openPlayer(context: Context): PendingIntent {
+        val settings = Settings(context)
+        val mode = settings.bluetoothMode
+        return PendingIntent.getActivity(
+            context,
+            1,
+            Intent(context, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .putExtra(MainActivity.EXTRA_SHOW_VIDEO, mode != BluetoothMode.AUDIO)
+                .putExtra(MainActivity.EXTRA_PIP, mode == BluetoothMode.PIP)
+                .putExtra(
+                    MainActivity.EXTRA_FULLSCREEN,
+                    mode == BluetoothMode.VIDEO && settings.bluetoothFullscreen,
+                ),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
     }
 

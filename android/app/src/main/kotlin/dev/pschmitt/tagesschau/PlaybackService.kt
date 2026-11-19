@@ -144,6 +144,7 @@ class PlaybackService : MediaSessionService() {
             NotificationCompat.Builder(this, BluetoothAutoPlay.CHANNEL)
                 .setSmallIcon(R.drawable.ic_tagesschau)
                 .setContentTitle(getString(R.string.autoplay_started))
+                .setContentIntent(BluetoothAutoPlay.openPlayer(this))
                 .setSilent(true)
                 .build()
         runCatching {
