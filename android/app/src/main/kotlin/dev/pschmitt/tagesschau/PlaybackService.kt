@@ -191,11 +191,13 @@ class PlaybackService : MediaSessionService() {
                 }
             }
         unlockReceiver = receiver
+        // Exported: SystemUI sends USER_PRESENT under its own uid, which a not-exported receiver
+        // never gets. It is a protected broadcast, so no other app can send it.
         ContextCompat.registerReceiver(
             this,
             receiver,
             IntentFilter(Intent.ACTION_USER_PRESENT),
-            ContextCompat.RECEIVER_NOT_EXPORTED,
+            ContextCompat.RECEIVER_EXPORTED,
         )
     }
 
