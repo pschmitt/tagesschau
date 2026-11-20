@@ -74,7 +74,13 @@ class PlaybackService : MediaSessionService() {
                         .build()
                 }
                 .getOrElse { player }
-        session = MediaSession.Builder(this, sessionPlayer).setSessionActivity(open).build()
+        session =
+            MediaSession.Builder(this, sessionPlayer).setSessionActivity(open).build().also {
+                // Media3 posts the media notification (and the system's media controls) only for
+                // sessions added to the service, which otherwise happens when a controller
+                // connects. Playback started from an intent (Bluetooth, Tasker) has none.
+                addSession(it)
+            }
         // Stop after the current edition unless "continue with the next one" is on.
         val settings = Settings(this)
         localPlayer = player
