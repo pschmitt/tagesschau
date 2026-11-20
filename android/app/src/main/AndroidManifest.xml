@@ -13,6 +13,10 @@
         android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- With CONNECT, lets MediaRouter2 move the app's audio to the device that connected. -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation" />
     <!-- Exact delayed start after a Bluetooth connection (falls back to an inexact alarm). -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <!-- Lets the Tasker action start playback from the background (activity start). -->

@@ -33,6 +33,7 @@ object BluetoothAutoPlay {
     const val ACTION_START = "dev.pschmitt.tagesschau.action.BT_START"
     const val ACTION_CANCEL = "dev.pschmitt.tagesschau.action.BT_CANCEL"
     const val EXTRA_NAME = "device_name"
+    const val EXTRA_ADDRESS = "device_address"
 
     fun createChannel(context: Context) {
         context
@@ -47,15 +48,15 @@ object BluetoothAutoPlay {
     }
 
     /** A chosen device connected: start now, or count down first. */
-    fun trigger(context: Context, deviceName: String) {
+    fun trigger(context: Context, deviceName: String, address: String) {
         val delay = Settings(context).bluetoothDelaySeconds
         if (delay <= 0) {
-            start(context, deviceName)
+            start(context, deviceName, address)
             return
         }
         val alarms = context.getSystemService(AlarmManager::class.java)
         val at = SystemClock.elapsedRealtime() + delay * 1000L
-        val pi = action(context, ACTION_START, deviceName)
+        val pi = action(context, ACTION_START, deviceName, address)
         if (Build.VERSION.SDK_INT < 31 || alarms.canScheduleExactAlarms()) {
             alarms.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, at, pi)
         } else {
@@ -76,22 +77,26 @@ object BluetoothAutoPlay {
                 .addAction(
                     0,
                     context.getString(R.string.cancel),
-                    action(context, ACTION_CANCEL, deviceName),
+                    action(context, ACTION_CANCEL, deviceName, address),
                 )
                 .addAction(
                     0,
                     context.getString(R.string.autoplay_now),
-                    action(context, ACTION_START, deviceName),
+                    action(context, ACTION_START, deviceName, address),
                 )
                 .build(),
         )
     }
 
-    /** Starts playback in the chosen mode and says so in a notification. */
-    fun start(context: Context, deviceName: String) {
+    /**
+     * Starts playback in the chosen mode and says so in a notification. The sound goes to the
+     * device that connected, also when another Bluetooth device is still connected ([AudioRoute]).
+     */
+    fun start(context: Context, deviceName: String, address: String) {
         context
             .getSystemService(AlarmManager::class.java)
-            .cancel(action(context, ACTION_START, deviceName))
+            .cancel(action(context, ACTION_START, deviceName, address))
+        if (address.isNotEmpty()) AudioRoute.preferBluetooth(context, address, deviceName)
         val settings = Settings(context)
         val intent =
             AutoStart.intent(
@@ -196,20 +201,26 @@ object BluetoothAutoPlay {
             .isSuccess
     }
 
-    fun cancel(context: Context, deviceName: String) {
+    fun cancel(context: Context, deviceName: String, address: String) {
         context
             .getSystemService(AlarmManager::class.java)
-            .cancel(action(context, ACTION_START, deviceName))
+            .cancel(action(context, ACTION_START, deviceName, address))
         NotificationManagerCompat.from(context).cancel(NOTIFICATION)
     }
 
-    private fun action(context: Context, action: String, deviceName: String): PendingIntent =
+    private fun action(
+        context: Context,
+        action: String,
+        deviceName: String,
+        address: String,
+    ): PendingIntent =
         PendingIntent.getBroadcast(
             context,
             action.hashCode(),
             Intent(context, BluetoothAutoPlayActionReceiver::class.java)
                 .setAction(action)
-                .putExtra(EXTRA_NAME, deviceName),
+                .putExtra(EXTRA_NAME, deviceName)
+                .putExtra(EXTRA_ADDRESS, address),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
 
@@ -243,7 +254,7 @@ class BluetoothAutoPlayReceiver : BroadcastReceiver() {
         if (now - prefs.getLong("last", 0) < 60_000) return
         prefs.edit { putLong("last", now) }
         val name = runCatching { device.name }.getOrNull() ?: address
-        BluetoothAutoPlay.trigger(context, name)
+        BluetoothAutoPlay.trigger(context, name, address)
     }
 }
 
@@ -251,9 +262,10 @@ class BluetoothAutoPlayReceiver : BroadcastReceiver() {
 class BluetoothAutoPlayActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val name = intent.getStringExtra(BluetoothAutoPlay.EXTRA_NAME).orEmpty()
+        val address = intent.getStringExtra(BluetoothAutoPlay.EXTRA_ADDRESS).orEmpty()
         when (intent.action) {
-            BluetoothAutoPlay.ACTION_START -> BluetoothAutoPlay.start(context, name)
-            BluetoothAutoPlay.ACTION_CANCEL -> BluetoothAutoPlay.cancel(context, name)
+            BluetoothAutoPlay.ACTION_START -> BluetoothAutoPlay.start(context, name, address)
+            BluetoothAutoPlay.ACTION_CANCEL -> BluetoothAutoPlay.cancel(context, name, address)
         }
     }
 }

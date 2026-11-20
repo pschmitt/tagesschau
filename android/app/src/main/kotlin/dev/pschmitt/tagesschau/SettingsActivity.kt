@@ -165,9 +165,10 @@ private fun SettingsScreen(activity: SettingsActivity) {
     var choosingBt by remember { mutableStateOf(false) }
     val btPermission =
         androidx.activity.compose.rememberLauncherForActivityResult(
-            androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+            androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
         ) { granted ->
-            if (granted) choosingBt = true
+            // Scanning is optional: it only lets auto-play move the sound to the device.
+            if (granted[android.Manifest.permission.BLUETOOTH_CONNECT] == true) choosingBt = true
         }
     var autoDownload by remember { mutableStateOf(settings.autoDownload) }
     var autoCharging by remember { mutableStateOf(settings.autoDownloadCharging) }
@@ -688,16 +689,24 @@ private fun SettingsScreen(activity: SettingsActivity) {
                             },
                             modifier =
                                 Modifier.clickable {
+                                    // Connect: names and connections of paired devices. Scan
+                                    // (never for location): lets auto-play switch the audio
+                                    // output to the device that connected (MediaRouter2).
+                                    val needed =
+                                        listOf(
+                                                android.Manifest.permission.BLUETOOTH_CONNECT,
+                                                android.Manifest.permission.BLUETOOTH_SCAN,
+                                            )
+                                            .filter {
+                                                activity.checkSelfPermission(it) !=
+                                                    android.content.pm.PackageManager
+                                                        .PERMISSION_GRANTED
+                                            }
                                     if (
                                         android.os.Build.VERSION.SDK_INT >= 31 &&
-                                            activity.checkSelfPermission(
-                                                android.Manifest.permission.BLUETOOTH_CONNECT
-                                            ) !=
-                                                android.content.pm.PackageManager.PERMISSION_GRANTED
+                                            needed.isNotEmpty()
                                     ) {
-                                        btPermission.launch(
-                                            android.Manifest.permission.BLUETOOTH_CONNECT
-                                        )
+                                        btPermission.launch(needed.toTypedArray())
                                     } else {
                                         choosingBt = true
                                     }

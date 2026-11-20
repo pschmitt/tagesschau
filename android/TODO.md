@@ -26,3 +26,16 @@ Status: in progress (2026-11-16)
 - [ ] Verified on a device: car connect with the screen off, sound, then unlock to fullscreen
 
 Status: in progress (2026-11-20)
+
+## TSA-3: Media notification and audio routing for Bluetooth auto-play
+
+- [x] `addSession` in `PlaybackService`: playback started from an intent (Bluetooth, Tasker)
+      had no connected controller, so Media3 posted no media notification and the system's
+      media controls did not list the app
+- [x] Bluetooth auto-play moves the sound to the device that connected: `MediaRouter2`
+      transfer to its system route (Android 14+, BLUETOOTH_CONNECT + BLUETOOTH_SCAN), with
+      Shizuku as a fallback (`IBluetooth.setActiveDevice` as the shell user); retried while
+      A2DP connects
+- [ ] Verified on a device: media controls after a Bluetooth start, routing with two devices
+
+Status: in progress (2026-11-20)

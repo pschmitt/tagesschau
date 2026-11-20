@@ -76,6 +76,16 @@ player opens (fullscreen or picture-in-picture, as set) and takes over the
 running stream, without a break in the sound. Tapping the "tagesschau startet"
 notification opens the player the same way.
 
+If another Bluetooth device (headphones, a second speaker) is still connected
+and holds the audio, Android often keeps playing there. Auto-play then moves
+the sound to the device that connected, as the system's output switcher does
+(Android 14 and later; it needs the "Geräte in der Nähe" permission, asked for
+when choosing the devices). It retries for up to 20 seconds while the device's
+audio profile connects. If that does not work and
+[Shizuku](https://shizuku.rikka.app/) is running with access granted
+(Settings, Updates, Shizuku), the app makes the device the active audio device
+through Shizuku instead.
+
 "Lautstärke beim Start festlegen" (off by default) sets the media volume to a
 chosen level when Bluetooth auto-play starts, and again a moment later, after
 Android has restored the device's own volume.
