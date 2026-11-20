@@ -1,6 +1,8 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 application_id := "dev.pschmitt.tagesschau.debug"
+# Play Console package, only for the shared `screenshots-upload` recipe.
+play_package := "dev.pschmitt.tagesschau"
 remote_host := env_var_or_default("TAGESSCHAU_ANDROID_REMOTE_HOST", "rofl-13.brkn.lol")
 
 # Empty for the main checkout; "-<worktree-dirname>" in a linked git worktree, so parallel
