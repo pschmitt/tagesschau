@@ -39,3 +39,14 @@ Status: in progress (2026-11-20)
 - [ ] Verified on a device: media controls after a Bluetooth start, routing with two devices
 
 Status: in progress (2026-11-20)
+
+## TSA-4: Stop and disconnect at the end of a Bluetooth auto-play
+
+- [x] "Am Ende stoppen": stop the player (no media items) when the auto-played edition ends
+- [x] "Am Ende trennen": disconnect the device (`IBluetooth.disconnectAllEnabledProfiles` as
+      the shell user through Shizuku); a reconnect within 30 minutes does not auto-play
+- [x] Only if at least 30 s were left to play once playback ran (resume near the end); off by
+      default
+- [ ] Verified on a device (P11): car, edition runs to its end
+
+Status: in progress (2026-11-27)

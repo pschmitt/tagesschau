@@ -97,6 +97,7 @@ object BluetoothAutoPlay {
             .getSystemService(AlarmManager::class.java)
             .cancel(action(context, ACTION_START, deviceName, address))
         if (address.isNotEmpty()) AudioRoute.preferBluetooth(context, address, deviceName)
+        BluetoothSession.started(address, deviceName)
         val settings = Settings(context)
         val intent =
             AutoStart.intent(
@@ -248,6 +249,8 @@ class BluetoothAutoPlayReceiver : BroadcastReceiver() {
             else intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
         val address = device?.address ?: return
         if (address !in Settings(context).bluetoothDevices) return
+        // Disconnected at the end of an edition: a reconnect does not start it again.
+        if (BluetoothSession.quiet(context, address)) return
         // A device that drops and reconnects should not restart playback each time.
         val prefs = context.getSharedPreferences("bluetooth", Context.MODE_PRIVATE)
         val now = System.currentTimeMillis()

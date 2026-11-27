@@ -73,6 +73,10 @@
     <string name="continue_on_disconnect">Continuer à la déconnexion</string>
     <string name="continue_on_disconnect_help">Si un appareil Bluetooth ou un casque est déconnecté, la lecture continue sur le haut-parleur. Désactivé : pause.</string>
     <string name="bt_resume_help">Si la dernière édition a déjà été commencée, la lecture reprend là où elle s\'était arrêtée au lieu de repartir du début.</string>
+    <string name="bt_stop_at_end">Arrêter à la fin</string>
+    <string name="bt_stop_at_end_help">À la fin de l\'édition, le lecteur s\'arrête (seulement s\'il restait au moins 30 s au démarrage).</string>
+    <string name="bt_disconnect_at_end">Déconnecter à la fin</string>
+    <string name="bt_disconnect_at_end_help">À la fin de l\'édition, l\'appareil est déconnecté (seulement s\'il restait au moins 30 s au démarrage). Nécessite Shizuku ; une reconnexion dans les 30 minutes ne lance rien.</string>
     <string name="autoplay_channel">Lecture automatique</string>
     <string name="autoplay_countdown_title">tagesschau démarre bientôt</string>
     <string name="autoplay_started">tagesschau démarre</string>

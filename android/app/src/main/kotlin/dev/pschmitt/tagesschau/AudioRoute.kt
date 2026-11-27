@@ -30,6 +30,7 @@ import rikka.shizuku.ShizukuBinderWrapper
  * (public API, as the system's output switcher does; Android lets apps holding BLUETOOTH_CONNECT
  * and BLUETOOTH_SCAN move their audio to a system Bluetooth route), then, if Shizuku is set up, by
  * making the device the active audio device through the Bluetooth service as the shell user.
+ * Shizuku also disconnects the device at the end of an edition ([disconnect]).
  */
 object AudioRoute {
     private const val TAG = "AudioRoute"
@@ -159,13 +160,49 @@ object AudioRoute {
             .getOrDefault(false)
 
     /**
-     * `IBluetooth.setActiveDevice(device, ACTIVE_DEVICE_AUDIO, attributionSource)` on the app's
-     * Bluetooth service binder, wrapped so the call runs as the shell user (which holds
-     * BLUETOOTH_PRIVILEGED). Android 13 adds a result receiver as the last argument.
+     * Disconnects [address] (all its profiles) once an auto-played edition is over. Android has no
+     * public API for that, so this needs Shizuku: `IBluetooth.disconnectAllEnabledProfiles` as the
+     * shell user.
+     */
+    fun disconnect(context: Context, address: String) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        val app = context.applicationContext
+        val shizuku = ShizukuInstaller.get(app)
+        scope.launch {
+            // Let the player let go of the audio first.
+            delay(1000)
+            shizuku.refresh()
+            if (shizuku.state.value != ShizukuState.READY) {
+                Log.w(TAG, "disconnecting $address needs Shizuku")
+                return@launch
+            }
+            runCatching {
+                    kotlinx.coroutines.withContext(Dispatchers.IO) {
+                        privileged(app, address, "disconnectAllEnabledProfiles")
+                    }
+                }
+                .onSuccess { Log.i(TAG, "disconnectAllEnabledProfiles($address): $it") }
+                .onFailure { Log.w(TAG, "disconnect failed", it) }
+        }
+    }
+
+    /**
+     * `IBluetooth.setActiveDevice(device, ACTIVE_DEVICE_AUDIO, attributionSource)` as the shell
+     * user, see [privileged].
+     */
+    @androidx.annotation.RequiresApi(31)
+    private fun setActive(context: Context, address: String): Any? =
+        privileged(context, address, "setActiveDevice")
+
+    /**
+     * Calls the `IBluetooth` method [name] for [address] on the app's Bluetooth service binder,
+     * wrapped so the call runs as the shell user (which holds BLUETOOTH_PRIVILEGED). Arguments by
+     * type: the device, ACTIVE_DEVICE_AUDIO for an int, the shell's attribution source, and the
+     * result receiver that Android 13 adds as the last argument.
      */
     @androidx.annotation.RequiresApi(31)
     @android.annotation.SuppressLint("MissingPermission")
-    private fun setActive(context: Context, address: String): Any? {
+    private fun privileged(context: Context, address: String, name: String): Any? {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
             HiddenApiBypass.addHiddenApiExemptions("")
         val adapter =
@@ -181,9 +218,8 @@ object AudioRoute {
         val stub = Class.forName("android.bluetooth.IBluetooth\$Stub")
         val privileged = stub.getMethod("asInterface", IBinder::class.java).invoke(null, binder)
         val method =
-            Class.forName("android.bluetooth.IBluetooth").methods.firstOrNull {
-                it.name == "setActiveDevice"
-            } ?: error("no IBluetooth.setActiveDevice")
+            Class.forName("android.bluetooth.IBluetooth").methods.firstOrNull { it.name == name }
+                ?: error("no IBluetooth.$name")
         val shell = AttributionSource.Builder(SHELL_UID).setPackageName(SHELL_PACKAGE).build()
         val args =
             method.parameterTypes

@@ -170,6 +170,19 @@ class Settings(context: Context) {
         get() = prefs.getBoolean(KEY_BT_RESUME, true)
         set(value) = prefs.edit { putBoolean(KEY_BT_RESUME, value) }
 
+    /**
+     * Bluetooth auto-play: stop the player once the edition is over (if at least 30 seconds were
+     * left when it started).
+     */
+    var bluetoothStopAtEnd: Boolean
+        get() = prefs.getBoolean(KEY_BT_STOP_AT_END, false)
+        set(value) = prefs.edit { putBoolean(KEY_BT_STOP_AT_END, value) }
+
+    /** Bluetooth auto-play: disconnect the device once the edition is over (needs Shizuku). */
+    var bluetoothDisconnectAtEnd: Boolean
+        get() = prefs.getBoolean(KEY_BT_DISCONNECT_AT_END, false)
+        set(value) = prefs.edit { putBoolean(KEY_BT_DISCONNECT_AT_END, value) }
+
     /** Seconds between a Bluetooth connection and playback (cancellable from a notification). */
     var bluetoothDelaySeconds: Int
         get() = prefs.getInt(KEY_BT_DELAY, 0)
@@ -205,6 +218,8 @@ class Settings(context: Context) {
         private const val KEY_BT_FULLSCREEN = "bluetooth_fullscreen"
         private const val KEY_BT_DELAY = "bluetooth_delay"
         private const val KEY_BT_RESUME = "bluetooth_resume"
+        const val KEY_BT_STOP_AT_END = "bluetooth_stop_at_end"
+        const val KEY_BT_DISCONNECT_AT_END = "bluetooth_disconnect_at_end"
         const val KEY_CONTINUE_ON_DISCONNECT = "continue_on_disconnect"
         private const val KEY_BT_VOLUME = "bluetooth_volume"
         private const val KEY_BT_VOLUME_LEVEL = "bluetooth_volume_level"

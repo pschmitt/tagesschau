@@ -157,6 +157,8 @@ private fun SettingsScreen(activity: SettingsActivity) {
     var btDelay by remember { mutableStateOf(settings.bluetoothDelaySeconds) }
     var btFullscreen by remember { mutableStateOf(settings.bluetoothFullscreen) }
     var btResume by remember { mutableStateOf(settings.bluetoothResume) }
+    var btStopAtEnd by remember { mutableStateOf(settings.bluetoothStopAtEnd) }
+    var btDisconnectAtEnd by remember { mutableStateOf(settings.bluetoothDisconnectAtEnd) }
     var continueOnDisconnect by remember { mutableStateOf(settings.continueOnDisconnect) }
     var btVolumeOn by remember { mutableStateOf(settings.bluetoothVolume >= 0) }
     var btVolumeLevel by remember {
@@ -839,6 +841,42 @@ private fun SettingsScreen(activity: SettingsActivity) {
                                     {
                                         btResume = it
                                         settings.bluetoothResume = it
+                                    },
+                                )
+                            },
+                            colors = itemColors,
+                            modifier = Modifier.padding(start = 40.dp),
+                        )
+                        ListItem(
+                            headlineContent = { Text(stringResource(R.string.bt_stop_at_end)) },
+                            supportingContent = {
+                                Text(stringResource(R.string.bt_stop_at_end_help))
+                            },
+                            trailingContent = {
+                                Switch(
+                                    btStopAtEnd,
+                                    {
+                                        btStopAtEnd = it
+                                        settings.bluetoothStopAtEnd = it
+                                    },
+                                )
+                            },
+                            colors = itemColors,
+                            modifier = Modifier.padding(start = 40.dp),
+                        )
+                        ListItem(
+                            headlineContent = {
+                                Text(stringResource(R.string.bt_disconnect_at_end))
+                            },
+                            supportingContent = {
+                                Text(stringResource(R.string.bt_disconnect_at_end_help))
+                            },
+                            trailingContent = {
+                                Switch(
+                                    btDisconnectAtEnd,
+                                    {
+                                        btDisconnectAtEnd = it
+                                        settings.bluetoothDisconnectAtEnd = it
                                     },
                                 )
                             },

@@ -73,6 +73,10 @@
     <string name="continue_on_disconnect">Keep playing on disconnect</string>
     <string name="continue_on_disconnect_help">If a Bluetooth device or headphones disconnect, playback continues on the speaker. Off: pause.</string>
     <string name="bt_resume_help">If the latest edition has already been started, playback continues there instead of starting over.</string>
+    <string name="bt_stop_at_end">Stop at the end</string>
+    <string name="bt_stop_at_end_help">When the edition is over, the player stops (only if at least 30 s were left when it started).</string>
+    <string name="bt_disconnect_at_end">Disconnect at the end</string>
+    <string name="bt_disconnect_at_end_help">When the edition is over, the device is disconnected (only if at least 30 s were left when it started). Needs Shizuku; reconnecting within 30 minutes starts nothing.</string>
     <string name="autoplay_channel">Autoplay</string>
     <string name="autoplay_countdown_title">tagesschau is about to start</string>
     <string name="autoplay_started">tagesschau is starting</string>

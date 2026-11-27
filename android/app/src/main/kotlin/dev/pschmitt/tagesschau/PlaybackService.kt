@@ -98,6 +98,21 @@ class PlaybackService : MediaSessionService() {
                     player.setHandleAudioBecomingNoisy(!settings.continueOnDisconnect)
             }
         settings.prefs.registerOnSharedPreferenceChangeListener(prefsListener)
+        // Bluetooth auto-play: stop and/or disconnect once the edition is over, if so set.
+        sessionPlayer.addListener(
+            BluetoothSession.listener(this, sessionPlayer) {
+                // Not from inside the player's own callback.
+                scope.launch {
+                    sessionPlayer.stop()
+                    sessionPlayer.clearMediaItems()
+                    ServiceCompat.stopForeground(
+                        this@PlaybackService,
+                        ServiceCompat.STOP_FOREGROUND_REMOVE,
+                    )
+                    stopSelf()
+                }
+            }
+        )
     }
 
     private var localPlayer: ExoPlayer? = null

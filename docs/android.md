@@ -93,6 +93,19 @@ Android has restored the device's own volume.
 "Bei Trennung weiterspielen" (on by default) keeps playback going on the
 phone's speaker when a Bluetooth device or headphones disconnect; off pauses it. Like the Tasker action, this needs "Über anderen Apps einblenden".
 
+When an edition that auto-play started is over:
+
+- "Am Ende stoppen" (off by default) stops the player, so the media
+  notification and the car's media display go away.
+- "Am Ende trennen" (off by default) disconnects the device that started it.
+  Android has no public API for this, so it needs Shizuku. A reconnect of that
+  device within 30 minutes does not start playback again.
+
+Both only apply if at least 30 seconds were left to play when playback started.
+An edition that "Fortsetzen" picks up just before its end does not drop the
+connection right away. Das Erste live and the edition on air have no end, so
+neither setting does anything there.
+
 ## Downloads
 
 Every edition within the retention period downloads by itself, by default on
