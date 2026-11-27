@@ -24,6 +24,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -44,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -864,24 +866,38 @@ private fun SettingsScreen(activity: SettingsActivity) {
                             colors = itemColors,
                             modifier = Modifier.padding(start = 40.dp),
                         )
+                        // Needs Shizuku: greyed out (and shown off, the stored choice kept)
+                        // while it is not running or the app has no access.
+                        val shizukuReady = shizukuState == ShizukuState.READY
                         ListItem(
                             headlineContent = {
                                 Text(stringResource(R.string.bt_disconnect_at_end))
                             },
                             supportingContent = {
-                                Text(stringResource(R.string.bt_disconnect_at_end_help))
+                                Column {
+                                    Text(stringResource(R.string.bt_disconnect_at_end_help))
+                                    if (!shizukuReady) {
+                                        Text(
+                                            stringResource(R.string.needs_shizuku),
+                                            color = MaterialTheme.colorScheme.error,
+                                        )
+                                    }
+                                }
                             },
                             trailingContent = {
                                 Switch(
-                                    btDisconnectAtEnd,
+                                    btDisconnectAtEnd && shizukuReady,
                                     {
                                         btDisconnectAtEnd = it
                                         settings.bluetoothDisconnectAtEnd = it
                                     },
+                                    enabled = shizukuReady,
                                 )
                             },
                             colors = itemColors,
-                            modifier = Modifier.padding(start = 40.dp),
+                            modifier =
+                                Modifier.padding(start = 40.dp)
+                                    .alpha(if (shizukuReady) 1f else 0.5f),
                         )
                         ListItem(
                             headlineContent = { Text(stringResource(R.string.bt_delay)) },

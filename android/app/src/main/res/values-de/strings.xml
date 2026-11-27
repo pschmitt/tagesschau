@@ -77,6 +77,7 @@
     <string name="bt_stop_at_end_help">Ist die Ausgabe zu Ende, wird der Player beendet (nur wenn beim Start noch mindestens 30 s übrig waren).</string>
     <string name="bt_disconnect_at_end">Am Ende trennen</string>
     <string name="bt_disconnect_at_end_help">Ist die Ausgabe zu Ende, wird das Gerät getrennt (nur wenn beim Start noch mindestens 30 s übrig waren). Braucht Shizuku; eine neue Verbindung in den nächsten 30 Minuten startet nichts.</string>
+    <string name="needs_shizuku">Braucht Shizuku (laufend, mit Zugriff für diese App; siehe Updates).</string>
     <string name="autoplay_channel">Auto-Wiedergabe</string>
     <string name="autoplay_countdown_title">tagesschau startet gleich</string>
     <string name="autoplay_started">tagesschau startet</string>

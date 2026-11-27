@@ -47,6 +47,7 @@ Status: in progress (2026-11-20)
       the shell user through Shizuku); a reconnect within 30 minutes does not auto-play
 - [x] Only if at least 30 s were left to play once playback ran (resume near the end); off by
       default
+- [x] "Am Ende trennen" greyed out (shown off, choice kept) while Shizuku is not ready
 - [ ] Verified on a device (P11): car, edition runs to its end
 
 Status: in progress (2026-11-27)
